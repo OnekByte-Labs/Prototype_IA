@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getSentinelCookie } from '@/lib/auth';
+import { getSentinelCookie, refreshSentinelCookie } from '@/lib/auth';
 
 export const revalidate = 10; // Cache for 10 seconds
+
+const BROWSER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 
 interface IngestCamera {
   id: string;
@@ -16,15 +19,25 @@ export async function GET() {
     const token = (process.env.CAMERA_ACCESS_TOKEN || '').trim();
     const actualPassword = token || password;
 
-    const cookie = await getSentinelCookie();
+    let cookie = await getSentinelCookie();
 
-    let headers: HeadersInit = {
+    const makeHeaders = (): HeadersInit => ({
       'Cookie': cookie,
-    };
+      'User-Agent': BROWSER_UA,
+      'Referer': 'https://cctv.corp8.cloud/',
+    });
     
     // Fetch from the government portal
-    let response = await fetch(catalogueUrl, { headers, next: { revalidate: 10 } });
+    let response = await fetch(catalogueUrl, { headers: makeHeaders(), next: { revalidate: 10 } });
     let text = await response.text();
+
+    // If we got a redirect or HTML login page, re-authenticate and retry
+    if (!response.ok || text.trim().toLowerCase().startsWith('<!doctype') || text.includes('browser required') || text.includes('one session per IP')) {
+      console.log('[cameras] Initial fetch failed, refreshing cookie...');
+      cookie = await refreshSentinelCookie();
+      response = await fetch(catalogueUrl, { headers: makeHeaders(), next: { revalidate: 10 } });
+      text = await response.text();
+    }
 
     if (!response.ok || text.trim().toLowerCase().startsWith('<!doctype')) {
       throw new Error(`Failed to fetch catalogue: Invalid response or unauthorized.`);

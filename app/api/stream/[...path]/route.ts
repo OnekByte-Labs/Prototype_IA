@@ -1,40 +1,54 @@
 import { NextResponse } from 'next/server';
-import { getSentinelCookie } from '@/lib/auth';
+import { getSentinelCookie, refreshSentinelCookie } from '@/lib/auth';
 
-export const revalidate = 0; // Don't cache the stream proxy
+export const dynamic = 'force-dynamic';
+
+const BROWSER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 
 export async function GET(
   request: Request,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const cookie = await getSentinelCookie();
-    
-    // Construct the remote URL
+    let cookie = await getSentinelCookie();
     const hlsBase = process.env.CAMERA_HLS_BASE_URL || 'https://cctv.corp8.cloud';
-    const remotePath = params.path.join('/');
-    const targetUrl = `${hlsBase}/live/stream/${remotePath}`;
 
-    const headers: HeadersInit = {
-      'Cookie': cookie,
-    };
-    
-    // Forward the request to the CDN
-    const response = await fetch(targetUrl, {
-      headers,
-      redirect: 'manual'
+    // The correct CDN path is /<cam_id>/<file> — NOT /live/stream/<cam_id>/<file>
+    const remotePath = (await params).path.join('/');
+    const targetUrl = `${hlsBase}/${remotePath}`;
+
+    let response = await fetch(targetUrl, {
+      headers: {
+        'Cookie': cookie,
+        'User-Agent': BROWSER_UA,
+        'Referer': `${hlsBase}/`,
+        'Accept': '*/*',
+      },
+      redirect: 'manual',
     });
 
+    // Handle "one session per IP" or expired cookie — re-login and retry once
+    if (response.status === 403 || response.status === 302) {
+      console.log(`[stream-proxy] Got ${response.status} for ${remotePath}, refreshing cookie...`);
+      cookie = await refreshSentinelCookie();
+      response = await fetch(targetUrl, {
+        headers: {
+          'Cookie': cookie,
+          'User-Agent': BROWSER_UA,
+          'Referer': `${hlsBase}/`,
+          'Accept': '*/*',
+        },
+        redirect: 'manual',
+      });
+    }
+
     if (!response.ok) {
-      if (response.status === 302) {
-        return new NextResponse("Unauthorized", { status: 401 });
-      }
+      console.error(`[stream-proxy] Failed: ${response.status} ${response.statusText} for ${targetUrl}`);
       return new NextResponse(response.statusText, { status: response.status });
     }
 
     const contentType = response.headers.get('content-type') || 'application/vnd.apple.mpegurl';
-    
-    // Stream the body directly to avoid buffering large .ts video segments in memory
     const body = response.body;
 
     const proxyHeaders = new Headers();
@@ -47,7 +61,7 @@ export async function GET(
       headers: proxyHeaders,
     });
   } catch (error) {
-    console.error('Error in stream proxy:', error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    console.error('[stream-proxy] Error:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
