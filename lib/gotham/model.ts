@@ -24,6 +24,9 @@ export type Camera = {
   sensitivity: number;
   recording: boolean;
   uptime: number;
+  hlsUrl?: string;
+  rtspUrl?: string;
+  webrtcUrl?: string;
 };
 
 export const CAMERAS: Camera[] = [

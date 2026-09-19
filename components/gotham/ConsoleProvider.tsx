@@ -21,6 +21,9 @@ import {
 } from "@/lib/gotham/model";
 import { intRange, mulberry32 } from "@/lib/gotham/rng";
 import { useToast } from "./Toast";
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 type ConsoleState = {
   alerts: Alert[];
@@ -138,6 +141,12 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     };
   }, [toast]);
 
+  // Fetch live camera statuses from our API proxy
+  const { data: apiCameras } = useSWR<any[]>('/api/cameras', fetcher, {
+    refreshInterval: 10000,
+    fallbackData: [],
+  });
+
   const ack = useCallback(
     (id: string) => {
       setAlerts((prev) =>
@@ -198,10 +207,27 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     toast(next ? "Live feed resumed" : "Live feed paused");
   }, [liveOn, toast]);
 
-  const cameras = useMemo(
-    () => CAMERAS.map((c) => (degraded.includes(c.id) ? { ...c, online: false, recording: false } : c)),
-    [degraded],
-  );
+  const cameras = useMemo(() => {
+    return CAMERAS.map((c) => {
+      // Find the corresponding camera from the API to get live 'online' state and 'hlsUrl'
+      const liveData = apiCameras?.find((apiCam) => apiCam.id === c.id);
+      
+      const isDegraded = degraded.includes(c.id);
+      
+      return { 
+        ...c, 
+        // Use the real name from the live data if available, otherwise fallback to the mock name
+        name: liveData?.name ? liveData.name : c.name,
+        // If the API knows about this camera, use its online status, otherwise fallback to mock
+        online: isDegraded ? false : (liveData ? liveData.online : c.online), 
+        recording: isDegraded ? false : c.recording,
+        // Inject the stream URLs dynamically into the Gotham camera model
+        hlsUrl: liveData?.hlsUrl,
+        rtspUrl: liveData?.rtspUrl,
+        webrtcUrl: liveData?.webrtcUrl,
+      };
+    });
+  }, [degraded, apiCameras]);
 
   const unacked = useMemo(() => alerts.filter((a) => a.status === "new").length, [alerts]);
 

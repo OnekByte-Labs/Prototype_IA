@@ -85,21 +85,43 @@ export type CameraRow = {
   actions: { label: string; tone: "default" | "warn" | "err" }[];
 };
 
-const std = [{ label: "PING", tone: "default" as const }, { label: "DIAG", tone: "default" as const }];
+import useSWR from 'swr';
+import { Camera } from './dashboard-data';
 
-export const cameras: CameraRow[] = [
-  { state: "ok", id: "CAM-01", name: "MAIN GATE ENTRANCE", zone: "HQ", ip: "10.142.12.101", model: "AXIS Q6135-LE", firmware: { text: "v11.8.42", note: "[OK]", tone: "ok" }, stream: { label: "1080P60 RTSP", tone: "ok" }, recording: { label: "ACTIVE [EDGE+NVR]", tone: "ok" }, storage: { label: "64%", pct: 64, tone: "ok" }, uptime: { label: "99.98%", tone: "ok" }, fault: { label: "None (Nominal)", tone: "ok" }, actions: std },
-  { state: "ok", id: "CAM-07", name: "PERIMETER E PTZ", zone: "Perimeter E", ip: "10.142.14.107", model: "BOSCH AUTODOME 7000i", firmware: { text: "v7.82.01", note: "[OK]", tone: "ok" }, stream: { label: "4K30 H.265", tone: "ok" }, recording: { label: "ACTIVE [NVR]", tone: "ok" }, storage: { label: "82%", pct: 82, tone: "ok" }, uptime: { label: "99.94%", tone: "ok" }, fault: { label: "None", tone: "ok" }, actions: std },
-  { state: "warn", id: "CAM-09", name: "AMMUNITION DUMP B-1", tag: { label: "NO REC" }, zone: "Depot", ip: "10.142.20.109", model: "FLIR FC-644 ID", firmware: { text: "v4.2.1 [PATCH PENDING]", tone: "warn" }, stream: { label: "1080P30 FLIR", tone: "ok" }, recording: { label: "NO RECORDING [STORAGE ERR]", tone: "warn" }, storage: { label: "98% [FULL]", pct: 98, tone: "warn" }, uptime: { label: "98.12%", tone: "warn" }, fault: { label: "Storage write reject (08m ago)", tone: "warn" }, actions: [{ label: "PURGE", tone: "warn" }, { label: "DIAG", tone: "default" }] },
-  { state: "ok", id: "CAM-12", name: "ARMOURY VAULT PTZ", zone: "Depot", ip: "10.142.20.112", model: "PELCO SPECTRA PRO", firmware: { text: "v3.14.9", note: "[OK]", tone: "ok" }, stream: { label: "1080P60 TAC", tone: "ok" }, recording: { label: "ACTIVE [REC]", tone: "ok" }, storage: { label: "45%", pct: 45, tone: "ok" }, uptime: { label: "99.99%", tone: "ok" }, fault: { label: "PTZ calibr. 4d ago", tone: "ok" }, actions: std },
-  { state: "ok", id: "CAM-14", name: "VEHICLE DEPOT GATE", zone: "Motor Pool", ip: "10.142.30.114", model: "HANWHA XNV-8080R", firmware: { text: "v2.01.0", note: "[OK]", tone: "ok" }, stream: { label: "1080P30", tone: "ok" }, recording: { label: "ACTIVE", tone: "ok" }, storage: { label: "72%", pct: 72, tone: "ok" }, uptime: { label: "99.85%", tone: "ok" }, fault: { label: "None", tone: "ok" }, actions: std },
-  { state: "err", id: "CAM-15", name: "PERIMETER W FENCE-04", tag: { label: "OFFLINE", pulse: true }, zone: "Perimeter W", ip: "10.142.16.115", model: "BOSCH MIC IP 7100i", firmware: { text: "v7.80.00 [MISMATCH]", tone: "err" }, stream: { label: "NO SIGNAL / TIMEOUT", tone: "err" }, recording: { label: "DISABLED / OFFLINE", tone: "err" }, storage: { label: "0% [N/A]", tone: "ok" }, uptime: { label: "74.20%", tone: "err" }, fault: { label: "ERR_RTSP_CARRIER_DROP (14:31Z)", tone: "err" }, actions: [{ label: "REBOOT", tone: "err" }, { label: "DIAG", tone: "default" }] },
-  { state: "ok", id: "CAM-16", name: "BARRACKS CORRIDOR", zone: "HQ", ip: "10.142.12.116", model: "AXIS P3245-LV", firmware: { text: "v10.2.1", note: "[OK]", tone: "ok" }, stream: { label: "1080P30", tone: "ok" }, recording: { label: "ACTIVE", tone: "ok" }, storage: { label: "51%", pct: 51, tone: "ok" }, uptime: { label: "99.91%", tone: "ok" }, fault: { label: "None", tone: "ok" }, actions: std },
-  { state: "ok", id: "CAM-21", name: "MOTOR POOL REAR", zone: "Motor Pool", ip: "10.142.30.121", model: "FLIR PT-606", firmware: { text: "v4.1.9", note: "[OK]", tone: "ok" }, stream: { label: "1080P60", tone: "ok" }, recording: { label: "ACTIVE", tone: "ok" }, storage: { label: "69%", pct: 69, tone: "ok" }, uptime: { label: "99.64%", tone: "ok" }, fault: { label: "None", tone: "ok" }, actions: std },
-  { state: "err", id: "CAM-28", name: "DEPOT PERIMETER N", tag: { label: "FIBER FAULT" }, zone: "Depot", ip: "10.142.20.128", model: "AXIS Q1798-LE", firmware: { text: "v11.8.40", note: "[OK]", tone: "ok" }, stream: { label: "LINK DOWN / FIBER LOSS", tone: "err" }, recording: { label: "FAIL / UNREACHABLE", tone: "err" }, storage: { label: "0% [N/A]", tone: "ok" }, uptime: { label: "81.50%", tone: "err" }, fault: { label: "FIBER_TRANSCEIVER_FAULT (02h ago)", tone: "err" }, actions: [{ label: "REBOOT", tone: "err" }, { label: "DIAG", tone: "default" }] },
-  { state: "ok", id: "CAM-33", name: "FUEL STORAGE S", zone: "Depot", ip: "10.142.20.133", model: "PELCO SARIX", firmware: { text: "v3.12.0", note: "[OK]", tone: "ok" }, stream: { label: "1080P30", tone: "ok" }, recording: { label: "ACTIVE", tone: "ok" }, storage: { label: "77%", pct: 77, tone: "ok" }, uptime: { label: "99.88%", tone: "ok" }, fault: { label: "None", tone: "ok" }, actions: std },
-  { state: "ok", id: "CAM-42", name: "HQ SCIF ACCESS", zone: "HQ", ip: "10.142.10.142", model: "SONY SNC-VB770", firmware: { text: "v5.4.1", note: "[OK]", tone: "ok" }, stream: { label: "1080P60", tone: "ok" }, recording: { label: "ACTIVE [ENCRYPTED]", tone: "ok" }, storage: { label: "38%", pct: 38, tone: "ok" }, uptime: { label: "100.0%", tone: "ok", strong: true }, fault: { label: "None", tone: "ok" }, actions: std },
-];
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+export function useDeviceCameras() {
+  const { data, error, isLoading } = useSWR<Camera[]>('/api/cameras', fetcher, {
+    refreshInterval: 10000,
+    fallbackData: [],
+  });
+
+  const std = [{ label: "PING", tone: "default" as const }, { label: "DIAG", tone: "default" as const }];
+
+  const mappedCameras: CameraRow[] = (data || []).map((cam) => {
+    return {
+      state: cam.online ? "ok" : "err",
+      id: cam.id,
+      name: cam.label.split(' · ')[1] || cam.label,
+      zone: "Unknown", // Would come from real API
+      ip: "0.0.0.0", // Would come from real API
+      model: "Unknown", // Would come from real API
+      firmware: { text: "v1.0", tone: cam.online ? "ok" : "err" },
+      stream: { label: cam.online ? "1080P30 HLS" : "NO SIGNAL", tone: cam.online ? "ok" : "err" },
+      recording: { label: cam.online ? "ACTIVE" : "OFFLINE", tone: cam.online ? "ok" : "err" },
+      storage: { label: "N/A", tone: "ok" },
+      uptime: { label: cam.online ? "99.9%" : "0%", tone: cam.online ? "ok" : "err" },
+      fault: { label: cam.online ? "None" : "Offline", tone: cam.online ? "ok" : "err" },
+      actions: std,
+    };
+  });
+
+  return {
+    cameras: mappedCameras,
+    isLoading,
+    isError: error,
+  };
+}
 
 export const nvrPanel = {
   title: "NVR STORAGE & CLUSTER TOPOLOGY",

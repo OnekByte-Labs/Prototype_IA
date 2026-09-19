@@ -17,19 +17,30 @@ export type Camera = {
   id: string;
   label: string;
   online: boolean;
+  hlsUrl?: string;
+  webrtcUrl?: string;
+  rtspUrl?: string;
 };
 
-export const cameras: Camera[] = [
-  { id: "CAM-01", label: "CAM-01 · MAIN GATE", online: true },
-  { id: "CAM-02", label: "CAM-02 · PERIMETER N", online: true },
-  { id: "CAM-03", label: "CAM-03 · CHECKPOINT ALPHA", online: true },
-  { id: "CAM-07", label: "CAM-07 · PERIMETER E", online: true },
-  { id: "CAM-09", label: "CAM-09 · AMMUNITION DUMP", online: true },
-  { id: "CAM-12", label: "CAM-12 · ARMOURY SECTOR 4", online: true },
-  { id: "CAM-14", label: "CAM-14 · VEHICLE DEPOT", online: true },
-  { id: "CAM-15", label: "CAM-15 · PERIMETER W", online: false },
-  { id: "CAM-16", label: "CAM-16 · BARRACKS ACCESS", online: true },
-];
+// The cameras array is no longer statically exported.
+// Components should use the useCameras hook below to fetch dynamic data.
+
+import useSWR from 'swr';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+export function useCameras() {
+  const { data, error, isLoading } = useSWR<Camera[]>('/api/cameras', fetcher, {
+    refreshInterval: 10000, // Poll every 10s
+    fallbackData: [], // Default to empty array while loading
+  });
+
+  return {
+    cameras: data || [],
+    isLoading,
+    isError: error,
+  };
+}
 
 export type HourBar = {
   hour: string;

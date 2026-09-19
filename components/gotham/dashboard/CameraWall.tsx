@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import Hls from "hls.js";
 import { Icon } from "@/components/ui/Icon";
 import type { Camera } from "@/lib/gotham/model";
 import { useClock } from "../hooks";
@@ -17,6 +18,38 @@ function Tile({
   focused?: boolean;
   onClick: () => void;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (!videoRef.current || !cam.hlsUrl || !cam.online) return;
+
+    let hls: Hls | null = null;
+    const video = videoRef.current;
+
+    if (Hls.isSupported()) {
+      hls = new Hls({
+        enableWorker: false,
+        lowLatencyMode: true,
+      });
+      hls.loadSource(cam.hlsUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = cam.hlsUrl;
+      video.addEventListener("loadedmetadata", () => {
+        video.play().catch(() => {});
+      });
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
+  }, [cam.hlsUrl, cam.online]);
+
   return (
     <button
       type="button"
@@ -46,11 +79,21 @@ function Tile({
         )}
       </div>
 
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center relative">
         {cam.online ? (
-          <Icon name="videocam" size={focused ? 40 : 18} className="text-g-border-strong" />
+          <>
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover z-0"
+            />
+            {/* Overlay icon only when focused or on hover? Actually, let's keep it clean if video is playing */}
+            {focused && <Icon name="videocam" size={40} className="text-white/20 absolute z-10 pointer-events-none" />}
+          </>
         ) : (
-          <span className="flex flex-col items-center gap-1 text-g-red">
+          <span className="flex flex-col items-center gap-1 text-g-red z-10 relative">
             <Icon name="videocam_off" size={focused ? 40 : 18} />
             <span className="text-micro uppercase">No signal</span>
           </span>
