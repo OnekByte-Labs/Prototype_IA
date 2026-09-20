@@ -57,7 +57,7 @@ function Tile({
       data-online={cam.online}
       onClick={onClick}
       title={`${cam.id} · ${cam.name}`}
-      className={`relative bg-g-bg border rounded-[2px] flex flex-col justify-between p-1.5 text-left overflow-hidden transition-none ${
+      className={`relative bg-g-bg border rounded-[2px] flex flex-col justify-between p-1.5 text-left overflow-hidden transition-none w-full h-full ${
         focused ? "border-g-blue" : "border-g-border hover:border-g-border-strong hover:bg-g-hover"
       }`}
     >
