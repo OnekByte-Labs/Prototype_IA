@@ -141,8 +141,18 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     };
   }, [toast]);
 
+interface ApiCamera {
+  id: string;
+  name: string;
+  label: string;
+  online: boolean;
+  hlsUrl: string;
+  webrtcUrl?: string;
+  rtspUrl?: string;
+}
+
   // Fetch live camera statuses from our API proxy
-  const { data: apiCameras } = useSWR<any[]>('/api/cameras', fetcher, {
+  const { data: apiCameras } = useSWR<ApiCamera[]>('/api/cameras', fetcher, {
     refreshInterval: 10000,
     fallbackData: [],
   });
