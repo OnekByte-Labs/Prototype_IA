@@ -81,6 +81,8 @@ export function IconRail() {
 
 /* --------------------------------------------------------------------- top bar */
 
+import { DatasetRegistryModal } from "./dashboard/DatasetRegistryModal";
+
 const TITLES: { match: string; crumb: string[] }[] = [
   { match: "/dashboard", crumb: ["Watchfloor", "Dashboard"] },
   { match: "/alerts", crumb: ["Watchfloor", "Alert console"] },
@@ -95,6 +97,7 @@ export function TopBar() {
   const clock = useClock();
   const { unacked, muted, toggleMute } = useConsole();
   const [helpOpen, setHelpOpen] = useState(false);
+  const [registryOpen, setRegistryOpen] = useState(false);
 
   const crumb = TITLES.find((t) => isActivePath(pathname, t.match))?.crumb ?? ["Watchfloor"];
 
@@ -118,7 +121,17 @@ export function TopBar() {
         <MicroLabel>HRS</MicroLabel>
       </div>
 
-      <div className="flex items-center gap-2 w-64 justify-end">
+      <div className="flex items-center gap-2 justify-end">
+        <button
+          type="button"
+          onClick={() => setRegistryOpen(true)}
+          title="Datasets & Agent Skills Registry"
+          className="h-7 px-2 flex items-center gap-1 text-[11px] font-mono bg-g-bg border border-g-border hover:border-g-blue text-g-text-2 hover:text-white rounded-[2px]"
+        >
+          <Icon name="database" size={14} className="text-cyan-400" />
+          <span>DATASETS & SKILLS</span>
+        </button>
+
         <button
           type="button"
           title={muted ? "Unmute alert tone" : "Mute alert tone"}
@@ -153,6 +166,7 @@ export function TopBar() {
       </div>
 
       {helpOpen && <ShortcutHelp onClose={() => setHelpOpen(false)} />}
+      <DatasetRegistryModal isOpen={registryOpen} onClose={() => setRegistryOpen(false)} />
     </header>
   );
 }
