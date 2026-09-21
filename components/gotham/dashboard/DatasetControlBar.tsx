@@ -15,8 +15,8 @@ interface DatasetControlBarProps {
   onChangeDensity: (density: GridDensity) => void;
   tileMode: TileMode;
   onChangeTileMode: (mode: TileMode) => void;
-  showAiBoxes: boolean;
-  onToggleAiBoxes: () => void;
+  showAiBoxes?: boolean;
+  onToggleAiBoxes?: () => void;
   globalThermal: boolean;
   onToggleGlobalThermal: () => void;
   alertCount: number;
@@ -29,8 +29,6 @@ export function DatasetControlBar({
   onChangeDensity,
   tileMode,
   onChangeTileMode,
-  showAiBoxes,
-  onToggleAiBoxes,
   globalThermal,
   onToggleGlobalThermal,
   alertCount,
@@ -113,18 +111,13 @@ export function DatasetControlBar({
 
         {/* Global AI & Thermal Toggles */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={onToggleAiBoxes}
-            className={`px-2 py-1 rounded-[2px] text-micro font-mono flex items-center gap-1 transition-none ${
-              showAiBoxes
-                ? "bg-cyan-950 border border-cyan-500/60 text-cyan-300"
-                : "bg-g-bg border border-g-border text-g-muted hover:text-g-text"
-            }`}
+          <div
+            title="Clean Real Surveillance Stream (Bounding boxes removed per operator spec)"
+            className="px-2 py-1 rounded-[2px] text-micro font-mono flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 select-none"
           >
-            <Icon name="select_all" size={13} />
-            <span>AI BOXES {showAiBoxes ? "ON" : "OFF"}</span>
-          </button>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>CLEAN STREAM · NO BOXES</span>
+          </div>
 
           <button
             type="button"

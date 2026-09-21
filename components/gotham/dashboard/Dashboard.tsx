@@ -16,7 +16,15 @@ import {
 
 /* ----------------------------------------------------------------- alert feed */
 
-function FeedRow({ a, onAck }: { a: Alert; onAck: (id: string) => void }) {
+function FeedRow({
+  a,
+  onAck,
+  onSelectCamera,
+}: {
+  a: Alert;
+  onAck: (id: string) => void;
+  onSelectCamera?: (cameraId: string) => void;
+}) {
   const cam = cameraById(a.cameraId);
   const unacked = a.status === "new";
 
@@ -24,14 +32,16 @@ function FeedRow({ a, onAck }: { a: Alert; onAck: (id: string) => void }) {
     <div
       data-testid="feed-row"
       data-status={a.status}
-      className={`group h-11 px-3 flex items-center gap-2.5 border-l-2 hover:bg-g-hover transition-none ${
-        unacked ? "border-l-g-red" : "border-l-transparent"
+      onClick={() => onSelectCamera?.(a.cameraId)}
+      title={`Click to focus ${a.cameraId} (${cam?.name ?? ""}) on tactical wall`}
+      className={`group h-11 px-3 flex items-center gap-2.5 border-l-2 hover:bg-g-hover transition-none cursor-pointer ${
+        unacked ? "border-l-g-red bg-red-950/10" : "border-l-transparent"
       } ${a.live ? "animate-g-in" : ""}`}
     >
       <span className="text-data font-data text-g-text-2 w-[58px] shrink-0">{hms(a.t)}</span>
       <ClassTag cls={a.cls} />
       <div className="min-w-0 flex-1">
-        <div className={`text-ui truncate ${unacked ? "text-g-text" : "text-g-text-2"}`}>
+        <div className={`text-ui truncate ${unacked ? "text-g-text font-medium" : "text-g-text-2"}`}>
           {a.cameraId} · {cam?.name ?? ""}
         </div>
         <div className="text-micro uppercase text-g-muted truncate">
@@ -42,7 +52,10 @@ function FeedRow({ a, onAck }: { a: Alert; onAck: (id: string) => void }) {
       {unacked ? (
         <Button
           size="sm"
-          onClick={() => onAck(a.id)}
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+            e.stopPropagation();
+            onAck(a.id);
+          }}
           className="opacity-0 group-hover:opacity-100 focus:opacity-100"
           title={`Acknowledge ${a.id}`}
         >
@@ -140,8 +153,9 @@ export function Dashboard() {
   const [activeDataset, setActiveDataset] = useState<DatasetSource | "ALL">("ALL");
   const [density, setDensity] = useState<GridDensity>(16);
   const [tileMode, setTileMode] = useState<TileMode>("all");
-  const [showAiBoxes, setShowAiBoxes] = useState(true);
+  const [showAiBoxes, setShowAiBoxes] = useState(false);
   const [globalThermal, setGlobalThermal] = useState(false);
+  const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 
   const alertingCameraIds = useMemo(() => {
     return Array.from(new Set(alerts.filter((a) => a.status === "new").map((a) => a.cameraId)));
@@ -229,6 +243,8 @@ export function Dashboard() {
             globalThermal={globalThermal}
             alertingCameraIds={alertingCameraIds}
             onAcknowledgeCamera={handleAcknowledgeCamera}
+            selectedCameraId={selectedCameraId}
+            onClearSelectedCamera={() => setSelectedCameraId(null)}
           />
         </div>
 
@@ -258,7 +274,12 @@ export function Dashboard() {
           >
             <div className="h-full overflow-y-auto divide-y divide-g-border">
               {feed.map((a) => (
-                <FeedRow key={a.id} a={a} onAck={ack} />
+                <FeedRow
+                  key={a.id}
+                  a={a}
+                  onAck={ack}
+                  onSelectCamera={(camId) => setSelectedCameraId(camId)}
+                />
               ))}
             </div>
           </Panel>

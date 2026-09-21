@@ -21,27 +21,42 @@ interface CameraWallProps {
   globalThermal?: boolean;
   alertingCameraIds?: string[];
   onAcknowledgeCamera?: (camId: string) => void;
+  selectedCameraId?: string | null;
+  onClearSelectedCamera?: () => void;
 }
 
 export function CameraWall({
   density = 16,
   activeDataset = "ALL",
   tileMode = "all",
-  showAiBoxes = true,
+  showAiBoxes = false,
   globalThermal = false,
   alertingCameraIds = [],
   onAcknowledgeCamera,
+  selectedCameraId = null,
+  onClearSelectedCamera,
 }: CameraWallProps) {
-  const [focusId, setFocusId] = useState<string | null>(null);
+  const [internalFocusId, setInternalFocusId] = useState<string | null>(null);
+  const focusId = selectedCameraId ?? internalFocusId;
   const clock = useClock();
+
+  const handleCloseFocus = () => {
+    setInternalFocusId(null);
+    onClearSelectedCamera?.();
+  };
 
   // Handle ESC key to exit focus mode
   useEffect(() => {
     if (!focusId) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setFocusId(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setInternalFocusId(null);
+        onClearSelectedCamera?.();
+      }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [focusId]);
+  }, [focusId, onClearSelectedCamera]);
 
   // Compute displayed cameras based on filter, dynamic alert eviction, and density
   const displayedCameras = useMemo(() => {
@@ -120,7 +135,7 @@ export function CameraWall({
           {focusedCam && (
             <button
               type="button"
-              onClick={() => setFocusId(null)}
+              onClick={handleCloseFocus}
               className="text-micro font-mono uppercase text-g-blue hover:underline flex items-center gap-1 ml-2"
             >
               <Icon name="fullscreen_exit" size={13} />
@@ -154,7 +169,7 @@ export function CameraWall({
                   <h3 className="font-bold text-g-text text-ui">{focusedCam.name}</h3>
                   <span className="text-g-muted">{focusedCam.id} · {focusedCam.sector}</span>
                 </div>
-                <Button size="sm" onClick={() => setFocusId(null)}>
+                <Button size="sm" onClick={handleCloseFocus}>
                   CLOSE
                 </Button>
               </div>
@@ -279,7 +294,7 @@ export function CameraWall({
                     showAiBoxes={showAiBoxes}
                     thermalOverride={globalThermal}
                     isBreached={isAlerting}
-                    onClick={() => setFocusId(cam.id)}
+                    onClick={() => setInternalFocusId(cam.id)}
                   />
                 </div>
               );

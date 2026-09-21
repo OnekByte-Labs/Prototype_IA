@@ -3,9 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import {
-  DATASET_ANNOTATION_PRESETS,
   DATASET_CATALOG,
-  type BoundingBox,
   type TacticalCamera,
 } from "@/lib/datasets/dataset-definitions";
 
@@ -23,15 +21,12 @@ export function TacticalVideoFeed({
   camera,
   clock,
   focused = false,
-  showAiBoxes = true,
   thermalOverride = false,
   isBreached = false,
   onClick,
 }: TacticalVideoFeedProps) {
   const dataset = DATASET_CATALOG[camera.dataset] || DATASET_CATALOG.VIRAT;
-  const initialBoxes = DATASET_ANNOTATION_PRESETS[camera.dataset] || [];
 
-  const [boxes, setBoxes] = useState<BoundingBox[]>(initialBoxes);
   const [userThermalToggle, setUserThermalToggle] = useState<boolean | null>(null);
   const [showHud, setShowHud] = useState(true);
 
@@ -40,23 +35,7 @@ export function TacticalVideoFeed({
 
   // Derived thermal state: user toggle takes precedence, then global override, then default LLVIP
   const thermalMode = userThermalToggle ?? (thermalOverride || camera.dataset === "LLVIP");
-  const isBreachedLocal = isBreached || boxes.some((b) => b.isBreach);
-
-  // Subtle procedural jitter to simulate live tracking vectors
-  useEffect(() => {
-    if (!camera.online) return;
-    const interval = setInterval(() => {
-      setBoxes((prev) =>
-        prev.map((b) => ({
-          ...b,
-          x: Math.max(5, Math.min(85, b.x + (Math.random() * 1.2 - 0.6))),
-          y: Math.max(10, Math.min(80, b.y + (Math.random() * 1.0 - 0.5))),
-          confidence: Math.round((b.confidence + (Math.random() * 0.4 - 0.2)) * 10) / 10,
-        })),
-      );
-    }, 1200);
-    return () => clearInterval(interval);
-  }, [camera.online]);
+  const isBreachedLocal = isBreached;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -197,54 +176,6 @@ export function TacticalVideoFeed({
       {/* Sensor Noise & Grain */}
       <div className="absolute inset-0 pointer-events-none opacity-15 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] z-10" />
 
-      {/* AI Bounding Boxes Layer */}
-      {camera.online && showAiBoxes && (
-        <div className="absolute inset-0 pointer-events-none z-20">
-          {boxes.map((b) => {
-            const isAlert = b.isBreach || b.category === "threat";
-            const borderCol = isAlert
-              ? "border-red-500 bg-red-500/15 text-red-400"
-              : b.category === "plate"
-                ? "border-amber-400 bg-amber-400/15 text-amber-300"
-                : b.category === "vehicle"
-                  ? "border-purple-400 bg-purple-400/15 text-purple-300"
-                  : "border-cyan-400 bg-cyan-400/15 text-cyan-300";
-
-            return (
-              <div
-                key={b.id}
-                style={{
-                  left: `${b.x}%`,
-                  top: `${b.y}%`,
-                  width: `${b.w}%`,
-                  height: `${b.h}%`,
-                }}
-                className={`absolute border transition-all duration-300 flex flex-col justify-between ${borderCol} ${
-                  isAlert ? "animate-pulse" : ""
-                }`}
-              >
-                {/* Corner Bracket styling */}
-                <div className="flex justify-between w-full">
-                  <span className="w-1.5 h-1.5 border-t-2 border-l-2 border-current" />
-                  <span className="w-1.5 h-1.5 border-t-2 border-r-2 border-current" />
-                </div>
-
-                {/* AI Label & Confidence */}
-                <div className="bg-black/85 px-1 py-0.5 text-[9px] font-mono leading-tight tracking-tight border-b border-current truncate self-start max-w-full shadow">
-                  {b.label}
-                  {b.trackId && <span className="opacity-75 ml-1">#{b.trackId}</span>}
-                  <span className="font-semibold ml-1">{b.confidence}%</span>
-                </div>
-
-                <div className="flex justify-between w-full">
-                  <span className="w-1.5 h-1.5 border-b-2 border-l-2 border-current" />
-                  <span className="w-1.5 h-1.5 border-b-2 border-r-2 border-current" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {/* Tactical Top Bar HUD */}
       {showHud && (

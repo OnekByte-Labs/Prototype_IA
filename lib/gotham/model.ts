@@ -1,4 +1,5 @@
 import { intRange, mulberry32, pick, range, type Rng } from "./rng";
+import { TACTICAL_CAMERAS } from "@/lib/datasets/dataset-definitions";
 
 export const ZONES = [
   "HQ COMPLEX",
@@ -26,17 +27,20 @@ export type Camera = {
   uptime: number;
 };
 
-export const CAMERAS: Camera[] = [
-  { id: "CAM-01", name: "MAIN GATE", zone: "HQ COMPLEX", online: true, ip: "10.142.12.101", model: "AXIS Q6135-LE", firmware: "11.8.42", resolution: "1920×1080", fps: 60, sensitivity: 72, recording: true, uptime: 99.98 },
-  { id: "CAM-03", name: "CHECKPOINT ALPHA", zone: "HQ COMPLEX", online: true, ip: "10.142.12.103", model: "AXIS P3245-LV", firmware: "10.2.1", resolution: "1920×1080", fps: 30, sensitivity: 64, recording: true, uptime: 99.91 },
-  { id: "CAM-07", name: "PERIMETER E", zone: "PERIMETER EAST", online: true, ip: "10.142.14.107", model: "BOSCH AUTODOME 7000i", firmware: "7.82.01", resolution: "3840×2160", fps: 30, sensitivity: 80, recording: true, uptime: 99.94 },
-  { id: "CAM-09", name: "AMMUNITION DUMP", zone: "DEPOT", online: true, ip: "10.142.20.109", model: "FLIR FC-644 ID", firmware: "4.2.1", resolution: "1920×1080", fps: 30, sensitivity: 88, recording: false, uptime: 98.12 },
-  { id: "CAM-12", name: "ARMOURY", zone: "DEPOT", online: true, ip: "10.142.20.112", model: "PELCO SPECTRA PRO", firmware: "3.14.9", resolution: "1920×1080", fps: 60, sensitivity: 91, recording: true, uptime: 99.99 },
-  { id: "CAM-15", name: "PERIMETER W", zone: "PERIMETER WEST", online: false, ip: "10.142.16.115", model: "BOSCH MIC IP 7100i", firmware: "7.80.00", resolution: "1920×1080", fps: 30, sensitivity: 70, recording: false, uptime: 74.2 },
-  { id: "CAM-16", name: "BARRACKS ACCESS", zone: "HQ COMPLEX", online: true, ip: "10.142.12.116", model: "AXIS P3245-LV", firmware: "10.2.1", resolution: "1920×1080", fps: 30, sensitivity: 58, recording: true, uptime: 99.91 },
-  { id: "CAM-22", name: "MOTOR POOL", zone: "MOTOR POOL", online: true, ip: "10.142.30.122", model: "HANWHA XNV-8080R", firmware: "2.01.0", resolution: "1920×1080", fps: 30, sensitivity: 61, recording: true, uptime: 99.85 },
-  { id: "CAM-28", name: "DEPOT PERIMETER N", zone: "DEPOT", online: true, ip: "10.142.20.128", model: "AXIS Q1798-LE", firmware: "11.8.40", resolution: "3840×2160", fps: 30, sensitivity: 76, recording: true, uptime: 81.5 },
-];
+export const CAMERAS: Camera[] = TACTICAL_CAMERAS.map((tc) => ({
+  id: tc.id,
+  name: tc.name,
+  zone: (ZONES.includes(tc.zone as Zone) ? tc.zone : "HQ COMPLEX") as Zone,
+  online: tc.online,
+  ip: tc.ip,
+  model: tc.model,
+  firmware: "11.8.42",
+  resolution: tc.resolution,
+  fps: tc.fps,
+  sensitivity: tc.aiEnabled ? 85 : 60,
+  recording: tc.recording,
+  uptime: tc.uptimePct,
+}));
 
 export const cameraById = (id: string) => CAMERAS.find((c) => c.id === id);
 export const cameraLabel = (c: Camera) => `${c.id} · ${c.name}`;
@@ -60,7 +64,7 @@ export const NVRS: Nvr[] = [
   { id: "NVR-04", name: "DEPOT & MOTOR POOL", zone: "DEPOT", cams: 8, camsOk: 8, usedTb: 17.2, totalTb: 32, tempC: 40, state: "ok" },
 ];
 
-export type AlertClass = "person" | "vehicle" | "animal";
+export type AlertClass = "intrusion" | "person" | "vehicle" | "animal";
 export type Severity = "high" | "med" | "low";
 export type AlertStatus = "new" | "ack" | "dispatched";
 
@@ -95,30 +99,32 @@ export const hm = (t: number) => hms(t).slice(0, 5);
 export const secondsOfDay = (d: Date) =>
   d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
 
-/** 55% animal, 30% person, 15% vehicle — what a rural cantonment perimeter actually sees. */
+/** 35% intrusion, 30% person, 25% vehicle, 10% animal. */
 function drawClass(rng: Rng): AlertClass {
   const r = rng();
-  if (r < 0.55) return "animal";
-  if (r < 0.85) return "person";
-  return "vehicle";
+  if (r < 0.35) return "intrusion";
+  if (r < 0.65) return "person";
+  if (r < 0.90) return "vehicle";
+  return "animal";
 }
 
 /** Severity is a function of what was seen and where — never random on its own. */
 export function severityFor(cls: AlertClass, zone: Zone, cameraId: string): Severity {
+  if (cls === "intrusion") return "high";
   if (cls === "animal") return "low";
   if (cls === "person") {
-    if (cameraId === "CAM-12" || zone === "DEPOT") return "high";
-    if (zone === "PERIMETER EAST" || zone === "PERIMETER WEST") return "med";
+    if (cameraId === "CAM-12" || zone === "DEPOT" || zone === "PERIMETER EAST" || zone === "PERIMETER WEST") return "high";
     return "med";
   }
-  if (zone === "DEPOT") return "high";
+  if (zone === "DEPOT" || zone === "PERIMETER EAST" || zone === "PERIMETER WEST") return "high";
   return zone === "MOTOR POOL" ? "low" : "med";
 }
 
 const CONF: Record<AlertClass, [number, number]> = {
-  person: [88, 99.6],
-  vehicle: [84, 98.2],
-  animal: [72, 94],
+  intrusion: [92.0, 99.8],
+  person: [88.0, 99.6],
+  vehicle: [84.0, 98.2],
+  animal: [72.0, 94.0],
 };
 
 /**
@@ -190,6 +196,7 @@ export function nextAlert(rng: Rng, now: Date): Alert {
 }
 
 export const CLASS_LABEL: Record<AlertClass, string> = {
+  intrusion: "Intrusion",
   person: "Person",
   vehicle: "Vehicle",
   animal: "Animal",
