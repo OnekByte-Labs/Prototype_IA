@@ -35,6 +35,9 @@ export function TacticalVideoFeed({
   const [userThermalToggle, setUserThermalToggle] = useState<boolean | null>(null);
   const [showHud, setShowHud] = useState(true);
 
+  // Determine real video source
+  const videoSrc = camera.videoSrc || dataset.videoSrc || "/feeds/feed-virat-perimeter.mp4";
+
   // Derived thermal state: user toggle takes precedence, then global override, then default LLVIP
   const thermalMode = userThermalToggle ?? (thermalOverride || camera.dataset === "LLVIP");
   const isBreachedLocal = isBreached || boxes.some((b) => b.isBreach);
@@ -56,8 +59,9 @@ export function TacticalVideoFeed({
   }, [camera.online]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Canvas visual rendering for realistic tactical sensor noise & crosshairs
+  // Canvas visual overlay for tactical scanlines, crosshairs, and virtual tripwires
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !camera.online) return;
@@ -74,87 +78,31 @@ export function TacticalVideoFeed({
 
       ctx.clearRect(0, 0, w, h);
 
-      if (thermalMode) {
-        // Thermal IR palette (Ironbow / Indigo gradient with heat signatures)
-        const grad = ctx.createLinearGradient(0, 0, w, h);
-        grad.addColorStop(0, "#08041c");
-        grad.addColorStop(0.5, "#25093f");
-        grad.addColorStop(1, "#0a1b24");
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
-
-        // Heat signatures
-        ctx.fillStyle = "rgba(255, 180, 50, 0.45)";
-        ctx.beginPath();
-        ctx.ellipse(w * 0.45, h * 0.45, 45, 70, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(255, 60, 20, 0.6)";
-        ctx.beginPath();
-        ctx.ellipse(w * 0.45, h * 0.42, 25, 40, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(255, 240, 200, 0.85)";
-        ctx.beginPath();
-        ctx.ellipse(w * 0.45, h * 0.38, 12, 18, 0, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (camera.dataset === "VISDRONE") {
-        // Drone overhead background (aerial grid)
-        ctx.fillStyle = "#0c151c";
-        ctx.fillRect(0, 0, w, h);
-
-        ctx.strokeStyle = "rgba(45, 140, 180, 0.15)";
-        ctx.lineWidth = 1;
-        const step = 40;
-        for (let x = 0; x < w; x += step) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, h);
-          ctx.stroke();
-        }
-        for (let y = 0; y < h; y += step) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(w, y);
-          ctx.stroke();
-        }
-
-        // UAV Center Reticle
-        ctx.strokeStyle = "rgba(74, 222, 128, 0.6)";
-        ctx.lineWidth = 1.5;
+      // VisDrone Aerial HUD Overlay
+      if (camera.dataset === "VISDRONE") {
+        ctx.strokeStyle = "rgba(74, 222, 128, 0.4)";
+        ctx.lineWidth = 1.2;
         const cx = w / 2;
         const cy = h / 2;
-        ctx.strokeRect(cx - 18, cy - 18, 36, 36);
-        ctx.beginPath();
-        ctx.moveTo(cx - 28, cy);
-        ctx.lineTo(cx - 18, cy);
-        ctx.moveTo(cx + 18, cy);
-        ctx.lineTo(cx + 28, cy);
-        ctx.moveTo(cx, cy - 28);
-        ctx.lineTo(cx, cy - 18);
-        ctx.moveTo(cx, cy + 18);
-        ctx.lineTo(cx, cy + 28);
-        ctx.stroke();
-      } else {
-        // Standard Outdoor Tactical Feed (Deep surveillance charcoal with scanline)
-        ctx.fillStyle = "#070c0e";
-        ctx.fillRect(0, 0, w, h);
 
-        // Ground / horizon line
-        ctx.strokeStyle = "rgba(60, 90, 80, 0.25)";
+        // Reticle box
+        ctx.strokeRect(cx - 24, cy - 24, 48, 48);
         ctx.beginPath();
-        ctx.moveTo(0, h * 0.48);
-        ctx.lineTo(w, h * 0.48);
+        ctx.moveTo(cx - 36, cy);
+        ctx.lineTo(cx - 24, cy);
+        ctx.moveTo(cx + 24, cy);
+        ctx.lineTo(cx + 36, cy);
+        ctx.moveTo(cx, cy - 36);
+        ctx.lineTo(cx, cy - 24);
+        ctx.moveTo(cx, cy + 24);
+        ctx.lineTo(cx, cy + 36);
         ctx.stroke();
 
-        // Subtle moving scanline
-        const scanY = (Math.sin(t) * 0.5 + 0.5) * h;
-        ctx.strokeStyle = "rgba(100, 220, 180, 0.08)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, scanY);
-        ctx.lineTo(w, scanY);
-        ctx.stroke();
+        // Corner crossbars
+        ctx.fillStyle = "rgba(74, 222, 128, 0.7)";
+        ctx.font = "9px monospace";
+        ctx.fillText("ALT: 68m", 12, h - 22);
+        ctx.fillText("HDG: 042°", 12, h - 10);
       }
 
       // Perimeter Tripwire representation for Border Threat cameras
@@ -171,12 +119,31 @@ export function TacticalVideoFeed({
         ctx.setLineDash([]);
       }
 
+      // Subtle moving horizontal scanline
+      const scanY = (Math.sin(t) * 0.5 + 0.5) * h;
+      ctx.strokeStyle = "rgba(100, 220, 180, 0.08)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, scanY);
+      ctx.lineTo(w, scanY);
+      ctx.stroke();
+
       animFrame = requestAnimationFrame(render);
     };
 
     render();
     return () => cancelAnimationFrame(animFrame);
-  }, [camera.online, camera.dataset, thermalMode, isBreachedLocal]);
+  }, [camera.online, camera.dataset, isBreachedLocal]);
+
+  // Ensure video element plays automatically
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && camera.online) {
+      video.play().catch(() => {
+        // Autoplay may wait for user interaction, muted avoids blocking
+      });
+    }
+  }, [camera.online, videoSrc]);
 
   return (
     <div
@@ -189,16 +156,26 @@ export function TacticalVideoFeed({
           : ""
       }`}
     >
-      {/* Background Simulation Canvas */}
+      {/* Real Live Video Feed Layer */}
       {camera.online ? (
-        <canvas
-          ref={canvasRef}
-          width={focused ? 720 : 360}
-          height={focused ? 440 : 220}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        <video
+          ref={videoRef}
+          key={videoSrc}
+          src={videoSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
+            thermalMode
+              ? "filter invert contrast-150 saturate-200 hue-rotate-90 brightness-95"
+              : camera.dataset === "BORDER_THREAT"
+                ? "filter brightness-90 contrast-125"
+                : ""
+          }`}
         />
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#06080a] text-g-red">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#06080a] text-g-red z-10">
           <Icon name="videocam_off" size={focused ? 48 : 24} />
           <span className="text-micro font-mono tracking-wider mt-1 uppercase text-g-red/80">
             NO CARRIER · RTSP LOSS
@@ -207,21 +184,31 @@ export function TacticalVideoFeed({
         </div>
       )}
 
-      {/* Sensor Noise Scanlines */}
-      <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
+      {/* Tactical Canvas Overlay (Scanlines, UAV Reticles, Tripwires) */}
+      {camera.online && (
+        <canvas
+          ref={canvasRef}
+          width={focused ? 720 : 360}
+          height={focused ? 440 : 220}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10"
+        />
+      )}
+
+      {/* Sensor Noise & Grain */}
+      <div className="absolute inset-0 pointer-events-none opacity-15 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] z-10" />
 
       {/* AI Bounding Boxes Layer */}
       {camera.online && showAiBoxes && (
-        <div className="absolute inset-0 pointer-events-none z-10">
+        <div className="absolute inset-0 pointer-events-none z-20">
           {boxes.map((b) => {
             const isAlert = b.isBreach || b.category === "threat";
             const borderCol = isAlert
-              ? "border-red-500 bg-red-500/10 text-red-400"
+              ? "border-red-500 bg-red-500/15 text-red-400"
               : b.category === "plate"
-                ? "border-amber-400 bg-amber-400/10 text-amber-300"
+                ? "border-amber-400 bg-amber-400/15 text-amber-300"
                 : b.category === "vehicle"
-                  ? "border-purple-400 bg-purple-400/10 text-purple-300"
-                  : "border-cyan-400 bg-cyan-400/10 text-cyan-300";
+                  ? "border-purple-400 bg-purple-400/15 text-purple-300"
+                  : "border-cyan-400 bg-cyan-400/15 text-cyan-300";
 
             return (
               <div
@@ -243,7 +230,7 @@ export function TacticalVideoFeed({
                 </div>
 
                 {/* AI Label & Confidence */}
-                <div className="bg-black/80 px-1 py-0.5 text-[9px] font-mono leading-tight tracking-tight border-b border-current truncate self-start max-w-full">
+                <div className="bg-black/85 px-1 py-0.5 text-[9px] font-mono leading-tight tracking-tight border-b border-current truncate self-start max-w-full shadow">
                   {b.label}
                   {b.trackId && <span className="opacity-75 ml-1">#{b.trackId}</span>}
                   <span className="font-semibold ml-1">{b.confidence}%</span>
@@ -259,71 +246,79 @@ export function TacticalVideoFeed({
         </div>
       )}
 
-      {/* Tactical Top Bar */}
-      <div className="relative z-20 flex items-center justify-between p-1.5 bg-gradient-to-b from-black/85 via-black/40 to-transparent">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-[10px] font-mono font-bold text-g-text uppercase truncate">
-            {camera.id} · {camera.name}
-          </span>
-          {camera.isFixed && (
+      {/* Tactical Top Bar HUD */}
+      {showHud && (
+        <div className="relative z-30 flex items-center justify-between p-1.5 bg-gradient-to-b from-black/90 via-black/50 to-transparent">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[10px] font-mono font-bold text-g-text uppercase truncate text-shadow">
+              {camera.id} · {camera.name}
+            </span>
+            {camera.isFixed && (
+              <span
+                title="Fixed Core Surveillance Post"
+                className="text-[8px] font-mono px-1 py-0.2 bg-blue-900/80 border border-blue-500/60 text-blue-200 rounded-[2px]"
+              >
+                PINNED
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Dataset Badge */}
             <span
-              title="Fixed Core Surveillance Post"
-              className="text-[8px] font-mono px-1 py-0.2 bg-blue-900/60 border border-blue-500/50 text-blue-300 rounded-[2px]"
+              className="text-[9px] font-mono px-1 py-0.5 rounded-[2px] bg-black/60 border border-white/20 text-white/90"
+              title={`Source: ${dataset.name} (${dataset.provider})`}
             >
-              PINNED
+              {camera.dataset}
             </span>
-          )}
+
+            {/* Rec Status */}
+            {camera.online && camera.recording && (
+              <span className="flex items-center gap-1 text-[9px] font-mono text-red-400 bg-black/40 px-1 rounded">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                REC
+              </span>
+            )}
+          </div>
         </div>
+      )}
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Dataset Badge */}
-          <span
-            className="text-[9px] font-mono px-1 py-0.5 rounded-[2px] bg-white/10 border border-white/20 text-white/90"
-            title={`Source: ${dataset.name} (${dataset.provider})`}
-          >
-            {camera.dataset}
-          </span>
+      {/* Tactical Bottom Bar HUD */}
+      {showHud && (
+        <div className="relative z-30 flex items-center justify-between p-1.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent">
+          <div className="flex items-center gap-2 text-[9px] font-mono text-g-muted">
+            <span className="text-white/80">{camera.zone}</span>
+            <span className="opacity-50">|</span>
+            <span className="text-cyan-300">{dataset.inferenceModel}</span>
+          </div>
 
-          {/* Rec Status */}
-          {camera.online && camera.recording && (
-            <span className="flex items-center gap-1 text-[9px] font-mono text-red-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-              REC
+          <div className="flex items-center gap-2 text-[9px] font-mono text-g-text-2">
+            {thermalMode && (
+              <span className="text-amber-400 bg-amber-950/80 px-1 rounded-[2px] border border-amber-600/60 font-semibold">
+                IR THERMAL
+              </span>
+            )}
+            <span className="text-emerald-400 font-bold">
+              {camera.online ? `${camera.fps} FPS` : "--"}
             </span>
-          )}
+            <span className="text-white/90">{camera.online ? clock : "--:--:--"}</span>
+          </div>
         </div>
-      </div>
-
-      {/* Tactical Bottom Bar */}
-      <div className="relative z-20 flex items-center justify-between p-1.5 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-        <div className="flex items-center gap-2 text-[9px] font-mono text-g-muted">
-          <span>{camera.zone}</span>
-          <span className="opacity-50">|</span>
-          <span>{dataset.inferenceModel}</span>
-        </div>
-
-        <div className="flex items-center gap-2 text-[9px] font-mono text-g-text-2">
-          {thermalMode && (
-            <span className="text-amber-400 bg-amber-950/60 px-1 rounded-[2px] border border-amber-600/40">
-              IR THERMAL
-            </span>
-          )}
-          <span className="text-emerald-400">{camera.online ? `${camera.fps} FPS` : "--"}</span>
-          <span className="text-white/80">{camera.online ? clock : "--:--:--"}</span>
-        </div>
-      </div>
+      )}
 
       {/* Interactive Controls Overlay for Focused Mode */}
       {focused && (
-        <div className="absolute top-8 right-2 z-30 flex flex-col gap-1 bg-black/85 p-1 rounded border border-white/10 text-micro">
+        <div className="absolute top-9 right-2 z-40 flex flex-col gap-1 bg-black/90 p-1.5 rounded border border-white/20 text-micro">
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               setUserThermalToggle(!thermalMode);
             }}
-            className={`px-2 py-1 text-left flex items-center gap-1 rounded ${
-              thermalMode ? "bg-amber-600 text-black font-semibold" : "text-white/80 hover:bg-white/10"
+            className={`px-2 py-1 text-left flex items-center gap-1.5 rounded ${
+              thermalMode
+                ? "bg-amber-600 text-black font-semibold"
+                : "text-white/80 hover:bg-white/10"
             }`}
           >
             <Icon name="thermostat" size={12} />
@@ -336,7 +331,7 @@ export function TacticalVideoFeed({
               e.stopPropagation();
               setShowHud(!showHud);
             }}
-            className="px-2 py-1 text-left flex items-center gap-1 text-white/80 hover:bg-white/10 rounded"
+            className="px-2 py-1 text-left flex items-center gap-1.5 text-white/80 hover:bg-white/10 rounded"
           >
             <Icon name="layers" size={12} />
             {showHud ? "HUD Display" : "Raw Feed"}

@@ -36,6 +36,7 @@ export interface DatasetMeta {
   modelLatencyMs: number;
   sampleRtspUri: string;
   downloadUrl: string;
+  videoSrc: string;
 }
 
 export const DATASET_CATALOG: Record<DatasetSource, DatasetMeta> = {
@@ -53,6 +54,7 @@ export const DATASET_CATALOG: Record<DatasetSource, DatasetMeta> = {
     modelLatencyMs: 16.4,
     sampleRtspUri: "rtsp://localhost:8554/virat_perimeter",
     downloadUrl: "https://viratdata.org/",
+    videoSrc: "/feeds/feed-virat-perimeter.mp4",
   },
   MOT20: {
     id: "MOT20",
@@ -68,6 +70,7 @@ export const DATASET_CATALOG: Record<DatasetSource, DatasetMeta> = {
     modelLatencyMs: 19.8,
     sampleRtspUri: "rtsp://localhost:8554/mot20_maingate",
     downloadUrl: "https://motchallenge.net/data/MOT20/",
+    videoSrc: "/feeds/feed-mot20-crowd.mp4",
   },
   LLVIP: {
     id: "LLVIP",
@@ -83,6 +86,7 @@ export const DATASET_CATALOG: Record<DatasetSource, DatasetMeta> = {
     modelLatencyMs: 14.2,
     sampleRtspUri: "rtsp://localhost:8554/llvip_thermal",
     downloadUrl: "https://bupt-ai-cz.github.io/LLVIP/",
+    videoSrc: "/feeds/feed-llvip-thermal.mp4",
   },
   BORDER_THREAT: {
     id: "BORDER_THREAT",
@@ -98,6 +102,7 @@ export const DATASET_CATALOG: Record<DatasetSource, DatasetMeta> = {
     modelLatencyMs: 12.5,
     sampleRtspUri: "rtsp://localhost:8554/border_climbing",
     downloadUrl: "https://www.kaggle.com/datasets/shihabsarar/ai-based-threat-detection-dataset-for-border",
+    videoSrc: "/feeds/feed-border-threat.mp4",
   },
   VISDRONE: {
     id: "VISDRONE",
@@ -113,6 +118,7 @@ export const DATASET_CATALOG: Record<DatasetSource, DatasetMeta> = {
     modelLatencyMs: 22.1,
     sampleRtspUri: "rtsp://localhost:8554/visdrone_uav",
     downloadUrl: "https://github.com/VisDrone/VisDrone-Dataset",
+    videoSrc: "/feeds/feed-visdrone-aerial.mp4",
   },
   UFPR_ALPR: {
     id: "UFPR_ALPR",
@@ -128,6 +134,7 @@ export const DATASET_CATALOG: Record<DatasetSource, DatasetMeta> = {
     modelLatencyMs: 24.6,
     sampleRtspUri: "rtsp://localhost:8554/ufpr_anpr",
     downloadUrl: "https://github.com/UFPR-ALPR",
+    videoSrc: "/feeds/feed-vehicle-anpr.mp4",
   },
 };
 
@@ -155,6 +162,7 @@ export interface TacticalCamera {
   aiWorkload: AiWorkloadType;
   isFixed: boolean; // Pinned permanent display tile
   rtspUri: string;
+  videoSrc?: string;
   mgrs: string;
   elevationM: number;
 }
