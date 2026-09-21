@@ -153,8 +153,7 @@ export function Dashboard() {
   const [activeDataset, setActiveDataset] = useState<DatasetSource | "ALL">("ALL");
   const [density, setDensity] = useState<GridDensity>(16);
   const [tileMode, setTileMode] = useState<TileMode>("all");
-  const [showAiBoxes, setShowAiBoxes] = useState(false);
-  const [globalThermal, setGlobalThermal] = useState(false);
+  const [showAiBoxes] = useState(false);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 
   const alertingCameraIds = useMemo(() => {
@@ -224,10 +223,6 @@ export function Dashboard() {
         onChangeDensity={setDensity}
         tileMode={tileMode}
         onChangeTileMode={setTileMode}
-        showAiBoxes={showAiBoxes}
-        onToggleAiBoxes={() => setShowAiBoxes(!showAiBoxes)}
-        globalThermal={globalThermal}
-        onToggleGlobalThermal={() => setGlobalThermal(!globalThermal)}
         alertCount={alertingCameraIds.length}
       />
 
@@ -240,7 +235,6 @@ export function Dashboard() {
             activeDataset={activeDataset}
             tileMode={tileMode}
             showAiBoxes={showAiBoxes}
-            globalThermal={globalThermal}
             alertingCameraIds={alertingCameraIds}
             onAcknowledgeCamera={handleAcknowledgeCamera}
             selectedCameraId={selectedCameraId}

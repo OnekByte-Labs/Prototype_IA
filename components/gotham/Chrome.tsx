@@ -16,9 +16,9 @@ type RailItem = { label: string; icon: string; href?: string };
 const RAIL: RailItem[] = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard" },
   { label: "Alerts", icon: "warning", href: "/alerts" },
+  { label: "Cameras", icon: "videocam", href: "/cameras" },
   { label: "Map", icon: "map", href: "/map" },
   { label: "Devices", icon: "router", href: "/devices" },
-  { label: "Cameras", icon: "videocam" },
   { label: "Reports", icon: "description" },
   { label: "Wall", icon: "grid_on" },
   { label: "Admin", icon: "admin_panel_settings", href: "/admin" },
@@ -86,6 +86,7 @@ import { DatasetRegistryModal } from "./dashboard/DatasetRegistryModal";
 const TITLES: { match: string; crumb: string[] }[] = [
   { match: "/dashboard", crumb: ["Watchfloor", "Dashboard"] },
   { match: "/alerts", crumb: ["Watchfloor", "Alert console"] },
+  { match: "/cameras", crumb: ["Watchfloor", "Tactical cameras"] },
   { match: "/map", crumb: ["Watchfloor", "Tactical map"] },
   { match: "/devices", crumb: ["Watchfloor", "Device health"] },
   { match: "/admin", crumb: ["Watchfloor", "Administration"] },

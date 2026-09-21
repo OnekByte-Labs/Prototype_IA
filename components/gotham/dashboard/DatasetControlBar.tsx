@@ -17,8 +17,8 @@ interface DatasetControlBarProps {
   onChangeTileMode: (mode: TileMode) => void;
   showAiBoxes?: boolean;
   onToggleAiBoxes?: () => void;
-  globalThermal: boolean;
-  onToggleGlobalThermal: () => void;
+  globalThermal?: boolean;
+  onToggleGlobalThermal?: () => void;
   alertCount: number;
 }
 
@@ -29,15 +29,13 @@ export function DatasetControlBar({
   onChangeDensity,
   tileMode,
   onChangeTileMode,
-  globalThermal,
-  onToggleGlobalThermal,
   alertCount,
 }: DatasetControlBarProps) {
   const datasets: Array<{ id: DatasetSource | "ALL"; label: string; tag: string }> = [
     { id: "ALL", label: "ALL CHANNELS", tag: "32 CAMS" },
     { id: "VIRAT", label: "VIRAT HD", tag: "HD Video" },
     { id: "MOT20", label: "MOT20", tag: "Crowd Tracking" },
-    { id: "LLVIP", label: "LLVIP", tag: "Thermal IR" },
+    { id: "LLVIP", label: "LOW LIGHT", tag: "Night Vision" },
     { id: "BORDER_THREAT", label: "BORDER THREAT", tag: "Intrusion" },
     { id: "VISDRONE", label: "VISDRONE", tag: "Tactical UAV" },
     { id: "UFPR_ALPR", label: "UFPR-ALPR", tag: "ANPR / OCR" },
@@ -109,28 +107,15 @@ export function DatasetControlBar({
           })}
         </div>
 
-        {/* Global AI & Thermal Toggles */}
+        {/* Stream Status Indicators */}
         <div className="flex items-center gap-1.5 shrink-0">
           <div
-            title="Clean Real Surveillance Stream (Bounding boxes removed per operator spec)"
+            title="Clean Real Surveillance Stream (Bounding boxes and thermal distortions removed)"
             className="px-2 py-1 rounded-[2px] text-micro font-mono flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 select-none"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>CLEAN STREAM · NO BOXES</span>
+            <span>CLEAN OPTICAL FEEDS</span>
           </div>
-
-          <button
-            type="button"
-            onClick={onToggleGlobalThermal}
-            className={`px-2 py-1 rounded-[2px] text-micro font-mono flex items-center gap-1 transition-none ${
-              globalThermal
-                ? "bg-amber-950 border border-amber-500/70 text-amber-300"
-                : "bg-g-bg border border-g-border text-g-muted hover:text-g-text"
-            }`}
-          >
-            <Icon name="thermostat" size={13} />
-            <span>FLIR IR {globalThermal ? "ACTIVE" : "OFF"}</span>
-          </button>
         </div>
       </div>
 

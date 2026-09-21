@@ -21,20 +21,15 @@ export function TacticalVideoFeed({
   camera,
   clock,
   focused = false,
-  thermalOverride = false,
   isBreached = false,
   onClick,
 }: TacticalVideoFeedProps) {
   const dataset = DATASET_CATALOG[camera.dataset] || DATASET_CATALOG.VIRAT;
 
-  const [userThermalToggle, setUserThermalToggle] = useState<boolean | null>(null);
   const [showHud, setShowHud] = useState(true);
 
   // Determine real video source
   const videoSrc = camera.videoSrc || dataset.videoSrc || "/feeds/feed-virat-perimeter.mp4";
-
-  // Derived thermal state: user toggle takes precedence, then global override, then default LLVIP
-  const thermalMode = userThermalToggle ?? (thermalOverride || camera.dataset === "LLVIP");
   const isBreachedLocal = isBreached;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,7 +54,7 @@ export function TacticalVideoFeed({
 
       // VisDrone Aerial HUD Overlay
       if (camera.dataset === "VISDRONE") {
-        ctx.strokeStyle = "rgba(74, 222, 128, 0.4)";
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.45)";
         ctx.lineWidth = 1.2;
         const cx = w / 2;
         const cy = h / 2;
@@ -78,7 +73,7 @@ export function TacticalVideoFeed({
         ctx.stroke();
 
         // Corner crossbars
-        ctx.fillStyle = "rgba(74, 222, 128, 0.7)";
+        ctx.fillStyle = "rgba(56, 189, 248, 0.75)";
         ctx.font = "9px monospace";
         ctx.fillText("ALT: 68m", 12, h - 22);
         ctx.fillText("HDG: 042°", 12, h - 10);
@@ -100,8 +95,8 @@ export function TacticalVideoFeed({
 
       // Subtle moving horizontal scanline
       const scanY = (Math.sin(t) * 0.5 + 0.5) * h;
-      ctx.strokeStyle = "rgba(100, 220, 180, 0.08)";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(0, scanY);
       ctx.lineTo(w, scanY);
@@ -135,7 +130,7 @@ export function TacticalVideoFeed({
           : ""
       }`}
     >
-      {/* Real Live Video Feed Layer */}
+      {/* Real Live Video Feed Layer - Clean Natural Surveillance */}
       {camera.online ? (
         <video
           ref={videoRef}
@@ -145,13 +140,7 @@ export function TacticalVideoFeed({
           loop
           muted
           playsInline
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
-            thermalMode
-              ? "filter invert contrast-150 saturate-200 hue-rotate-90 brightness-95"
-              : camera.dataset === "BORDER_THREAT"
-                ? "filter brightness-90 contrast-125"
-                : ""
-          }`}
+          className="absolute inset-0 w-full h-full object-cover"
         />
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#06080a] text-g-red z-10">
@@ -224,11 +213,6 @@ export function TacticalVideoFeed({
           </div>
 
           <div className="flex items-center gap-2 text-[9px] font-mono text-g-text-2">
-            {thermalMode && (
-              <span className="text-amber-400 bg-amber-950/80 px-1 rounded-[2px] border border-amber-600/60 font-semibold">
-                IR THERMAL
-              </span>
-            )}
             <span className="text-emerald-400 font-bold">
               {camera.online ? `${camera.fps} FPS` : "--"}
             </span>
@@ -240,22 +224,6 @@ export function TacticalVideoFeed({
       {/* Interactive Controls Overlay for Focused Mode */}
       {focused && (
         <div className="absolute top-9 right-2 z-40 flex flex-col gap-1 bg-black/90 p-1.5 rounded border border-white/20 text-micro">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setUserThermalToggle(!thermalMode);
-            }}
-            className={`px-2 py-1 text-left flex items-center gap-1.5 rounded ${
-              thermalMode
-                ? "bg-amber-600 text-black font-semibold"
-                : "text-white/80 hover:bg-white/10"
-            }`}
-          >
-            <Icon name="thermostat" size={12} />
-            {thermalMode ? "Thermal ON" : "Thermal OFF"}
-          </button>
-
           <button
             type="button"
             onClick={(e) => {

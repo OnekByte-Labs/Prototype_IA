@@ -18,7 +18,6 @@ interface CameraWallProps {
   activeDataset?: DatasetSource | "ALL";
   tileMode?: TileMode;
   showAiBoxes?: boolean;
-  globalThermal?: boolean;
   alertingCameraIds?: string[];
   onAcknowledgeCamera?: (camId: string) => void;
   selectedCameraId?: string | null;
@@ -30,7 +29,6 @@ export function CameraWall({
   activeDataset = "ALL",
   tileMode = "all",
   showAiBoxes = false,
-  globalThermal = false,
   alertingCameraIds = [],
   onAcknowledgeCamera,
   selectedCameraId = null,
@@ -157,7 +155,6 @@ export function CameraWall({
                 clock={clock}
                 focused={true}
                 showAiBoxes={showAiBoxes}
-                thermalOverride={globalThermal}
                 isBreached={alertingCameraIds.includes(focusedCam.id)}
               />
             </div>
@@ -292,7 +289,6 @@ export function CameraWall({
                     clock={clock}
                     focused={false}
                     showAiBoxes={showAiBoxes}
-                    thermalOverride={globalThermal}
                     isBreached={isAlerting}
                     onClick={() => setInternalFocusId(cam.id)}
                   />

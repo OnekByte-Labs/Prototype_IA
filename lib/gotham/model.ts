@@ -171,18 +171,16 @@ export function seedAlerts(count = 48, seed = 0x15cc): Alert[] {
   liveSeq = SEED_START;
   for (let i = 0; i < count; i++) {
     const a = makeAlert(rng, t, n--);
-    // Older alerts are mostly resolved; the newest few are still open.
-    if (i > 2) {
-      const r = rng();
-      if (r < 0.72) {
-        a.status = "ack";
-        a.ackBy = pick(rng, ["A. VERMA", "R. SINGH", "M. KUMAR", "P. NAIR"]);
-        a.ackAt = a.t + intRange(rng, 20, 240);
-      } else if (r < 0.8) {
-        a.status = "dispatched";
-        a.ackBy = "A. VERMA";
-        a.ackAt = a.t + intRange(rng, 15, 90);
-      }
+    // Historical event log: all past events are logged and resolved
+    const r = rng();
+    if (r < 0.85) {
+      a.status = "ack";
+      a.ackBy = pick(rng, ["A. VERMA", "R. SINGH", "M. KUMAR", "P. NAIR"]);
+      a.ackAt = a.t + intRange(rng, 20, 240);
+    } else {
+      a.status = "dispatched";
+      a.ackBy = "A. VERMA";
+      a.ackAt = a.t + intRange(rng, 15, 90);
     }
     out.push(a);
     t -= intRange(rng, 90, 1500);
