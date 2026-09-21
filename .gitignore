@@ -44,3 +44,8 @@ next-env.d.ts
 /docs/
 *.pdf
 
+# agent customizations & skills
+.agents/
+.agents
+
+

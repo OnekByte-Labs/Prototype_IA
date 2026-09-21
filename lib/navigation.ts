@@ -11,7 +11,7 @@ export const navItems: NavEntry[] = [
   { label: "Alerts", icon: "notifications", href: "/alerts" },
   { label: "Map", icon: "map", href: "/map" },
   { label: "Devices", icon: "hub", href: "/devices" },
-  { label: "Cameras", icon: "videocam" },
+  { label: "Cameras", icon: "videocam", href: "/cameras" },
   { label: "Reports", icon: "description" },
   { label: "Admin", icon: "vpn_key", href: "/admin" },
 ];

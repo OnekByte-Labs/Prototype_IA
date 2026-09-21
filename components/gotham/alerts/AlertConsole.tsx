@@ -26,7 +26,7 @@ import {
 import { useToast } from "../Toast";
 
 const SEV_RANK: Record<Severity, number> = { low: 0, med: 1, high: 2 };
-const CLASSES: AlertClass[] = ["person", "vehicle", "animal"];
+const CLASSES: AlertClass[] = ["intrusion", "person", "vehicle", "animal"];
 
 type Row = Alert & { sevRank: number; camName: string };
 
@@ -189,6 +189,7 @@ function SummaryStrip({ rows }: { rows: Alert[] }) {
     <div className="h-10 shrink-0 px-3 flex items-center gap-6 bg-g-panel border-b border-g-border">
       {cell("24h total", String(rows.length))}
       <span className="w-px h-4 bg-g-border" />
+      {cell("Intrusion", String(byClass("intrusion")))}
       {cell("Person", String(byClass("person")))}
       {cell("Vehicle", String(byClass("vehicle")))}
       {cell("Animal", String(byClass("animal")))}
