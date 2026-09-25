@@ -1,5 +1,7 @@
+"use client";
 import { Icon } from "@/components/ui/Icon";
-import { kpis as staticKpis, tabs, useDeviceCameras } from "@/lib/devices-data";
+import { kpis as staticKpis, tabs } from "@/lib/devices-data";
+import { useDeviceCameras } from "@/lib/use-device-cameras";
 
 /** Sub-tab ribbon (cameras / NVRs / terminals) with search, zone filter and bulk actions. */
 export function DevicesToolbar() {

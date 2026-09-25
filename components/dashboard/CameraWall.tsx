@@ -1,67 +1,31 @@
-import { useEffect, useRef } from "react";
-import Hls from "hls.js";
 import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
-import { useCameras, type Camera } from "@/lib/dashboard-data";
+import type { Camera } from "@/lib/dashboard-data";
+import { useCameras } from "@/lib/use-cameras";
+
 function CameraTile({ camera }: { camera: Camera }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    if (!videoRef.current || !camera.hlsUrl) return;
-
-    let hls: Hls | null = null;
-    const video = videoRef.current;
-
-    if (Hls.isSupported()) {
-      hls = new Hls({
-        enableWorker: false,
-        lowLatencyMode: true,
-      });
-      hls.loadSource(camera.hlsUrl);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {
-          // Ignore autoplay failures
-        });
-      });
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      // For Safari where HLS is natively supported
-      video.src = camera.hlsUrl;
-      video.addEventListener("loadedmetadata", () => {
-        video.play().catch(() => {});
-      });
-    }
-
-    return () => {
-      if (hls) {
-        hls.destroy();
-      }
-    };
-  }, [camera.hlsUrl]);
-
   return (
     <div className="relative bg-well border border-brand-border flex flex-col justify-between overflow-hidden">
       <div className="flex justify-between items-center p-1 z-10">
         <div className="flex items-center space-x-1">
           <span className="w-1.5 h-1.5 bg-brand-red" />
           <span className="text-[9px] font-mono font-bold text-brand-red tracking-wider">
-            REC
+            AI
           </span>
         </div>
-        <span className="w-1.5 h-1.5 bg-brand-green" />
+        <span className="w-1.5 h-1.5 bg-brand-amber" />
       </div>
       {/* Reticle */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-20">
         <div className="w-8 h-8 border border-white/40" />
       </div>
-      
-      {/* Video Player */}
+
+      {/* MJPEG Stream */}
       <div className="absolute inset-0 z-0">
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={camera.mjpegUrl}
+          alt={camera.label}
           className="w-full h-full object-cover"
         />
       </div>

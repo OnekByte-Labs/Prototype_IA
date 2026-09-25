@@ -1,0 +1,16 @@
+# Core
+opencv-python>=4.8.0
+numpy>=1.24.0
+pyyaml>=6.0
+onnxruntime>=1.16.0
+
+# Tracker (ByteTrack)
+lapx>=0.5.0
+scipy>=1.10.0
+
+# ANPR / OCR
+fast-plate-ocr[cpu]>=0.2.0
+
+# Output server
+flask>=3.0.0
+flask-cors>=4.0.0

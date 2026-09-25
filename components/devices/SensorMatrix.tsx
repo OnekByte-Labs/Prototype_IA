@@ -1,5 +1,7 @@
+"use client";
 import { Icon } from "@/components/ui/Icon";
-import { matrix, useDeviceCameras, type CameraRow, type Tone } from "@/lib/devices-data";
+import { matrix, type CameraRow, type Tone } from "@/lib/devices-data";
+import { useDeviceCameras } from "@/lib/use-device-cameras";
 
 const dot: Record<Tone, string> = { ok: "bg-secondary", warn: "bg-tertiary", err: "bg-error" };
 const text: Record<Tone, string> = { ok: "text-secondary", warn: "text-tertiary", err: "text-error" };

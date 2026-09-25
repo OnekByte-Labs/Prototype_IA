@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Hls from "hls.js";
 import { Icon } from "@/components/ui/Icon";
 import type { Camera } from "@/lib/gotham/model";
+import { useConsole } from "../ConsoleProvider";
 import { useClock } from "../hooks";
 import { MicroLabel, StatusDot } from "../primitives";
 
@@ -18,9 +19,12 @@ function Tile({
   focused?: boolean;
   onClick: () => void;
 }) {
+  const { toggleAi } = useConsole();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const isMjpeg = !!cam.mjpegUrl;
 
   useEffect(() => {
+    if (isMjpeg) return;
     if (!videoRef.current || !cam.hlsUrl || !cam.online) return;
 
     let hls: Hls | null = null;
@@ -48,7 +52,7 @@ function Tile({
         hls.destroy();
       }
     };
-  }, [cam.hlsUrl, cam.online]);
+  }, [cam.hlsUrl, cam.online, isMjpeg]);
 
   return (
     <button
@@ -61,15 +65,33 @@ function Tile({
         focused ? "border-g-blue" : "border-g-border hover:border-g-border-strong hover:bg-g-hover"
       }`}
     >
-      <div className="flex items-center justify-between gap-1">
+      <div className="flex items-center justify-between gap-1 z-20">
         <span className="text-micro uppercase text-g-text-2 truncate">
           {cam.id} · {cam.name}
         </span>
         {cam.online ? (
           cam.recording ? (
             <span className="flex items-center gap-1 shrink-0">
-              <StatusDot tone="red" className="animate-pulse" />
-              <span className="text-micro text-g-muted">REC</span>
+              <StatusDot tone={cam.aiEnabled ? "red" : "idle"} className={cam.aiEnabled ? "animate-pulse" : ""} />
+              {isMjpeg ? (
+                <span
+                  role="button"
+                  title={cam.aiEnabled ? "Disable AI" : "Enable AI"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleAi(cam.id, !cam.aiEnabled);
+                  }}
+                  className={`text-micro px-1 py-0.5 rounded-[2px] transition-colors cursor-pointer ${
+                    cam.aiEnabled 
+                      ? "bg-g-red/10 text-g-red hover:bg-g-red/20" 
+                      : "bg-g-bg border border-g-border text-g-muted hover:text-g-text"
+                  }`}
+                >
+                  AI
+                </span>
+              ) : (
+                <span className="text-micro text-g-muted">REC</span>
+              )}
             </span>
           ) : (
             <span className="text-micro text-g-amber shrink-0">NO REC</span>
@@ -82,13 +104,22 @@ function Tile({
       <div className="flex-1 flex items-center justify-center relative">
         {cam.online ? (
           <>
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover z-0"
-            />
+            {isMjpeg ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={cam.mjpegUrl}
+                alt={cam.name}
+                className="absolute inset-0 w-full h-full object-cover z-0"
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover z-0"
+              />
+            )}
             {/* Overlay icon only when focused or on hover? Actually, let's keep it clean if video is playing */}
             {focused && <Icon name="videocam" size={40} className="text-white/20 absolute z-10 pointer-events-none" />}
           </>

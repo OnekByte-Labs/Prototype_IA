@@ -27,18 +27,20 @@ export type Camera = {
   hlsUrl?: string;
   rtspUrl?: string;
   webrtcUrl?: string;
+  mjpegUrl?: string;
+  aiEnabled?: boolean;
 };
 
 export const CAMERAS: Camera[] = [
   { id: "CAM-01", name: "MAIN GATE", zone: "HQ COMPLEX", online: true, ip: "10.142.12.101", model: "AXIS Q6135-LE", firmware: "11.8.42", resolution: "1920×1080", fps: 60, sensitivity: 72, recording: true, uptime: 99.98 },
-  { id: "CAM-03", name: "CHECKPOINT ALPHA", zone: "HQ COMPLEX", online: true, ip: "10.142.12.103", model: "AXIS P3245-LV", firmware: "10.2.1", resolution: "1920×1080", fps: 30, sensitivity: 64, recording: true, uptime: 99.91 },
-  { id: "CAM-07", name: "PERIMETER E", zone: "PERIMETER EAST", online: true, ip: "10.142.14.107", model: "BOSCH AUTODOME 7000i", firmware: "7.82.01", resolution: "3840×2160", fps: 30, sensitivity: 80, recording: true, uptime: 99.94 },
-  { id: "CAM-09", name: "AMMUNITION DUMP", zone: "DEPOT", online: true, ip: "10.142.20.109", model: "FLIR FC-644 ID", firmware: "4.2.1", resolution: "1920×1080", fps: 30, sensitivity: 88, recording: false, uptime: 98.12 },
-  { id: "CAM-12", name: "ARMOURY", zone: "DEPOT", online: true, ip: "10.142.20.112", model: "PELCO SPECTRA PRO", firmware: "3.14.9", resolution: "1920×1080", fps: 60, sensitivity: 91, recording: true, uptime: 99.99 },
-  { id: "CAM-15", name: "PERIMETER W", zone: "PERIMETER WEST", online: false, ip: "10.142.16.115", model: "BOSCH MIC IP 7100i", firmware: "7.80.00", resolution: "1920×1080", fps: 30, sensitivity: 70, recording: false, uptime: 74.2 },
-  { id: "CAM-16", name: "BARRACKS ACCESS", zone: "HQ COMPLEX", online: true, ip: "10.142.12.116", model: "AXIS P3245-LV", firmware: "10.2.1", resolution: "1920×1080", fps: 30, sensitivity: 58, recording: true, uptime: 99.91 },
-  { id: "CAM-22", name: "MOTOR POOL", zone: "MOTOR POOL", online: true, ip: "10.142.30.122", model: "HANWHA XNV-8080R", firmware: "2.01.0", resolution: "1920×1080", fps: 30, sensitivity: 61, recording: true, uptime: 99.85 },
-  { id: "CAM-28", name: "DEPOT PERIMETER N", zone: "DEPOT", online: true, ip: "10.142.20.128", model: "AXIS Q1798-LE", firmware: "11.8.40", resolution: "3840×2160", fps: 30, sensitivity: 76, recording: true, uptime: 81.5 },
+  { id: "CAM-02", name: "PERIMETER EAST", zone: "PERIMETER EAST", online: true, ip: "10.142.12.103", model: "AXIS P3245-LV", firmware: "10.2.1", resolution: "1920×1080", fps: 30, sensitivity: 64, recording: true, uptime: 99.91 },
+  { id: "CAM-03", name: "CHECKPOINT ALPHA", zone: "HQ COMPLEX", online: true, ip: "10.142.14.107", model: "BOSCH AUTODOME 7000i", firmware: "7.82.01", resolution: "3840×2160", fps: 30, sensitivity: 80, recording: true, uptime: 99.94 },
+  { id: "CAM-04", name: "PERIMETER SOUTH", zone: "DEPOT", online: true, ip: "10.142.20.109", model: "FLIR FC-644 ID", firmware: "4.2.1", resolution: "1920×1080", fps: 30, sensitivity: 88, recording: true, uptime: 98.12 },
+  { id: "CAM-05", name: "ARMOURY SECTOR 4", zone: "DEPOT", online: true, ip: "10.142.20.112", model: "PELCO SPECTRA PRO", firmware: "3.14.9", resolution: "1920×1080", fps: 60, sensitivity: 91, recording: true, uptime: 99.99 },
+  { id: "CAM-06", name: "VEHICLE DEPOT", zone: "PERIMETER WEST", online: true, ip: "10.142.16.115", model: "BOSCH MIC IP 7100i", firmware: "7.80.00", resolution: "1920×1080", fps: 30, sensitivity: 70, recording: true, uptime: 74.2 },
+  { id: "CAM-07", name: "HQ ENTRANCE", zone: "HQ COMPLEX", online: true, ip: "10.142.12.116", model: "AXIS P3245-LV", firmware: "10.2.1", resolution: "1920×1080", fps: 30, sensitivity: 58, recording: true, uptime: 99.91 },
+  { id: "CAM-08", name: "MOTOR POOL", zone: "MOTOR POOL", online: true, ip: "10.142.30.122", model: "HANWHA XNV-8080R", firmware: "2.01.0", resolution: "1920×1080", fps: 30, sensitivity: 61, recording: true, uptime: 99.85 },
+  { id: "CAM-09", name: "PERIMETER W", zone: "PERIMETER WEST", online: false, ip: "10.142.16.115", model: "BOSCH MIC IP 7100i", firmware: "7.80.00", resolution: "1920×1080", fps: 30, sensitivity: 70, recording: false, uptime: 74.2 },
 ];
 
 export const cameraById = (id: string) => CAMERAS.find((c) => c.id === id);

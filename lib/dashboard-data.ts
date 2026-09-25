@@ -1,3 +1,4 @@
+
 // Mock data copied verbatim from the Stitch screen "ISCC Main Command Dashboard - 3-Zone Redesign".
 
 export type Kpi = {
@@ -17,30 +18,9 @@ export type Camera = {
   id: string;
   label: string;
   online: boolean;
-  hlsUrl?: string;
-  webrtcUrl?: string;
-  rtspUrl?: string;
+  mjpegUrl?: string;
 };
 
-// The cameras array is no longer statically exported.
-// Components should use the useCameras hook below to fetch dynamic data.
-
-import useSWR from 'swr';
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-export function useCameras() {
-  const { data, error, isLoading } = useSWR<Camera[]>('/api/cameras', fetcher, {
-    refreshInterval: 10000, // Poll every 10s
-    fallbackData: [], // Default to empty array while loading
-  });
-
-  return {
-    cameras: data || [],
-    isLoading,
-    isError: error,
-  };
-}
 
 export type HourBar = {
   hour: string;

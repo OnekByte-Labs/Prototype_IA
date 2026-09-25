@@ -21,7 +21,7 @@ import {
 } from "@/lib/gotham/model";
 import { intRange, mulberry32 } from "@/lib/gotham/rng";
 import { useToast } from "./Toast";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -39,6 +39,8 @@ type ConsoleState = {
   cameras: Camera[];
   /** Cameras knocked offline by the simulation this session. */
   degraded: string[];
+  /** Toggle AI for a specific camera */
+  toggleAi: (id: string, enabled: boolean) => Promise<void>;
 };
 
 const Ctx = createContext<ConsoleState | null>(null);
@@ -121,25 +123,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [liveOn]);
 
-  /* ---- health simulation: a camera drops, then self-heals after ~60s ---- */
-  useEffect(() => {
-    let healTimer: ReturnType<typeof setTimeout>;
-    const dropTimer = setTimeout(() => {
-      const candidates = CAMERAS.filter((c) => c.online).map((c) => c.id);
-      const id = candidates[Math.floor(rng.current() * candidates.length)];
-      setDegraded([id]);
-      toast(`${id} link lost — carrier drop`, "warn");
-      healTimer = setTimeout(() => {
-        setDegraded([]);
-        toast(`${id} link restored`, "ok");
-      }, 60_000);
-    }, 42_000);
-
-    return () => {
-      clearTimeout(dropTimer);
-      clearTimeout(healTimer);
-    };
-  }, [toast]);
+  /* ---- health simulation removed ---- */
 
 interface ApiCamera {
   id: string;
@@ -149,6 +133,8 @@ interface ApiCamera {
   hlsUrl: string;
   webrtcUrl?: string;
   rtspUrl?: string;
+  mjpegUrl?: string;
+  aiEnabled?: boolean;
 }
 
   // Fetch live camera statuses from our API proxy
@@ -217,6 +203,27 @@ interface ApiCamera {
     toast(next ? "Live feed resumed" : "Live feed paused");
   }, [liveOn, toast]);
 
+  const { mutate } = useSWRConfig();
+
+  const toggleAi = useCallback(async (id: string, enabled: boolean) => {
+    try {
+      const res = await fetch(`/api/cameras/${id}/ai`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      if (res.ok) {
+        toast(`AI ${enabled ? 'enabled' : 'disabled'} for ${id}`);
+        // Optimistically update or trigger re-fetch
+        mutate('/api/cameras');
+      } else {
+        toast(`Failed to toggle AI for ${id}`, "err");
+      }
+    } catch (e) {
+      toast(`Failed to toggle AI for ${id}`, "err");
+    }
+  }, [toast, mutate]);
+
   const cameras = useMemo(() => {
     return CAMERAS.map((c) => {
       // Find the corresponding camera from the API to get live 'online' state and 'hlsUrl'
@@ -235,6 +242,8 @@ interface ApiCamera {
         hlsUrl: liveData?.hlsUrl,
         rtspUrl: liveData?.rtspUrl,
         webrtcUrl: liveData?.webrtcUrl,
+        mjpegUrl: liveData?.mjpegUrl,
+        aiEnabled: liveData?.aiEnabled,
       };
     });
   }, [degraded, apiCameras]);
@@ -254,8 +263,9 @@ interface ApiCamera {
       toggleLive,
       cameras,
       degraded,
+      toggleAi,
     }),
-    [alerts, unacked, ack, ackMany, dispatch, muted, toggleMute, liveOn, toggleLive, cameras, degraded],
+    [alerts, unacked, ack, ackMany, dispatch, muted, toggleMute, liveOn, toggleLive, cameras, degraded, toggleAi],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
