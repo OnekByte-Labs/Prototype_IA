@@ -134,6 +134,7 @@ interface ApiCamera {
   webrtcUrl?: string;
   rtspUrl?: string;
   mjpegUrl?: string;
+  metadataUrl?: string;
   aiEnabled?: boolean;
 }
 
@@ -243,6 +244,7 @@ interface ApiCamera {
         rtspUrl: liveData?.rtspUrl,
         webrtcUrl: liveData?.webrtcUrl,
         mjpegUrl: liveData?.mjpegUrl,
+        metadataUrl: liveData?.metadataUrl,
         aiEnabled: liveData?.aiEnabled,
       };
     });

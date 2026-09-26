@@ -2,7 +2,7 @@
 # This uses the standard COCO 80-class mapping.
 # vehicle_classes lists COCO class IDs that trigger the ANPR cascade.
 
-classes:
+names:
   0: person
   1: bicycle
   2: car
@@ -20,7 +20,7 @@ classes:
   22: animal
   23: animal
 
-# Classes that are relevant for our surveillance use case
+allowed_classes: [0, 1, 2, 3, 5, 7, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
 person_classes: [0]
 animal_classes: [14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
-vehicle_classes: [1, 2, 3, 5, 7]  # bicycle, car, motorcycle, bus, truck — triggers ANPR cascade
+vehicle_classes: [1, 2, 3, 5, 7]

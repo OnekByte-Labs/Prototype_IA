@@ -28,6 +28,7 @@ export type Camera = {
   rtspUrl?: string;
   webrtcUrl?: string;
   mjpegUrl?: string;
+  metadataUrl?: string;
   aiEnabled?: boolean;
 };
 

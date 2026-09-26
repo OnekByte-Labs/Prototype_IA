@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class FramePacket:
     """Immutable data class for a single frame read from a video."""
-    __slots__ = ("frame", "frame_id", "stream_id", "loop_reset", "timestamp")
+    __slots__ = ("frame", "frame_id", "stream_id", "loop_reset", "timestamp", "video_time_sec")
 
     def __init__(
         self,
@@ -31,12 +31,14 @@ class FramePacket:
         stream_id: str,
         loop_reset: bool = False,
         timestamp: float = 0.0,
+        video_time_sec: float = 0.0,
     ):
         self.frame = frame
         self.frame_id = frame_id
         self.stream_id = stream_id
         self.loop_reset = loop_reset
         self.timestamp = timestamp
+        self.video_time_sec = video_time_sec
 
 
 class VideoReader(threading.Thread):
@@ -132,6 +134,7 @@ class VideoReader(threading.Thread):
                         stream_id=self.stream_id,
                         loop_reset=True,
                         timestamp=time.time(),
+                        video_time_sec=frame_id / max(effective_fps, 1.0),
                     )
                     frame_id += 1
                 else:
@@ -141,6 +144,7 @@ class VideoReader(threading.Thread):
                         stream_id=self.stream_id,
                         loop_reset=False,
                         timestamp=time.time(),
+                        video_time_sec=frame_id / max(effective_fps, 1.0),
                     )
                     frame_id += 1
 

@@ -24,16 +24,16 @@ logger = logging.getLogger(__name__)
 
 
 class FrameStore:
-    """Thread-safe store for the latest annotated frame per stream."""
+    """Thread-safe store for the latest annotated metadata per stream."""
     def __init__(self):
-        self._frames: Dict[str, np.ndarray] = {}
+        self._frames: Dict[str, dict] = {}
         self._lock = threading.Lock()
 
-    def put(self, stream_id: str, frame: np.ndarray):
+    def put(self, stream_id: str, data: dict):
         with self._lock:
-            self._frames[stream_id] = frame
+            self._frames[stream_id] = data
 
-    def get(self, stream_id: str) -> Optional[np.ndarray]:
+    def get(self, stream_id: str) -> Optional[dict]:
         with self._lock:
             return self._frames.get(stream_id)
 
@@ -63,9 +63,7 @@ class EventStore:
 class AIConfigStore:
     """Thread-safe store for AI enablement per stream."""
     def __init__(self, initial_configs: list):
-        self._enabled = {cfg["id"]: False for cfg in initial_configs}
-        if "cam_06" in self._enabled:
-            self._enabled["cam_06"] = True
+        self._enabled = {cfg["id"]: True for cfg in initial_configs}
         self._lock = threading.Lock()
 
     def is_enabled(self, stream_id: str) -> bool:
@@ -91,6 +89,7 @@ def create_app(
     event_store: EventStore,
     ai_config: AIConfigStore,
     stream_configs: list,
+    mode: str = "mock"
 ) -> FastAPI:
     """Create and configure the FastAPI app."""
 
@@ -104,21 +103,41 @@ def create_app(
         allow_headers=["*"],
     )
 
+    from fastapi import Request
+
     @app.get("/cameras")
-    def get_cameras():
+    def get_cameras(request: Request):
+        host = request.client.host if request.client else "127.0.0.1"
+        # We need the base URL that the client requested
+        base_url = str(request.base_url).rstrip('/')
         result = []
         for cfg in stream_configs:
             sid = cfg["id"]
-            result.append(
-                {
-                    "id": sid.upper().replace("CAM_", "CAM-"),
-                    "label": cfg.get("label", sid),
-                    "online": True,
-                    "mjpegUrl": f"/stream/{sid}",
-                    "aiEnabled": ai_config.is_enabled(sid),
-                }
-            )
+            cam_data = {
+                "id": sid.upper().replace("CAM_", "CAM-"),
+                "label": cfg.get("label", sid),
+                "online": True,
+                "aiEnabled": ai_config.is_enabled(sid),
+            }
+            if mode == "live":
+                cam_data["mjpegUrl"] = f"{base_url}/stream/{sid}"
+                cam_data["metadataUrl"] = f"{base_url}/metadata/{sid}"
+            else:
+                cam_data["metadataUrl"] = f"{base_url}/metadata/{sid}"
+                cam_data["videoUrl"] = f"/api/videos/{sid}"
+            result.append(cam_data)
         return result
+
+    @app.get("/stream/{stream_id}")
+    def stream_video(stream_id: str):
+        def generate():
+            import time
+            while True:
+                data = frame_store.get(stream_id)
+                if data and "jpeg" in data:
+                    yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + data["jpeg"] + b"\r\n"
+                time.sleep(0.033) # ~30fps poll rate
+        return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
 
     @app.post("/cameras/{stream_id}/ai")
     def toggle_ai(stream_id: str, req: AIToggleRequest):
@@ -126,36 +145,53 @@ def create_app(
         ai_config.set_enabled(internal_id, req.enabled)
         return {"success": True, "aiEnabled": ai_config.is_enabled(internal_id)}
 
-    @app.get("/stream/{stream_id}")
-    async def stream_video(stream_id: str):
-        async def generate():
-            last_frame_id = None
-            while True:
-                frame = frame_store.get(stream_id)
-                if frame is not None:
-                    current_frame_id = id(frame)
-                    if current_frame_id != last_frame_id:
-                        h, w = frame.shape[:2]
-                        if w > 800:
-                            scale = 800 / w
-                            frame = cv2.resize(frame, (800, int(h * scale)))
+    @app.get("/metadata/{stream_id}")
+    async def stream_metadata(stream_id: str):
+        internal_id = stream_id.lower().replace("cam-", "cam_")
+        import os
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        precomputed_path = os.path.join(base_dir, "backend", "outputs", "precomputed", f"{internal_id}.json")
 
-                        # cv2.imencode releases the GIL, so it's safe in async
-                        _, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
-                        yield (
-                            b"--frame\r\n"
-                            b"Content-Type: image/jpeg\r\n\r\n"
-                            + jpeg.tobytes()
-                            + b"\r\n"
-                        )
-                        last_frame_id = current_frame_id
+        async def generate():
+            if os.path.exists(precomputed_path):
+                import json
+                import time
+                with open(precomputed_path, "r", encoding="utf-8") as f:
+                    all_frames = json.load(f)
                 
-                # Non-blocking sleep for FastAPI async loop
-                await asyncio.sleep(0.033)
+                if not all_frames:
+                    return
+                
+                # Loop forever at exactly 30 FPS
+                while True:
+                    for frame_data in all_frames:
+                        if not ai_config.is_enabled(stream_id):
+                            # AI disabled mock data
+                            yield f"data: {json.dumps({'frame_id': frame_data['frame_id'], 'video_time_sec': frame_data['video_time_sec'], 'detections': []})}\n\n"
+                        else:
+                            yield f"data: {json.dumps(frame_data)}\n\n"
+                        await asyncio.sleep(1 / 30.0)
+            else:
+                last_frame_id = None
+                while True:
+                    metadata = frame_store.get(stream_id)
+                    if metadata is not None and isinstance(metadata, dict):
+                        if metadata.get("frame_id") != last_frame_id:
+                            import json
+                            # Send as Server-Sent Event (SSE)
+                            yield f"data: {json.dumps(metadata)}\n\n"
+                            last_frame_id = metadata["frame_id"]
+                    
+                    # Check 100 times a second for new metadata
+                    await asyncio.sleep(0.01)
 
         return StreamingResponse(
             generate(),
-            media_type="multipart/x-mixed-replace; boundary=frame",
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
         )
 
     @app.get("/events")
@@ -172,9 +208,10 @@ def run_server(
     stream_configs: list,
     host: str = "0.0.0.0",
     port: int = 5555,
+    mode: str = "mock",
 ):
     """Start the FastAPI output server in a daemon thread via Uvicorn."""
-    app = create_app(frame_store, event_store, ai_config, stream_configs)
+    app = create_app(frame_store, event_store, ai_config, stream_configs, mode=mode)
     
     def start_uvicorn():
         uvicorn.run(app, host=host, port=port, log_level="error")

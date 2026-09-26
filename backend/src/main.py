@@ -249,14 +249,29 @@ def main():
                                     "ts": datetime.now(timezone.utc).isoformat(),
                                 })
 
-                    # ── 4. Annotate frame ──
-                    annotated = draw_detections(
-                        frame.copy(),
-                        confirmed_tracks,
-                        class_names,
-                        plate_texts=plate_texts,
-                        plate_boxes=plate_boxes_frame,
-                    )
+                    # ── 4. Generate Metadata ──
+                    detections_list = []
+                    for track in confirmed_tracks:
+                        # track.bbox is (x1, y1, x2, y2)
+                        det = {
+                            "id": int(track.track_id),
+                            "class": str(class_names.get(track.class_id, "unknown")),
+                            "confidence": float(round(float(track.confidence), 3)),
+                            "x": int(track.bbox[0]),
+                            "y": int(track.bbox[1]),
+                            "w": int(track.bbox[2] - track.bbox[0]),
+                            "h": int(track.bbox[3] - track.bbox[1]),
+                        }
+                        if track.track_id in plate_texts:
+                            det["plate"] = plate_texts[track.track_id]
+                        detections_list.append(det)
+
+                    metadata = {
+                        "frame_id": packet.frame_id,
+                        "video_time_sec": packet.video_time_sec,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "detections": detections_list,
+                    }
 
                     # Log detection events (sample every 30 frames to avoid flood)
                     if packet.frame_id % 30 == 0:
@@ -272,20 +287,15 @@ def main():
                                 "ts": datetime.now(timezone.utc).isoformat(),
                             })
                 else:
-                    # AI is disabled for this stream, just use the raw frame
-                    annotated = frame.copy()
-                    cv2.putText(
-                        annotated,
-                        "AI DISABLED",
-                        (20, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        1.0,
-                        (0, 0, 255),
-                        2,
-                    )
+                    # AI is disabled for this stream
+                    metadata = {
+                        "frame_id": packet.frame_id,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "detections": [],
+                    }
 
-                # Push annotated frame to output
-                frame_store.put(sid, annotated)
+                # Push JSON metadata to output store instead of an image
+                frame_store.put(sid, metadata)
 
                 # FPS tracking
                 elapsed = time.monotonic() - t0
