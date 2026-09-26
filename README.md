@@ -60,4 +60,4 @@ If you have a powerful enough server (or if you are only running 1-2 cameras), y
 ```powershell
 backend\venv\Scripts\python backend\src\run_live.py
 ```
-*Note: This starts the live Flask server on `http://localhost:5555`.*
+*Note: This starts the live FastAPI server on `http://127.0.0.1:5556`.*

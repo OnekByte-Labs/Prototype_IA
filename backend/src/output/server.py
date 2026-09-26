@@ -153,7 +153,7 @@ def create_app(
         precomputed_path = os.path.join(base_dir, "backend", "outputs", "precomputed", f"{internal_id}.json")
 
         async def generate():
-            if os.path.exists(precomputed_path):
+            if mode != "live" and os.path.exists(precomputed_path):
                 import json
                 import time
                 with open(precomputed_path, "r", encoding="utf-8") as f:
@@ -178,8 +178,10 @@ def create_app(
                     if metadata is not None and isinstance(metadata, dict):
                         if metadata.get("frame_id") != last_frame_id:
                             import json
-                            # Send as Server-Sent Event (SSE)
-                            yield f"data: {json.dumps(metadata)}\n\n"
+                            # Send as Server-Sent Event (SSE), but strip the raw JPEG bytes!
+                            meta_copy = metadata.copy()
+                            meta_copy.pop("jpeg", None)
+                            yield f"data: {json.dumps(meta_copy)}\n\n"
                             last_frame_id = metadata["frame_id"]
                     
                     # Check 100 times a second for new metadata

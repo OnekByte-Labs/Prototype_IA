@@ -67,7 +67,7 @@ def main():
 
     # ── Load config ──
     streams_cfg, classes_cfg, pipeline_cfg = load_config(PROJECT_ROOT)
-    class_names: Dict[int, str] = {int(k): v for k, v in classes_cfg["classes"].items()}
+    class_names: Dict[int, str] = {int(k): v for k, v in classes_cfg.get("names", classes_cfg.get("classes", {})).items()}
     vehicle_class_ids = set(classes_cfg.get("vehicle_classes", []))
     animal_class_ids = set(classes_cfg.get("animal_classes", []))
     allowed_class_ids = set(class_names.keys())
