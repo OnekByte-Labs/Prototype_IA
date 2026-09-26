@@ -1,32 +1,30 @@
 """
-Output server — Flask-based MJPEG + REST endpoint.
+Output server — FastAPI-based MJPEG + REST endpoint.
 
 Serves:
   GET /cameras           → JSON list of stream configs (for the Next.js frontend)
-  GET /stream/<stream_id> → MJPEG stream of annotated frames
+  GET /stream/{stream_id} → MJPEG stream of annotated frames
   GET /events            → latest N events as JSON
 """
 
-import json
+import asyncio
 import logging
 import threading
-import time
 from typing import Dict, Optional
-
 import cv2
 import numpy as np
-from flask import Flask, Response, jsonify
-from flask_cors import CORS
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+import uvicorn
 
 logger = logging.getLogger(__name__)
 
 
 class FrameStore:
-    """
-    Thread-safe store for the latest annotated frame per stream.
-    The pipeline writes frames here; the Flask server reads them.
-    """
-
+    """Thread-safe store for the latest annotated frame per stream."""
     def __init__(self):
         self._frames: Dict[str, np.ndarray] = {}
         self._lock = threading.Lock()
@@ -46,7 +44,6 @@ class FrameStore:
 
 class EventStore:
     """Thread-safe ring-buffer for recent events."""
-
     def __init__(self, max_events: int = 500):
         self._events = []
         self._lock = threading.Lock()
@@ -65,10 +62,8 @@ class EventStore:
 
 class AIConfigStore:
     """Thread-safe store for AI enablement per stream."""
-
     def __init__(self, initial_configs: list):
         self._enabled = {cfg["id"]: False for cfg in initial_configs}
-        # Only enable cam_06 by default to save CPU!
         if "cam_06" in self._enabled:
             self._enabled["cam_06"] = True
         self._lock = threading.Lock()
@@ -87,20 +82,30 @@ class AIConfigStore:
             return self._enabled.copy()
 
 
+class AIToggleRequest(BaseModel):
+    enabled: bool
+
+
 def create_app(
     frame_store: FrameStore,
     event_store: EventStore,
     ai_config: AIConfigStore,
     stream_configs: list,
-) -> Flask:
-    """Create and configure the Flask app."""
+) -> FastAPI:
+    """Create and configure the FastAPI app."""
 
-    app = Flask(__name__)
-    CORS(app)
+    app = FastAPI(title="AI Surveillance Backend")
 
-    @app.route("/cameras", methods=["GET"])
-    def cameras():
-        """Return camera list in the same format the Next.js frontend expects."""
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @app.get("/cameras")
+    def get_cameras():
         result = []
         for cfg in stream_configs:
             sid = cfg["id"]
@@ -113,44 +118,30 @@ def create_app(
                     "aiEnabled": ai_config.is_enabled(sid),
                 }
             )
-        return jsonify(result)
+        return result
 
-    @app.route("/cameras/<stream_id>/ai", methods=["POST"])
-    def toggle_ai(stream_id: str):
-        """Toggle AI enablement for a stream."""
-        from flask import request
-        data = request.json
-        if not data or "enabled" not in data:
-            return jsonify({"error": "Missing 'enabled' boolean"}), 400
-        
-        # Next.js sends IDs as "CAM-XX", we need "cam_xx" internally
+    @app.post("/cameras/{stream_id}/ai")
+    def toggle_ai(stream_id: str, req: AIToggleRequest):
         internal_id = stream_id.lower().replace("cam-", "cam_")
-        ai_config.set_enabled(internal_id, bool(data["enabled"]))
-        return jsonify({"success": True, "aiEnabled": ai_config.is_enabled(internal_id)})
+        ai_config.set_enabled(internal_id, req.enabled)
+        return {"success": True, "aiEnabled": ai_config.is_enabled(internal_id)}
 
-    @app.route("/stream/<stream_id>", methods=["GET"])
-    def stream(stream_id: str):
-        """MJPEG stream of annotated frames for a given camera."""
-
-        def generate():
+    @app.get("/stream/{stream_id}")
+    async def stream_video(stream_id: str):
+        async def generate():
             last_frame_id = None
             while True:
-                # We expect the frame store to give us a tuple (frame_id, frame)
-                # But currently it just gives the frame. Let's just use the object id of the frame array.
                 frame = frame_store.get(stream_id)
                 if frame is not None:
                     current_frame_id = id(frame)
                     if current_frame_id != last_frame_id:
-                        # Resize large frames (like 4K) down to 800px for the dashboard grid
-                        # to save massive amounts of CPU and network bandwidth.
                         h, w = frame.shape[:2]
                         if w > 800:
                             scale = 800 / w
                             frame = cv2.resize(frame, (800, int(h * scale)))
 
-                        _, jpeg = cv2.imencode(
-                            ".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 60]
-                        )
+                        # cv2.imencode releases the GIL, so it's safe in async
+                        _, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
                         yield (
                             b"--frame\r\n"
                             b"Content-Type: image/jpeg\r\n\r\n"
@@ -158,18 +149,18 @@ def create_app(
                             + b"\r\n"
                         )
                         last_frame_id = current_frame_id
-                # Sleep a little to prevent busy-waiting, target max 30 FPS check rate
-                time.sleep(0.033)
+                
+                # Non-blocking sleep for FastAPI async loop
+                await asyncio.sleep(0.033)
 
-        return Response(
+        return StreamingResponse(
             generate(),
-            mimetype="multipart/x-mixed-replace; boundary=frame",
+            media_type="multipart/x-mixed-replace; boundary=frame",
         )
 
-    @app.route("/events", methods=["GET"])
-    def events():
-        """Return latest events as JSON."""
-        return jsonify(event_store.get_recent())
+    @app.get("/events")
+    def get_events():
+        return event_store.get_recent()
 
     return app
 
@@ -182,10 +173,14 @@ def run_server(
     host: str = "0.0.0.0",
     port: int = 5555,
 ):
-    """Start the Flask output server in a daemon thread."""
+    """Start the FastAPI output server in a daemon thread via Uvicorn."""
     app = create_app(frame_store, event_store, ai_config, stream_configs)
+    
+    def start_uvicorn():
+        uvicorn.run(app, host=host, port=port, log_level="error")
+        
     server_thread = threading.Thread(
-        target=lambda: app.run(host=host, port=port, threaded=True, use_reloader=False),
+        target=start_uvicorn,
         daemon=True,
         name="output-server",
     )
