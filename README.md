@@ -53,8 +53,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. The dashboa
 - **Video Streams:** Add or modify video feeds in `backend/configs/streams.yaml` and `prototype/configs/streams.yaml`.
 - **Classes:** Define what objects you want YOLO to track (e.g., just cars and people) in `configs/classes.yaml`.
 
-## ⚠️ Notes on Google Colab
+## 📡 Live Execution Mode (Optional)
 
-Attempting to run `precompute.py` on Google Colab is highly discouraged due to constant dependency mismatches between Colab's Linux environment (cuDNN 8) and the latest `onnxruntime-gpu` PyPI wheels (which expect cuDNN 9 / CUDA 13). 
+If you have a powerful enough server (or if you are only running 1-2 cameras), you can run the system in completely **live** mode without precomputing. This streams the MJPEG video natively with the AI bounding boxes burned in.
 
-Your Windows PC with the Intel Arc iGPU natively supports the `DmlExecutionProvider` out of the box with zero configuration. **Run the precomputation locally!**
+```powershell
+backend\venv\Scripts\python backend\src\run_live.py
+```
+*Note: This starts the live Flask server on `http://localhost:5555`.*
