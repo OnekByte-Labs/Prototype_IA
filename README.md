@@ -1,46 +1,42 @@
-# AI Surveillance Pipeline
+# Prototype IA - Tactical Surveillance Dashboard
 
-A complete AI-powered video surveillance dashboard with real-time YOLO object detection, tracking, and License Plate Recognition (ANPR). 
+A highly performant, tactical surveillance dashboard prototype built with Next.js and Python. It simulates a live AI security system by decoupling the heavy AI inference from the video playback, allowing 9 simultaneous 4K/1080p camera feeds to be rendered at 60 FPS in the browser with perfectly synchronized AI bounding boxes.
 
-This project consists of two parts:
-1. **Frontend**: A modern Next.js React dashboard.
-2. **Backend**: A high-performance Python pipeline that processes video streams with ONNX models and serves MJPEG feeds via a Flask server.
+## 🏗 Architecture (The "Mock" Decoupled Pipeline)
+
+Running YOLOv11 + License Plate OCR on 9 simultaneous 4K streams in real-time requires a massive server farm. For this prototype, we use a **Decoupled Architecture**:
+
+1. **Precomputation (`precompute.py`)**: A Python script runs the heavy AI models (YOLOv11 + SORT Tracking + OCR) on the sample `.mp4` videos *once*, saving the frame-by-frame tracking coordinates into lightweight JSON files.
+2. **Mock Server (`run_mock.py`)**: A lightweight Python ASGI server that simulates a live system by streaming those JSON coordinates over Server-Sent Events (SSE).
+3. **Frontend (`CameraWall.tsx`)**: The Next.js dashboard plays the raw `.mp4` videos normally, while reading the SSE JSON stream and painting the tactical bounding boxes directly onto an invisible HTML5 `<canvas>` layered on top of the video in perfect synchronization.
 
 ---
 
 ## 🚀 Getting Started
 
-To run this project, you need to start both the Python backend and the Next.js frontend simultaneously.
+Follow these steps to run the full prototype on your local Windows PC.
 
-### 1. Start the AI Backend (Python)
+### Step 1: Precompute the AI Metadata
+Before starting the servers, you must generate the AI tracking data for the videos. The script utilizes **Microsoft DirectML** to hardware-accelerate the ONNX models directly on your Intel Arc iGPU!
 
-The backend handles all video decoding, AI inference (YOLO/OCR), and video streaming.
-
-**On Windows:**
-```bash
-# 1. Activate the virtual environment
-.\backend\venv\Scripts\activate
-
-# 2. Run the pipeline
-python backend\src\main.py
+Open a terminal and run:
+```powershell
+backend\venv\Scripts\python backend\src\precompute.py
 ```
+*Note: This will take some time (especially for the 4K video). It processes sequentially to prevent your iGPU from crashing. It saves the results to `backend/outputs/precomputed/`.*
 
-**On Mac / Linux:**
-```bash
-# 1. Activate the virtual environment
-source backend/venv/bin/activate
+### Step 2: Start the Mock AI Backend
+Once the JSON files are generated, start the mock metadata server.
 
-# 2. Run the pipeline
-python backend/src/main.py
+```powershell
+backend\venv\Scripts\python backend\src\run_mock.py
 ```
+*The mock server will start on `http://127.0.0.1:5556` and begin serving the precomputed metadata.*
 
-*Note: The backend will start a Flask MJPEG streaming server on `http://localhost:5555`.*
+### Step 3: Start the Next.js Dashboard
+Open a **new terminal window** and start the frontend:
 
-### 2. Start the Frontend Dashboard (Next.js)
-
-Open a **new terminal window** and run the Next.js development server:
-
-```bash
+```powershell
 # Install dependencies (only needed the first time)
 npm install
 
@@ -48,16 +44,17 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the live dashboard.
+Open [http://localhost:3000](http://localhost:3000) in your browser. The dashboard will automatically pull the MP4 videos and the SSE mock data, perfectly syncing them together with the bi-directional snap logic!
 
 ---
 
 ## ⚙️ Configuration
 
-- **Video Streams:** You can add or modify video feeds by editing `backend/configs/streams.yaml`.
-- **AI Models:** The system uses YOLOv11 for primary detection and YOLOv8 for license plate cropping. ONNX models are stored in the `models/` directory.
+- **Video Streams:** Add or modify video feeds in `backend/configs/streams.yaml` and `prototype/configs/streams.yaml`.
+- **Classes:** Define what objects you want YOLO to track (e.g., just cars and people) in `configs/classes.yaml`.
 
-## 🛑 Troubleshooting
+## ⚠️ Notes on Google Colab
 
-- **Feeds are missing/lagging:** Ensure the Python backend is actively running. The Next.js frontend relies completely on the Python server for video streams.
-- **Port conflicts:** If port 5555 or 3000 is already in use, you can modify the ports in `backend/src/output/server.py` and `package.json`.
+Attempting to run `precompute.py` on Google Colab is highly discouraged due to constant dependency mismatches between Colab's Linux environment (cuDNN 8) and the latest `onnxruntime-gpu` PyPI wheels (which expect cuDNN 9 / CUDA 13). 
+
+Your Windows PC with the Intel Arc iGPU natively supports the `DmlExecutionProvider` out of the box with zero configuration. **Run the precomputation locally!**
