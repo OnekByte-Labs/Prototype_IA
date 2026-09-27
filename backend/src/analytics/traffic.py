@@ -23,6 +23,11 @@ class TrafficCounter(BaseAnalytics):
         
         self.total_count = 0
 
+    def reset(self):
+        self.history.clear()
+        self.counted_ids.clear()
+        self.total_count = 0
+
     def process_frame(self, frame: np.ndarray, tracks: list, frame_id: int) -> list:
         events = []
         
@@ -44,10 +49,10 @@ class TrafficCounter(BaseAnalytics):
             current_track_ids.add(tid)
             
             x1, y1, x2, y2 = track.bbox
-            foot_x = (x1 + x2) / 2.0
-            foot_y = float(y2)
+            center_x = (x1 + x2) / 2.0
+            center_y = (y1 + y2) / 2.0
             
-            current_point = (foot_x, foot_y)
+            current_point = (center_x, center_y)
             
             if tid not in self.history:
                 self.history[tid] = []
@@ -75,11 +80,11 @@ class TrafficCounter(BaseAnalytics):
                         "object_id": tid,
                         "class_id": int(track.class_id),
                         "total_count": self.total_count,
-                        "location": [foot_x, foot_y]
+                        "location": [center_x, center_y]
                     })
                     
                     # Optional visual feedback: brief flash or marker
-                    cv2.circle(frame, (int(foot_x), int(foot_y)), 20, (0, 255, 0), -1)
+                    cv2.circle(frame, (int(center_x), int(center_y)), 20, (0, 255, 0), -1)
 
         # Cleanup old tracks
         dead_tracks = set(self.history.keys()) - current_track_ids

@@ -103,7 +103,9 @@ export const secondsOfDay = (d: Date) =>
   d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
 
 /** 55% animal, 30% person, 15% vehicle — what a rural cantonment perimeter actually sees. */
-function drawClass(rng: Rng): AlertClass {
+function drawClass(rng: Rng, cameraId: string): AlertClass {
+  if (cameraId === "CAM-05") return "person"; // Only people in Armoury Sector 4
+  
   const r = rng();
   if (r < 0.55) return "animal";
   if (r < 0.85) return "person";
@@ -114,7 +116,7 @@ function drawClass(rng: Rng): AlertClass {
 export function severityFor(cls: AlertClass, zone: Zone, cameraId: string): Severity {
   if (cls === "animal") return "low";
   if (cls === "person") {
-    if (cameraId === "CAM-12" || zone === "DEPOT") return "high";
+    if (cameraId === "CAM-12" || zone === "DEPOT" || cameraId === "CAM-05") return "high";
     if (zone === "PERIMETER EAST" || zone === "PERIMETER WEST") return "med";
     return "med";
   }
@@ -145,7 +147,7 @@ export function alertId(n: number) {
 function makeAlert(rng: Rng, t: number, n: number, live?: boolean): Alert {
   // Only CAM-05 has implemented behavior analytics for now
   const cam = CAMERAS.find((c) => c.id === "CAM-05")!;
-  const cls = drawClass(rng);
+  const cls = drawClass(rng, cam.id);
   const [lo, hi] = CONF[cls];
   return {
     id: alertId(n),

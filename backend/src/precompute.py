@@ -97,7 +97,13 @@ def run():
 
             # 1. Primary detection
             detections = detector.detect(frame)
-            filtered_detections = [d for d in detections if d.class_id in allowed_class_ids]
+            filtered_detections = []
+            for d in detections:
+                if d.class_id in allowed_class_ids:
+                    obj_class = str(class_names.get(d.class_id, "")).lower()
+                    min_conf = 0.30 if obj_class == "animal" else 0.40
+                    if d.confidence >= min_conf:
+                        filtered_detections.append(d)
             
             # 2. Tracking
             det_tuples = [(d.bbox, d.confidence, d.class_id) for d in filtered_detections]
@@ -123,7 +129,9 @@ def run():
                     if plate_crop.size > 0:
                         text = plate_ocr.recognize(plate_crop)
                         if text:
-                            plate_texts[track.track_id] = text
+                            text_clean = str(text).replace(" ", "")
+                            if len(text_clean) >= 6 and best_p.confidence >= 0.30:
+                                plate_texts[track.track_id] = text
 
             # 4. Generate Metadata
             detections_list = []

@@ -3,36 +3,71 @@
 import { useEffect, useState, useRef } from "react";
 import Hls from "hls.js";
 import { Icon } from "@/components/ui/Icon";
-import type { Camera } from "@/lib/gotham/model";
+import { secondsOfDay, type Camera } from "@/lib/gotham/model";
 import { useConsole } from "../ConsoleProvider";
 import { useClock } from "../hooks";
 import { MicroLabel, StatusDot } from "../primitives";
 
+const globalVideoTime = new Map<string, number>();
+const globalPrecomputedCache = new Map<string, any[]>();
+
 function DecoupledStream({ cam }: { cam: Camera }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Store the last 600 frames (approx 20 seconds) of metadata
-  const metadataBuffer = useRef<any[]>([]);
+  // Store the full precomputed data, initialized immediately from cache if available
+  const fullDataRef = useRef<any[] | null>(globalPrecomputedCache.get(cam.id) || null);
+  const { addAlert } = useConsole();
 
   useEffect(() => {
-    if (!cam.metadataUrl || !cam.aiEnabled) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const onLoadedMetadata = () => {
+      const savedTime = globalVideoTime.get(cam.id);
+      if (savedTime !== undefined && savedTime < video.duration) {
+        video.currentTime = savedTime;
+      }
+    };
     
-    const evtSource = new EventSource(cam.metadataUrl);
-    evtSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (typeof data.video_time_sec === 'number') {
-            metadataBuffer.current.push(data);
-            // Keep buffer size manageable
-            if (metadataBuffer.current.length > 600) {
-                metadataBuffer.current.shift();
-            }
-        }
-      } catch (e) {}
+    const onTimeUpdate = () => {
+      globalVideoTime.set(cam.id, video.currentTime);
     };
 
-    return () => evtSource.close();
-  }, [cam.metadataUrl, cam.aiEnabled]);
+    video.addEventListener("loadedmetadata", onLoadedMetadata);
+    video.addEventListener("timeupdate", onTimeUpdate);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", onLoadedMetadata);
+      video.removeEventListener("timeupdate", onTimeUpdate);
+    };
+  }, [cam.id]);
+
+  useEffect(() => {
+    if (!cam.aiEnabled || !cam.metadataUrl) return;
+    
+    // Check if we already have it in memory
+    if (globalPrecomputedCache.has(cam.id)) {
+      fullDataRef.current = globalPrecomputedCache.get(cam.id)!;
+      return;
+    }
+
+    // Construct the correct Python backend URL by replacing /metadata/ with /precomputed/
+    const precomputedUrl = cam.metadataUrl.replace('/metadata/', '/precomputed/');
+    
+    let active = true;
+    fetch(precomputedUrl)
+      .then(res => {
+        if (!res.ok) throw new Error("Not found");
+        return res.json();
+      })
+      .then(data => {
+        globalPrecomputedCache.set(cam.id, data);
+        if (active) fullDataRef.current = data;
+      })
+      .catch(e => console.error("Mock data fetch error for", cam.id, e));
+      
+    return () => { active = false; };
+  }, [cam.id, cam.aiEnabled, cam.metadataUrl]);
 
   useEffect(() => {
     let animationId: number;
@@ -40,6 +75,8 @@ function DecoupledStream({ cam }: { cam: Camera }) {
     const renderLoop = () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
+      const fullData = fullDataRef.current;
+      
       if (video && canvas) {
         const ctx = canvas.getContext("2d");
         if (ctx) {
@@ -50,47 +87,39 @@ function DecoupledStream({ cam }: { cam: Camera }) {
 
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-          if (cam.aiEnabled && metadataBuffer.current.length > 0) {
-            const buffer = metadataBuffer.current;
-            const duration = video.duration || 60;
+          if (cam.aiEnabled && fullData && fullData.length > 0) {
+            const currentTime = video.currentTime;
             
-            // Because the backend loops, video_time_sec goes to infinity. 
-            // We modulo it so it matches the video's local 0->duration time.
-            let latestBackendTime = buffer[buffer.length - 1].video_time_sec % duration;
-            
-            // 1. YouTube-style Buffering:
-            // If the video plays faster than the AI can process, pause the video and wait!
-            // If the AI is ahead of the video, let the video play smoothly.
-            if (Math.abs(video.currentTime - latestBackendTime) > 1.0) {
-                // Snap in either direction (if newly mounted or if backend loops mock data)
-                video.currentTime = latestBackendTime;
-            } else if (video.currentTime > latestBackendTime + 0.1) {
-                if (!video.paused) video.pause();
-            } else if (video.currentTime < latestBackendTime) {
-                if (video.paused) {
-                    const playPromise = video.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(() => {});
-                    }
-                }
+            // Fast binary search: fullData is chronologically ordered by video_time_sec
+            let low = 0;
+            let high = fullData.length - 1;
+            while (low <= high) {
+              const mid = (low + high) >> 1;
+              const midTime = fullData[mid].video_time_sec || 0;
+              if (midTime < currentTime) {
+                low = mid + 1;
+              } else {
+                high = mid - 1;
+              }
             }
-
-            // 2. Find the absolutely closest metadata to the current video time
-            let closestData = buffer[0];
-            let minDiff = Infinity;
-            for (let i = 0; i < buffer.length; i++) {
-                const diff = Math.abs((buffer[i].video_time_sec % duration) - video.currentTime);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    closestData = buffer[i];
-                }
-            }
+            const idx1 = Math.max(0, Math.min(high, fullData.length - 1));
+            const idx2 = Math.max(0, Math.min(low, fullData.length - 1));
+            const diff1 = Math.abs((fullData[idx1].video_time_sec || 0) - currentTime);
+            const diff2 = Math.abs((fullData[idx2].video_time_sec || 0) - currentTime);
+            const closestData = diff1 <= diff2 ? fullData[idx1] : fullData[idx2];
 
             const boxes = closestData.detections;
             
-            // Only draw if we found a match within a reasonable threshold (0.5s)
-            if (boxes && minDiff < 0.5) {
+            // Always draw since video is perfectly synced with the lookup
+            if (boxes) {
               boxes.forEach((box: any) => {
+                const objClass = box.class?.toLowerCase() || 'obj';
+                const confidence = box.confidence || 0;
+                
+                // Thresholds: 30% for animals, 40% for everything else
+                const minConfidence = objClass === 'animal' ? 0.30 : 0.40;
+                if (confidence < minConfidence) return;
+
                 let x = box.x;
                 let y = box.y;
                 let w = box.w;
@@ -99,7 +128,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                 if (h < 0) { y += h; h = -h; }
                 
                 // Tactical UI Colors
-                const isVehicle = ['car', 'truck', 'bus', 'motorcycle'].includes(box.class?.toLowerCase());
+                const isVehicle = ['car', 'truck', 'bus', 'motorcycle'].includes(objClass);
                 // Sky blue for vehicles, amber for others
                 const strokeColor = isVehicle ? 'rgba(56, 189, 248, 0.9)' : 'rgba(251, 191, 36, 0.9)'; 
                 const bgColor = isVehicle ? 'rgba(12, 74, 110, 0.85)' : 'rgba(120, 53, 15, 0.85)';
@@ -123,7 +152,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                 ctx.beginPath(); ctx.moveTo(x + w, y + h - cornerLen); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - cornerLen, y + h); ctx.stroke();
                 
                 // 3. Label text (e.g. "CAR · 85%")
-                const confPercent = Math.round((box.confidence || 0) * 100);
+                const confPercent = Math.round(confidence * 100);
                 const className = (box.class || 'OBJ').toUpperCase();
                 const mainLabel = `${className} · ${confPercent}%`;
                 
@@ -140,18 +169,24 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                 ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
                 ctx.fillText(mainLabel, x + 5, y - 5);
                 
-                // 6. Distinct License Plate Badge (if detected)
-                if (box.plate) {
-                    const plateLabel = box.plate;
+                let displayPlate = box.plate;
+                if (displayPlate) {
+                   const plateStr = String(displayPlate).replace(/\s/g, '');
+                   if (plateStr.length < 6) {
+                      displayPlate = undefined;
+                   }
+                }
+
+                if (displayPlate) {
                     ctx.font = `700 ${fontSize + 2}px monospace`;
-                    const pWidth = ctx.measureText(plateLabel).width;
+                    const pWidth = ctx.measureText(displayPlate).width;
                     
                     // Draw at the bottom of the bounding box
                     ctx.fillStyle = "rgba(251, 191, 36, 0.95)"; // Bright amber
                     ctx.fillRect(x, y + h, pWidth + 16, textHeight + 12);
                     
                     ctx.fillStyle = "#000000"; // Black text
-                    ctx.fillText(plateLabel, x + 8, y + h + textHeight + 5);
+                    ctx.fillText(displayPlate, x + 8, y + h + textHeight + 5);
                 }
               });
             }
@@ -186,34 +221,34 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                 ctx.fillText("▼ COUNTING LINE", lx - 50, ly);
 
                 // Draw running traffic count badge (top-left HUD)
+                // Now that the backend injects this persistently, we can always render it
                 const countEvent = closestData.events?.find((e: any) => e.type === 'traffic_count');
                 const totalCount = countEvent?.total_count ?? 0;
-                if (totalCount > 0) {
-                  const scale = Math.max(canvas.width / 960, 1); // scale relative to a 960px reference
-                  const badgeW = Math.round(140 * scale);
-                  const badgeH = Math.round(56 * scale);
-                  const bx = Math.round(14 * scale);
-                  const by = Math.round(14 * scale);
-                  const pad = Math.round(12 * scale);
-                  // Glassy dark background
-                  ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-                  ctx.beginPath();
-                  ctx.roundRect(bx, by, badgeW, badgeH, 8);
-                  ctx.fill();
-                  ctx.strokeStyle = "rgba(0, 200, 255, 0.6)";
-                  ctx.lineWidth = 1;
-                  ctx.beginPath();
-                  ctx.roundRect(bx, by, badgeW, badgeH, 8);
-                  ctx.stroke();
-                  // Label
-                  ctx.font = `bold ${Math.round(14 * scale)}px monospace`;
-                  ctx.fillStyle = "#00c8ff";
-                  ctx.fillText("VEHICLES", bx + pad, by + Math.round(22 * scale));
-                  // Count number
-                  ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
-                  ctx.fillStyle = "#ffffff";
-                  ctx.fillText(String(totalCount), bx + pad, by + Math.round(48 * scale));
-                }
+                
+                const scale = Math.max(canvas.width / 960, 1); // scale relative to a 960px reference
+                const badgeW = Math.round(140 * scale);
+                const badgeH = Math.round(56 * scale);
+                const bx = Math.round(14 * scale);
+                const by = Math.round(14 * scale);
+                const pad = Math.round(12 * scale);
+                // Glassy dark background
+                ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+                ctx.beginPath();
+                ctx.roundRect(bx, by, badgeW, badgeH, 8);
+                ctx.fill();
+                ctx.strokeStyle = "rgba(0, 200, 255, 0.6)";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(bx, by, badgeW, badgeH, 8);
+                ctx.stroke();
+                // Label
+                ctx.font = `bold ${Math.round(14 * scale)}px monospace`;
+                ctx.fillStyle = "#00c8ff";
+                ctx.fillText("VEHICLES", bx + pad, by + Math.round(22 * scale));
+                // Count number
+                ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText(String(totalCount), bx + pad, by + Math.round(48 * scale));
               } else if (cam.analytics.type === 'intrusion_zone' && cam.analytics.zone) {
                 const pts = cam.analytics.zone;
                 ctx.beginPath();
@@ -275,6 +310,26 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                 }
               }
             }
+
+            // Sync alerts natively to the sidebar feed
+            if (closestData.events) {
+              closestData.events.forEach((ev: any) => {
+                if (ev.type === 'intrusion') {
+                  const alertId = `${cam.id}-evt-intrude-${ev.object_id}`;
+                  addAlert({
+                    id: alertId,
+                    t: secondsOfDay(new Date()),
+                    cameraId: cam.id,
+                    zone: cam.zone,
+                    cls: "person",
+                    severity: "high",
+                    confidence: 0.92,
+                    status: "new",
+                    live: true,
+                  });
+                }
+              });
+            }
             
           }
         }
@@ -284,7 +339,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
     
     animationId = requestAnimationFrame(renderLoop);
     return () => cancelAnimationFrame(animationId);
-  }, [cam.aiEnabled]);
+  }, [cam, addAlert]);
 
   return (
     <>

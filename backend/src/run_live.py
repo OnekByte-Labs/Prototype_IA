@@ -161,6 +161,7 @@ def main():
     logger.info("Entering main inference loop (Ctrl+C to stop)…")
     active_streams = list(queues.keys())
     fps_counters: Dict[str, List[float]] = {sid: [] for sid in active_streams}
+    recent_events_map: Dict[str, List[dict]] = {}
 
     try:
         while True:
@@ -180,6 +181,10 @@ def main():
                 # Handle loop reset
                 if packet.loop_reset:
                     trackers[sid].reset_on_loop()
+                    if sid in analytics_engines:
+                        if hasattr(analytics_engines[sid], 'reset'):
+                            analytics_engines[sid].reset()
+                            
                     log_event({
                         "type": "loop_reset",
                         "stream_id": sid,
@@ -195,7 +200,10 @@ def main():
                     filtered_detections = []
                     for d in detections:
                         if d.class_id in allowed_class_ids:
-                            filtered_detections.append(d)
+                            obj_class = str(class_names.get(d.class_id, "")).lower()
+                            min_conf = 0.30 if obj_class == "animal" else 0.40
+                            if d.confidence >= min_conf:
+                                filtered_detections.append(d)
                     detections = filtered_detections
 
                     # ── 2. Tracking ──
@@ -240,32 +248,59 @@ def main():
                             text = ocr.recognize(plate_crop)
 
                             if text:
-                                plate_texts[track.track_id] = text
-                                # Convert plate bbox to frame coordinates
-                                plate_boxes_frame[track.track_id] = (
-                                    vx1 + px1c, vy1 + py1c,
-                                    vx1 + px2c, vy1 + py2c,
-                                )
+                                text_clean = str(text).replace(" ", "")
+                                if len(text_clean) >= 6 and best_plate.confidence >= 0.30:
+                                    plate_texts[track.track_id] = text
+                                    # Convert plate bbox to frame coordinates
+                                    plate_boxes_frame[track.track_id] = (
+                                        vx1 + px1c, vy1 + py1c,
+                                        vx1 + px2c, vy1 + py2c,
+                                    )
 
-                                # Log plate event
-                                log_event({
-                                    "type": "plate",
-                                    "stream_id": sid,
-                                    "frame_id": packet.frame_id,
-                                    "object_id": track.track_id,
-                                    "class": class_names.get(track.class_id, "unknown"),
-                                    "plate_bbox": [vx1 + px1c, vy1 + py1c, vx1 + px2c, vy1 + py2c],
-                                    "plate_text": text,
-                                    "plate_confidence": best_plate.confidence,
-                                    "ts": datetime.now(timezone.utc).isoformat(),
-                                })
+                                    # Log plate event
+                                    log_event({
+                                        "type": "plate",
+                                        "stream_id": sid,
+                                        "frame_id": packet.frame_id,
+                                        "object_id": track.track_id,
+                                        "class": class_names.get(track.class_id, "unknown"),
+                                        "plate_bbox": [vx1 + px1c, vy1 + py1c, vx1 + px2c, vy1 + py2c],
+                                        "plate_text": text,
+                                        "plate_confidence": best_plate.confidence,
+                                        "ts": datetime.now(timezone.utc).isoformat(),
+                                    })
 
                     # ── 3.5 Run Custom Analytics ──
+                    active_events = []
                     if sid in analytics_engines:
-                        analytics_events = analytics_engines[sid].process_frame(frame, confirmed_tracks, packet.frame_id)
+                        engine = analytics_engines[sid]
+                        analytics_events = engine.process_frame(frame, confirmed_tracks, packet.frame_id)
                         for ev in analytics_events:
                             ev["ts"] = datetime.now(timezone.utc).isoformat()
                             log_event(ev)
+                            
+                            # Add to TTL buffer
+                            if sid not in recent_events_map:
+                                recent_events_map[sid] = []
+                            recent_events_map[sid].append({"event": ev, "ttl": 90})
+
+                        # Update TTLs
+                        next_recent = []
+                        for item in recent_events_map.get(sid, []):
+                            active_events.append(item["event"])
+                            item["ttl"] -= 1
+                            if item["ttl"] > 0:
+                                next_recent.append(item)
+                        recent_events_map[sid] = next_recent
+
+                        # Persistent traffic count
+                        if hasattr(engine, 'total_count'):
+                            has_count = any(e.get("type") == "traffic_count" for e in active_events)
+                            if not has_count:
+                                active_events.append({
+                                    "type": "traffic_count",
+                                    "total_count": engine.total_count
+                                })
 
                     # ── 4. Generate Metadata ──
                     detections_list = []
@@ -288,6 +323,7 @@ def main():
                         "video_time_sec": packet.video_time_sec,
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                         "detections": detections_list,
+                        "events": active_events,
                     }
 
                     # Log detection events (sample every 30 frames to avoid flood)

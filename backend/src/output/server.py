@@ -151,6 +151,30 @@ def create_app(
         ai_config.set_enabled(internal_id, req.enabled)
         return {"success": True, "aiEnabled": ai_config.is_enabled(internal_id)}
 
+    precomputed_cache = {}
+
+    @app.get("/precomputed/{stream_id}")
+    def get_precomputed(stream_id: str):
+        internal_id = stream_id.lower().replace("cam-", "cam_")
+        import os
+        from fastapi import HTTPException
+        from fastapi.responses import Response
+        
+        if internal_id in precomputed_cache:
+            return Response(content=precomputed_cache[internal_id], media_type="application/json")
+            
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        precomputed_path = os.path.join(base_dir, "backend", "outputs", "precomputed", f"{internal_id}.json")
+        
+        if not os.path.exists(precomputed_path):
+            raise HTTPException(status_code=404, detail="Not found")
+            
+        with open(precomputed_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            
+        precomputed_cache[internal_id] = content
+        return Response(content=content, media_type="application/json")
+
     @app.get("/metadata/{stream_id}")
     async def stream_metadata(stream_id: str):
         internal_id = stream_id.lower().replace("cam-", "cam_")
@@ -179,6 +203,11 @@ def create_app(
 
                 # Loop forever at exactly 30 FPS
                 while True:
+                    # Reset all analytics engines at the start of the video loop
+                    for engine in analytics_engines.values():
+                        if hasattr(engine, 'reset'):
+                            engine.reset()
+
                     for frame_data in all_frames:
                         if not ai_config.is_enabled(stream_id):
                             # AI disabled mock data
@@ -186,10 +215,11 @@ def create_app(
                         else:
                             # Dynamically compute analytics!
                             if internal_id in analytics_engines:
+                                engine = analytics_engines[internal_id]
                                 tracks = [MockTrack(d) for d in frame_data.get("detections", []) if "id" in d]
                                 # Provide dummy frame of correct size, not used by traffic/intrusion currently
                                 dummy_frame = np.zeros((1080, 1920, 3), dtype=np.uint8) 
-                                new_events = analytics_engines[internal_id].process_frame(dummy_frame, tracks, frame_data["frame_id"])
+                                new_events = engine.process_frame(dummy_frame, tracks, frame_data["frame_id"])
                                 
                                 if new_events:
                                     for ev in new_events:
@@ -203,6 +233,16 @@ def create_app(
                                     if item["ttl"] > 0:
                                         next_recent.append(item)
                                 recent_events = next_recent
+
+                                # Always inject a generic traffic_count event if this is a traffic counter
+                                # so the UI badge stays visible
+                                if hasattr(engine, 'total_count'):
+                                    has_count_event = any(e.get("type") == "traffic_count" for e in active_events)
+                                    if not has_count_event:
+                                        active_events.append({
+                                            "type": "traffic_count",
+                                            "total_count": engine.total_count
+                                        })
 
                                 frame_data["events"] = active_events
                                     

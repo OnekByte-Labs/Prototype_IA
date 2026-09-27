@@ -18,6 +18,8 @@ class IntrusionDetector(BaseAnalytics):
         buffer_px = config.get("buffer_px", 0)
         if buffer_px > 0:
             self.detection_zone = self.intrusion_zone.buffer(-buffer_px)
+            if self.detection_zone.is_empty:
+                self.detection_zone = self.intrusion_zone
         else:
             self.detection_zone = self.intrusion_zone
             
@@ -28,6 +30,10 @@ class IntrusionDetector(BaseAnalytics):
         
         # Keep track of objects we've already alerted on to prevent alert spam
         self.alerted_ids = set()
+
+    def reset(self):
+        self.frames_in_zone.clear()
+        self.alerted_ids.clear()
 
     def process_frame(self, frame: np.ndarray, tracks: list, frame_id: int) -> list:
         events = []

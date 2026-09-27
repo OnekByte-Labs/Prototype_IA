@@ -41,6 +41,8 @@ type ConsoleState = {
   degraded: string[];
   /** Toggle AI for a specific camera */
   toggleAi: (id: string, enabled: boolean) => Promise<void>;
+  /** Add a real alert to the feed */
+  addAlert: (a: Alert) => void;
 };
 
 const Ctx = createContext<ConsoleState | null>(null);
@@ -102,26 +104,15 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     mutedRef.current = muted;
   }, [muted]);
 
-  /* ---- live alert feed: one new event every 15–25s ---- */
-  useEffect(() => {
-    if (!liveOn) return;
-    let timer: ReturnType<typeof setTimeout>;
-
-    const schedule = () => {
-      timer = setTimeout(
-        () => {
-          const a = nextAlert(rng.current, new Date());
-          setAlerts((prev) => [a, ...prev]);
-          if (a.severity === "high" && !mutedRef.current) beep();
-          schedule();
-        },
-        intRange(rng.current, 15, 25) * 1000,
-      );
-    };
-
-    schedule();
-    return () => clearTimeout(timer);
-  }, [liveOn]);
+  /* ---- live alert feed: disabled fake generation, now relies on addAlert ---- */
+  const addAlert = useCallback((a: Alert) => {
+    setAlerts((prev) => {
+      // Prevent duplicates if the video scrubs backwards
+      if (prev.some(p => p.id === a.id)) return prev;
+      if (a.severity === "high" && !mutedRef.current) beep();
+      return [a, ...prev];
+    });
+  }, []);
 
   /* ---- health simulation removed ---- */
 
@@ -267,8 +258,9 @@ interface ApiCamera {
       cameras,
       degraded,
       toggleAi,
+      addAlert,
     }),
-    [alerts, unacked, ack, ackMany, dispatch, muted, toggleMute, liveOn, toggleLive, cameras, degraded, toggleAi],
+    [alerts, unacked, ack, ackMany, dispatch, muted, toggleMute, liveOn, toggleLive, cameras, degraded, toggleAi, addAlert],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

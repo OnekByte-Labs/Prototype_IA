@@ -14,3 +14,9 @@ class BaseAnalytics:
         and return a list of triggered event dictionaries.
         """
         return []
+
+    def reset(self):
+        """
+        Reset internal state (e.g. when video loops)
+        """
+        pass
