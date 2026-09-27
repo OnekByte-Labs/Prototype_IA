@@ -203,6 +203,34 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                     ctx.fillStyle = "#000000"; // Black text
                     ctx.fillText(displayPlate, x + 8, y + h + textHeight + 5);
                 }
+
+                // In CAM-09, display the exact center point and coordinate tag used by IntrusionDetector
+                if (cam.id === 'CAM-09') {
+                  const cx = Math.round(x + w / 2);
+                  const cy = Math.round(y + h / 2);
+                  const coordTag = `PT: [${cx}, ${cy}]`;
+
+                  // 1. Center target dot
+                  ctx.beginPath();
+                  ctx.arc(cx, cy, Math.max(3.5, canvas.width / 450), 0, Math.PI * 2);
+                  ctx.fillStyle = "#ef4444";
+                  ctx.fill();
+                  ctx.strokeStyle = "#ffffff";
+                  ctx.lineWidth = 1;
+                  ctx.stroke();
+
+                  // 2. Coordinate badge below bounding box
+                  const subFontSize = Math.max(9, canvas.width / 150);
+                  ctx.font = `bold ${subFontSize}px monospace`;
+                  const cWidth = ctx.measureText(coordTag).width;
+                  ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+                  ctx.fillRect(x, y + h + 3, cWidth + 10, subFontSize + 6);
+                  ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
+                  ctx.lineWidth = 1;
+                  ctx.strokeRect(x, y + h + 3, cWidth + 10, subFontSize + 6);
+                  ctx.fillStyle = "#38bdf8"; // bright cyan text
+                  ctx.fillText(coordTag, x + 5, y + h + subFontSize + 5);
+                }
               });
             }
 
