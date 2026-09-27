@@ -120,6 +120,17 @@ def main():
     server_cfg = pipeline_cfg["server"]
     run_server(frame_store, event_store, ai_config, stream_list, host=server_cfg["host"], port=server_cfg["port"], mode="live")
 
+    # ── Initialize Analytics ──
+    from src.analytics import create_analytics
+    analytics_engines = {}
+    if "analytics" in pipeline_cfg:
+        for sid, cfg in pipeline_cfg["analytics"].items():
+            engine = create_analytics(sid, cfg)
+            if engine:
+                analytics_engines[sid] = engine
+                logger.info("Initialized analytics %s for stream %s", cfg.get("type"), sid)
+
+
     # ── Initialize per-stream readers and trackers ──
     queues: Dict[str, Queue] = {}
     readers: List[VideoReader] = []
@@ -248,6 +259,13 @@ def main():
                                     "plate_confidence": best_plate.confidence,
                                     "ts": datetime.now(timezone.utc).isoformat(),
                                 })
+
+                    # ── 3.5 Run Custom Analytics ──
+                    if sid in analytics_engines:
+                        analytics_events = analytics_engines[sid].process_frame(frame, confirmed_tracks, packet.frame_id)
+                        for ev in analytics_events:
+                            ev["ts"] = datetime.now(timezone.utc).isoformat()
+                            log_event(ev)
 
                     # ── 4. Generate Metadata ──
                     detections_list = []

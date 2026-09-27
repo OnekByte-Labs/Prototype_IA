@@ -30,10 +30,11 @@ export type Camera = {
   mjpegUrl?: string;
   metadataUrl?: string;
   aiEnabled?: boolean;
+  analytics?: any;
 };
 
 export const CAMERAS: Camera[] = [
-  { id: "CAM-01", name: "MAIN GATE", zone: "HQ COMPLEX", online: true, ip: "10.142.12.101", model: "AXIS Q6135-LE", firmware: "11.8.42", resolution: "1920×1080", fps: 60, sensitivity: 72, recording: true, uptime: 99.98 },
+  { id: "CAM-01", name: "MAIN GATE", zone: "HQ COMPLEX", online: true, ip: "10.142.12.101", model: "AXIS Q6135-LE", firmware: "11.8.42", resolution: "3840×2160", fps: 60, sensitivity: 72, recording: true, uptime: 99.98 },
   { id: "CAM-02", name: "PERIMETER EAST", zone: "PERIMETER EAST", online: true, ip: "10.142.12.103", model: "AXIS P3245-LV", firmware: "10.2.1", resolution: "1920×1080", fps: 30, sensitivity: 64, recording: true, uptime: 99.91 },
   { id: "CAM-03", name: "CHECKPOINT ALPHA", zone: "HQ COMPLEX", online: true, ip: "10.142.14.107", model: "BOSCH AUTODOME 7000i", firmware: "7.82.01", resolution: "3840×2160", fps: 30, sensitivity: 80, recording: true, uptime: 99.94 },
   { id: "CAM-04", name: "PERIMETER SOUTH", zone: "DEPOT", online: true, ip: "10.142.20.109", model: "FLIR FC-644 ID", firmware: "4.2.1", resolution: "1920×1080", fps: 30, sensitivity: 88, recording: true, uptime: 98.12 },
@@ -41,7 +42,7 @@ export const CAMERAS: Camera[] = [
   { id: "CAM-06", name: "VEHICLE DEPOT", zone: "PERIMETER WEST", online: true, ip: "10.142.16.115", model: "BOSCH MIC IP 7100i", firmware: "7.80.00", resolution: "1920×1080", fps: 30, sensitivity: 70, recording: true, uptime: 74.2 },
   { id: "CAM-07", name: "HQ ENTRANCE", zone: "HQ COMPLEX", online: true, ip: "10.142.12.116", model: "AXIS P3245-LV", firmware: "10.2.1", resolution: "1920×1080", fps: 30, sensitivity: 58, recording: true, uptime: 99.91 },
   { id: "CAM-08", name: "MOTOR POOL", zone: "MOTOR POOL", online: true, ip: "10.142.30.122", model: "HANWHA XNV-8080R", firmware: "2.01.0", resolution: "1920×1080", fps: 30, sensitivity: 61, recording: true, uptime: 99.85 },
-  { id: "CAM-09", name: "PERIMETER W", zone: "PERIMETER WEST", online: false, ip: "10.142.16.115", model: "BOSCH MIC IP 7100i", firmware: "7.80.00", resolution: "1920×1080", fps: 30, sensitivity: 70, recording: false, uptime: 74.2 },
+  { id: "CAM-09", name: "PERIMETER W", zone: "PERIMETER WEST", online: false, ip: "10.142.16.115", model: "BOSCH MIC IP 7100i", firmware: "7.80.00", resolution: "1920×1080", fps: 30, sensitivity: 70, recording: true, uptime: 74.2 },
 ];
 
 export const cameraById = (id: string) => CAMERAS.find((c) => c.id === id);
@@ -142,8 +143,8 @@ export function alertId(n: number) {
 }
 
 function makeAlert(rng: Rng, t: number, n: number, live?: boolean): Alert {
-  const online = CAMERAS.filter((c) => c.online);
-  const cam = pick(rng, online);
+  // Only CAM-05 has implemented behavior analytics for now
+  const cam = CAMERAS.find((c) => c.id === "CAM-05")!;
   const cls = drawClass(rng);
   const [lo, hi] = CONF[cls];
   return {

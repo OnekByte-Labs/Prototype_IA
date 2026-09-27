@@ -89,6 +89,8 @@ def create_app(
     event_store: EventStore,
     ai_config: AIConfigStore,
     stream_configs: list,
+    pipeline_cfg: dict,
+    analytics_engines: dict,
     mode: str = "mock"
 ) -> FastAPI:
     """Create and configure the FastAPI app."""
@@ -119,6 +121,10 @@ def create_app(
                 "online": True,
                 "aiEnabled": ai_config.is_enabled(sid),
             }
+            # Inject analytics config if present
+            if "analytics" in pipeline_cfg and sid in pipeline_cfg["analytics"]:
+                cam_data["analytics"] = pipeline_cfg["analytics"][sid]
+            
             if mode == "live":
                 cam_data["mjpegUrl"] = f"{base_url}/stream/{sid}"
                 cam_data["metadataUrl"] = f"{base_url}/metadata/{sid}"
@@ -162,6 +168,15 @@ def create_app(
                 if not all_frames:
                     return
                 
+                # Mock Track object to feed into analytics
+                class MockTrack:
+                    def __init__(self, d):
+                        self.track_id = d["id"]
+                        self.class_id = 0 # Not strictly needed for logic, usually string mapped
+                        self.bbox = [d["x"], d["y"], d["x"]+d["w"], d["y"]+d["h"]]
+
+                recent_events = []
+
                 # Loop forever at exactly 30 FPS
                 while True:
                     for frame_data in all_frames:
@@ -169,6 +184,28 @@ def create_app(
                             # AI disabled mock data
                             yield f"data: {json.dumps({'frame_id': frame_data['frame_id'], 'video_time_sec': frame_data['video_time_sec'], 'detections': []})}\n\n"
                         else:
+                            # Dynamically compute analytics!
+                            if internal_id in analytics_engines:
+                                tracks = [MockTrack(d) for d in frame_data.get("detections", []) if "id" in d]
+                                # Provide dummy frame of correct size, not used by traffic/intrusion currently
+                                dummy_frame = np.zeros((1080, 1920, 3), dtype=np.uint8) 
+                                new_events = analytics_engines[internal_id].process_frame(dummy_frame, tracks, frame_data["frame_id"])
+                                
+                                if new_events:
+                                    for ev in new_events:
+                                        recent_events.append({"event": ev, "ttl": 90}) # Show for 3 seconds (90 frames)
+                                
+                                active_events = []
+                                next_recent = []
+                                for item in recent_events:
+                                    active_events.append(item["event"])
+                                    item["ttl"] -= 1
+                                    if item["ttl"] > 0:
+                                        next_recent.append(item)
+                                recent_events = next_recent
+
+                                frame_data["events"] = active_events
+                                    
                             yield f"data: {json.dumps(frame_data)}\n\n"
                         await asyncio.sleep(1 / 30.0)
             else:
@@ -213,7 +250,23 @@ def run_server(
     mode: str = "mock",
 ):
     """Start the FastAPI output server in a daemon thread via Uvicorn."""
-    app = create_app(frame_store, event_store, ai_config, stream_configs, mode=mode)
+    import yaml
+    import os
+    # __file__ is backend/src/output/server.py
+    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    with open(os.path.join(backend_dir, "configs", "pipeline.yaml"), "r", encoding="utf-8") as f:
+        pipeline_cfg = yaml.safe_load(f)
+
+    # Initialize analytics engines dynamically for Mock mode
+    from src.analytics import create_analytics
+    analytics_engines = {}
+    if "analytics" in pipeline_cfg:
+        for asid, acfg in pipeline_cfg["analytics"].items():
+            engine = create_analytics(asid, acfg)
+            if engine:
+                analytics_engines[asid] = engine
+
+    app = create_app(frame_store, event_store, ai_config, stream_configs, pipeline_cfg, analytics_engines, mode=mode)
     
     def start_uvicorn():
         uvicorn.run(app, host=host, port=port, log_level="error")

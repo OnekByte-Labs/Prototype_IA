@@ -246,6 +246,7 @@ interface ApiCamera {
         mjpegUrl: liveData?.mjpegUrl,
         metadataUrl: liveData?.metadataUrl,
         aiEnabled: liveData?.aiEnabled,
+        analytics: (liveData as any)?.analytics,
       };
     });
   }, [degraded, apiCameras]);

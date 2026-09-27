@@ -155,6 +155,127 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                 }
               });
             }
+
+            // Draw Custom Analytics Zones/Lines if configured
+            if (cam.analytics) {
+              const resParts = cam.resolution ? cam.resolution.split("×") : ["1920", "1080"];
+              const origW = parseInt(resParts[0], 10) || 1920;
+              const origH = parseInt(resParts[1], 10) || 1080;
+              const scaleX = canvas.width / origW;
+              const scaleY = canvas.height / origH;
+              
+              if (cam.analytics.type === 'traffic_count' && cam.analytics.line) {
+                const pts = cam.analytics.line;
+                ctx.beginPath();
+                ctx.moveTo(pts[0][0] * scaleX, pts[0][1] * scaleY);
+                for (let i = 1; i < pts.length; i++) {
+                  ctx.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
+                }
+                ctx.strokeStyle = "rgba(0, 200, 255, 0.9)";
+                ctx.lineWidth = 3;
+                ctx.setLineDash([10, 6]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Draw "COUNTING LINE" label at midpoint
+                const midIdx = Math.floor(pts.length / 2);
+                const lx = pts[midIdx][0] * scaleX;
+                const ly = pts[midIdx][1] * scaleY - 12;
+                ctx.font = "bold 11px monospace";
+                ctx.fillStyle = "rgba(0, 200, 255, 0.9)";
+                ctx.fillText("▼ COUNTING LINE", lx - 50, ly);
+
+                // Draw running traffic count badge (top-left HUD)
+                const countEvent = closestData.events?.find((e: any) => e.type === 'traffic_count');
+                const totalCount = countEvent?.total_count ?? 0;
+                if (totalCount > 0) {
+                  const scale = Math.max(canvas.width / 960, 1); // scale relative to a 960px reference
+                  const badgeW = Math.round(140 * scale);
+                  const badgeH = Math.round(56 * scale);
+                  const bx = Math.round(14 * scale);
+                  const by = Math.round(14 * scale);
+                  const pad = Math.round(12 * scale);
+                  // Glassy dark background
+                  ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+                  ctx.beginPath();
+                  ctx.roundRect(bx, by, badgeW, badgeH, 8);
+                  ctx.fill();
+                  ctx.strokeStyle = "rgba(0, 200, 255, 0.6)";
+                  ctx.lineWidth = 1;
+                  ctx.beginPath();
+                  ctx.roundRect(bx, by, badgeW, badgeH, 8);
+                  ctx.stroke();
+                  // Label
+                  ctx.font = `bold ${Math.round(14 * scale)}px monospace`;
+                  ctx.fillStyle = "#00c8ff";
+                  ctx.fillText("VEHICLES", bx + pad, by + Math.round(22 * scale));
+                  // Count number
+                  ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
+                  ctx.fillStyle = "#ffffff";
+                  ctx.fillText(String(totalCount), bx + pad, by + Math.round(48 * scale));
+                }
+              } else if (cam.analytics.type === 'intrusion_zone' && cam.analytics.zone) {
+                const pts = cam.analytics.zone;
+                ctx.beginPath();
+                ctx.moveTo(pts[0][0] * scaleX, pts[0][1] * scaleY);
+                for (let i = 1; i < pts.length; i++) {
+                  ctx.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
+                }
+                ctx.closePath();
+                
+                const hasIntrusion = closestData.events?.some((e: any) => e.type === 'intrusion');
+                const zScale = Math.max(canvas.width / 960, 1);
+                
+                if (hasIntrusion) {
+                  // RED alert zone — matches screenshot style but red
+                  ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
+                  ctx.fill();
+                  ctx.strokeStyle = "rgba(255, 0, 0, 0.9)";
+                  ctx.lineWidth = 3;
+                  ctx.stroke();
+                  
+                  // "INTRUSION ZONE" label inside polygon
+                  const labelX = pts[0][0] * scaleX + Math.round(20 * scaleX);
+                  const labelY = (pts[0][1] * scaleY + pts[pts.length - 1][1] * scaleY) / 2;
+                  ctx.font = `bold ${Math.round(18 * zScale)}px monospace`;
+                  ctx.fillStyle = "rgba(255, 60, 60, 0.9)";
+                  ctx.fillText("INTRUSION ZONE", labelX, labelY);
+                  
+                  // Flashing ALERT banner at top
+                  const flash = Math.floor(Date.now() / 500) % 2 === 0;
+                  if (flash) {
+                    const bannerW = Math.round(260 * zScale);
+                    const bannerH = Math.round(40 * zScale);
+                    const bx = (canvas.width - bannerW) / 2;
+                    const by = Math.round(12 * zScale);
+                    ctx.fillStyle = "rgba(220, 0, 0, 0.9)";
+                    ctx.beginPath();
+                    ctx.roundRect(bx, by, bannerW, bannerH, 8);
+                    ctx.fill();
+                    ctx.font = `bold ${Math.round(16 * zScale)}px monospace`;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.textAlign = "center";
+                    ctx.fillText("⚠ INTRUSION ALERT", canvas.width / 2, by + Math.round(26 * zScale));
+                    ctx.textAlign = "start";
+                  }
+                } else {
+                  // Green safe zone — matches screenshot exactly
+                  ctx.fillStyle = "rgba(0, 255, 0, 0.25)";
+                  ctx.fill();
+                  ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
+                  ctx.lineWidth = 2;
+                  ctx.stroke();
+                  
+                  // "INTRUSION ZONE" label inside polygon (matches screenshot)
+                  const labelX = pts[0][0] * scaleX + Math.round(20 * scaleX);
+                  const labelY = (pts[0][1] * scaleY + pts[pts.length - 1][1] * scaleY) / 2;
+                  ctx.font = `bold ${Math.round(18 * zScale)}px monospace`;
+                  ctx.fillStyle = "rgba(0, 255, 0, 0.9)";
+                  ctx.fillText("INTRUSION ZONE", labelX, labelY);
+                }
+              }
+            }
+            
           }
         }
       }

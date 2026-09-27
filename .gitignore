@@ -45,6 +45,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 backend/venv/
-backend/outputs/
+# allow tracking of outputs/precomputed
+backend/outputs/events.jsonl
 .pytest_cache/
 skills/

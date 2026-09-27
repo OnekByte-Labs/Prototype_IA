@@ -11,7 +11,8 @@ const CAM_FILES: Record<string, string> = {
   "cam_05": "Robbery.mp4",
   "cam_06": "Traffic Control CCTV.mp4",
   "cam_07": "pedestrian_2.mp4",
-  "cam_08": "person-bicycle-car-detection.mp4"
+  "cam_08": "person-bicycle-car-detection.mp4",
+  "cam_09": "feed-worker-zone-intrusion.mp4"
 };
 
 export async function GET(

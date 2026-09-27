@@ -15,3 +15,24 @@ models:
 server:
   host: "0.0.0.0"
   port: 5556
+
+analytics:
+  cam_01:
+    type: traffic_count
+    line:
+      - [100, 1700]
+      - [1850, 1200]
+      - [3700, 1400]
+  cam_09:
+    type: intrusion_zone
+    zone:
+      - [20, 80]
+      - [730, 80]
+      - [620, 600]
+      - [380, 780]
+      - [20, 700]
+    # Detection uses a 30px inward buffer to avoid near-miss false triggers
+    buffer_px: 30
+    required_consecutive_frames: 8
+
+
