@@ -1,3 +1,4 @@
+
 // Mock data copied verbatim from the Stitch screen "ISCC Main Command Dashboard - 3-Zone Redesign".
 
 export type Kpi = {
@@ -17,19 +18,9 @@ export type Camera = {
   id: string;
   label: string;
   online: boolean;
+  mjpegUrl?: string;
 };
 
-export const cameras: Camera[] = [
-  { id: "CAM-01", label: "CAM-01 · MAIN GATE", online: true },
-  { id: "CAM-02", label: "CAM-02 · PERIMETER N", online: true },
-  { id: "CAM-03", label: "CAM-03 · CHECKPOINT ALPHA", online: true },
-  { id: "CAM-07", label: "CAM-07 · PERIMETER E", online: true },
-  { id: "CAM-09", label: "CAM-09 · AMMUNITION DUMP", online: true },
-  { id: "CAM-12", label: "CAM-12 · ARMOURY SECTOR 4", online: true },
-  { id: "CAM-14", label: "CAM-14 · VEHICLE DEPOT", online: true },
-  { id: "CAM-15", label: "CAM-15 · PERIMETER W", online: false },
-  { id: "CAM-16", label: "CAM-16 · BARRACKS ACCESS", online: true },
-];
 
 export type HourBar = {
   hour: string;

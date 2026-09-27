@@ -1,6 +1,7 @@
 import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
-import { cameras, type Camera } from "@/lib/dashboard-data";
+import type { Camera } from "@/lib/dashboard-data";
+import { useCameras } from "@/lib/use-cameras";
 
 function CameraTile({ camera }: { camera: Camera }) {
   return (
@@ -9,14 +10,24 @@ function CameraTile({ camera }: { camera: Camera }) {
         <div className="flex items-center space-x-1">
           <span className="w-1.5 h-1.5 bg-brand-red" />
           <span className="text-[9px] font-mono font-bold text-brand-red tracking-wider">
-            REC
+            AI
           </span>
         </div>
-        <span className="w-1.5 h-1.5 bg-brand-green" />
+        <span className="w-1.5 h-1.5 bg-brand-amber" />
       </div>
       {/* Reticle */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-20">
         <div className="w-8 h-8 border border-white/40" />
+      </div>
+
+      {/* MJPEG Stream */}
+      <div className="absolute inset-0 z-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={camera.mjpegUrl}
+          alt={camera.label}
+          className="w-full h-full object-cover"
+        />
       </div>
       <div className="z-10 bg-black/60 px-1.5 py-0.5 text-[9px] font-mono text-fg-1 truncate">
         {camera.label}
@@ -47,10 +58,15 @@ function CameraTileOffline({ camera }: { camera: Camera }) {
 
 /** 3x3 camera wall. */
 export function CameraWall() {
+  const { cameras, isLoading } = useCameras();
   return (
     <Panel className="flex-1 p-1.5 flex flex-col min-h-0 overflow-hidden">
       <div className="grid grid-cols-3 grid-rows-3 gap-1.5 flex-1 min-h-0">
-        {cameras.map((camera) =>
+        {isLoading ? (
+          <div className="col-span-3 row-span-3 flex items-center justify-center text-outline">
+            Loading cameras...
+          </div>
+        ) : cameras.map((camera) =>
           camera.online ? (
             <CameraTile key={camera.id} camera={camera} />
           ) : (

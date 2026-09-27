@@ -1,5 +1,7 @@
+"use client";
 import { Icon } from "@/components/ui/Icon";
-import { cameras, matrix, type CameraRow, type Tone } from "@/lib/devices-data";
+import { matrix, type CameraRow, type Tone } from "@/lib/devices-data";
+import { useDeviceCameras } from "@/lib/use-device-cameras";
 
 const dot: Record<Tone, string> = { ok: "bg-secondary", warn: "bg-tertiary", err: "bg-error" };
 const text: Record<Tone, string> = { ok: "text-secondary", warn: "text-tertiary", err: "text-error" };
@@ -141,6 +143,7 @@ const th = "py-2 px-2 font-medium tracking-wider";
 
 /** Tactical edge sensor matrix: density bar plus the full diagnostic table. */
 export function SensorMatrix() {
+  const { cameras, isLoading } = useDeviceCameras();
   return (
     <div className="bg-surface-container border border-outline-variant rounded-[2px] flex flex-col overflow-hidden">
       <div className="h-8 px-3 bg-surface-container-low border-b border-outline-variant flex items-center justify-between text-label-sm">
@@ -180,7 +183,11 @@ export function SensorMatrix() {
             </tr>
           </thead>
           <tbody className="text-body-sm divide-y divide-surface-container-high">
-            {cameras.map((cam) => (
+            {isLoading ? (
+              <tr><td colSpan={12} className="text-center py-4 text-outline">Loading...</td></tr>
+            ) : cameras.length === 0 ? (
+              <tr><td colSpan={12} className="text-center py-4 text-outline">No cameras found.</td></tr>
+            ) : cameras.map((cam) => (
               <CameraTableRow key={cam.id} cam={cam} />
             ))}
           </tbody>

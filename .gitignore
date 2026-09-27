@@ -40,12 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# documentation & internal specifications
-/docs/
-*.pdf
-
-# agent customizations & skills
-.agents/
-.agents
-
-
+# ── Python & Backend ──
+__pycache__/
+*.py[cod]
+*$py.class
+backend/venv/
+backend/outputs/
+.pytest_cache/
+skills/

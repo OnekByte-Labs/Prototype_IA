@@ -1,5 +1,7 @@
+"use client";
 import { Icon } from "@/components/ui/Icon";
-import { kpis, tabs } from "@/lib/devices-data";
+import { kpis as staticKpis, tabs } from "@/lib/devices-data";
+import { useDeviceCameras } from "@/lib/use-device-cameras";
 
 /** Sub-tab ribbon (cameras / NVRs / terminals) with search, zone filter and bulk actions. */
 export function DevicesToolbar() {
@@ -90,13 +92,21 @@ const card =
 
 /** Four compact KPI telemetry cards. */
 export function KpiCards() {
+  const { cameras, isLoading } = useDeviceCameras();
+  
+  const totalCams = cameras.length;
+  const onlineCams = cameras.filter(c => c.state === 'ok').length;
+  const offlineCams = cameras.filter(c => c.state === 'err').length;
+  const offlineNames = cameras.filter(c => c.state === 'err').map(c => c.name).join(', ');
+  const degradedCams = cameras.filter(c => c.state === 'warn').length;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2.5">
       <div className={card}>
         <div>
-          <div className="text-label-sm text-outline uppercase tracking-wider">{kpis.total.label}</div>
-          <div className="text-2xl font-bold font-code-sm text-on-surface mt-0.5">{kpis.total.value}</div>
-          <div className="text-[11px] text-outline mt-0.5">{kpis.total.note}</div>
+          <div className="text-label-sm text-outline uppercase tracking-wider">{staticKpis.total.label}</div>
+          <div className="text-2xl font-bold font-code-sm text-on-surface mt-0.5">{isLoading ? '-' : totalCams}</div>
+          <div className="text-[11px] text-outline mt-0.5">{staticKpis.total.note}</div>
         </div>
         <div className="w-10 h-10 rounded-[2px] bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary">
           <Icon name="videocam" size={24} className="align-middle" />
@@ -107,12 +117,12 @@ export function KpiCards() {
         <div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-secondary" />
-            <span className="text-label-sm text-secondary font-bold uppercase tracking-wider">{kpis.online.label}</span>
+            <span className="text-label-sm text-secondary font-bold uppercase tracking-wider">{staticKpis.online.label}</span>
           </div>
           <div className="text-2xl font-bold font-code-sm text-secondary mt-0.5">
-            {kpis.online.value} <span className="text-xs font-normal text-outline">{kpis.online.of}</span>
+            {isLoading ? '-' : onlineCams} <span className="text-xs font-normal text-outline">/ {totalCams}</span>
           </div>
-          <div className="text-[11px] font-code-sm text-secondary">{kpis.online.note}</div>
+          <div className="text-[11px] font-code-sm text-secondary">{staticKpis.online.note}</div>
         </div>
         <div className="w-10 h-10 rounded-[2px] bg-secondary-container/20 border border-secondary/30 flex items-center justify-center text-secondary">
           <Icon name="check_circle" size={24} className="align-middle" />
@@ -123,11 +133,11 @@ export function KpiCards() {
         <div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-error animate-ping" />
-            <span className="text-label-sm text-error font-bold uppercase tracking-wider">{kpis.offline.label}</span>
+            <span className="text-label-sm text-error font-bold uppercase tracking-wider">{staticKpis.offline.label}</span>
           </div>
-          <div className="text-2xl font-bold font-code-sm text-error mt-0.5">{kpis.offline.value}</div>
-          <div className="text-[10px] font-code-sm text-error/90 truncate max-w-[200px]" title={kpis.offline.title}>
-            {kpis.offline.note}
+          <div className="text-2xl font-bold font-code-sm text-error mt-0.5">{isLoading ? '-' : offlineCams}</div>
+          <div className="text-[10px] font-code-sm text-error/90 truncate max-w-[200px]" title={offlineNames}>
+            {offlineNames || "None"}
           </div>
         </div>
         <div className="w-10 h-10 rounded-[2px] bg-error-container/30 border border-error/40 flex items-center justify-center text-error">
@@ -139,10 +149,10 @@ export function KpiCards() {
         <div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-tertiary" />
-            <span className="text-label-sm text-tertiary font-bold uppercase tracking-wider">{kpis.degraded.label}</span>
+            <span className="text-label-sm text-tertiary font-bold uppercase tracking-wider">{staticKpis.degraded.label}</span>
           </div>
-          <div className="text-2xl font-bold font-code-sm text-tertiary mt-0.5">{kpis.degraded.value}</div>
-          <div className="text-[10px] font-code-sm text-tertiary/90">{kpis.degraded.note}</div>
+          <div className="text-2xl font-bold font-code-sm text-tertiary mt-0.5">{isLoading ? '-' : degradedCams}</div>
+          <div className="text-[10px] font-code-sm text-tertiary/90">{staticKpis.degraded.note}</div>
         </div>
         <div className="w-10 h-10 rounded-[2px] bg-tertiary-container/20 border border-tertiary/30 flex items-center justify-center text-tertiary">
           <Icon name="warning" size={24} className="align-middle" />

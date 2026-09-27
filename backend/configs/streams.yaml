@@ -1,0 +1,35 @@
+# Stream configuration — maps each test video to a stream ID.
+# Video paths are relative to the project root (E:\MIlitary_Prototype_IA).
+
+streams:
+  - id: cam_01
+    video_path: "Dataset/Test/4K Road traffic video for object detection and tracking.mp4"
+    label: "CAM-01 · MAIN GATE"
+
+  - id: cam_02
+    video_path: "Dataset/Test/Animal_car.mp4"
+    label: "CAM-02 · PERIMETER EAST"
+
+  - id: cam_03
+    video_path: "Dataset/Test/Person.mp4"
+    label: "CAM-03 · CHECKPOINT ALPHA"
+
+  - id: cam_04
+    video_path: "Dataset/Test/Person_crossing_line.mp4"
+    label: "CAM-04 · PERIMETER SOUTH"
+
+  - id: cam_05
+    video_path: "Dataset/Test/Robbery.mp4"
+    label: "CAM-05 · ARMOURY SECTOR 4"
+
+  - id: cam_06
+    video_path: "Dataset/Test/Traffic Control CCTV.mp4"
+    label: "CAM-06 · VEHICLE DEPOT"
+
+  - id: cam_07
+    video_path: "Dataset/Test/pedestrian_2.mp4"
+    label: "CAM-07 · HQ ENTRANCE"
+
+  - id: cam_08
+    video_path: "Dataset/Test/person-bicycle-car-detection.mp4"
+    label: "CAM-08 · MOTOR POOL"

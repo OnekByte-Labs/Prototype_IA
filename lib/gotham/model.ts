@@ -25,6 +25,12 @@ export type Camera = {
   sensitivity: number;
   recording: boolean;
   uptime: number;
+  hlsUrl?: string;
+  rtspUrl?: string;
+  webrtcUrl?: string;
+  mjpegUrl?: string;
+  metadataUrl?: string;
+  aiEnabled?: boolean;
 };
 
 export const CAMERAS: Camera[] = TACTICAL_CAMERAS.map((tc) => ({
