@@ -37,25 +37,6 @@ class IntrusionDetector(BaseAnalytics):
 
     def process_frame(self, frame: np.ndarray, tracks: list, frame_id: int) -> list:
         events = []
-        
-        # Draw the intrusion zone (green overlay if clear, red if triggered)
-        pts = np.array(self.zone_coords, np.int32).reshape((-1, 1, 2))
-        
-        # Determine if there is currently an active intrusion
-        zone_color = (0, 255, 0)  # Green by default
-        is_active_intrusion = any(tid in self.alerted_ids for tid in self.frames_in_zone)
-        if is_active_intrusion:
-            zone_color = (0, 0, 255)  # Red alert
-            
-        overlay = frame.copy()
-        cv2.fillPoly(overlay, [pts], zone_color)
-        cv2.addWeighted(overlay, 0.3, frame, 0.7, 0, frame)
-        cv2.polylines(frame, [pts], True, zone_color, 4)
-        
-        if is_active_intrusion:
-            cv2.putText(frame, "INTRUSION ALERT!", (50, 100), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 4)
-
         current_track_ids = set()
 
         for track in tracks:
@@ -69,9 +50,6 @@ class IntrusionDetector(BaseAnalytics):
             center_y = (y1 + y2) / 2.0
             
             check_point = Point(center_x, center_y)
-            
-            # Draw center point
-            cv2.circle(frame, (int(center_x), int(center_y)), 5, (255, 0, 0), -1)
             
             if self.detection_zone.contains(check_point):
                 # Object is inside zone

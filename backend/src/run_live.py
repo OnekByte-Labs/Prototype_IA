@@ -184,6 +184,8 @@ def main():
                     if sid in analytics_engines:
                         if hasattr(analytics_engines[sid], 'reset'):
                             analytics_engines[sid].reset()
+                    if sid in recent_events_map:
+                        recent_events_map[sid] = []
                             
                     log_event({
                         "type": "loop_reset",

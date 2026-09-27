@@ -43,6 +43,8 @@ type ConsoleState = {
   toggleAi: (id: string, enabled: boolean) => Promise<void>;
   /** Add a real alert to the feed */
   addAlert: (a: Alert) => void;
+  /** Update intrusion zone or counting line analytics coordinates */
+  updateZone: (id: string, data: { zone?: number[][]; line?: number[][] }) => Promise<boolean>;
 };
 
 const Ctx = createContext<ConsoleState | null>(null);
@@ -216,6 +218,27 @@ interface ApiCamera {
     }
   }, [toast, mutate]);
 
+  const updateZone = useCallback(async (id: string, zoneData: { zone?: number[][]; line?: number[][] }) => {
+    try {
+      const res = await fetch(`/api/cameras/${id}/zone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(zoneData),
+      });
+      if (res.ok) {
+        toast(`Perimeter updated live for ${id}`, "ok");
+        mutate('/api/cameras');
+        return true;
+      } else {
+        toast(`Failed to update perimeter for ${id}`, "err");
+        return false;
+      }
+    } catch (e) {
+      toast(`Failed to update perimeter for ${id}`, "err");
+      return false;
+    }
+  }, [toast, mutate]);
+
   const cameras = useMemo(() => {
     return CAMERAS.map((c) => {
       // Find the corresponding camera from the API to get live 'online' state and 'hlsUrl'
@@ -259,8 +282,9 @@ interface ApiCamera {
       degraded,
       toggleAi,
       addAlert,
+      updateZone,
     }),
-    [alerts, unacked, ack, ackMany, dispatch, muted, toggleMute, liveOn, toggleLive, cameras, degraded, toggleAi, addAlert],
+    [alerts, unacked, ack, ackMany, dispatch, muted, toggleMute, liveOn, toggleLive, cameras, degraded, toggleAi, addAlert, updateZone],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

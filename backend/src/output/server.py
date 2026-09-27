@@ -9,10 +9,12 @@ Serves:
 
 import asyncio
 import logging
+import os
 import threading
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 import cv2
 import numpy as np
+import yaml
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -67,13 +69,15 @@ class AIConfigStore:
         self._lock = threading.Lock()
 
     def is_enabled(self, stream_id: str) -> bool:
+        sid = stream_id.lower().replace("-", "_")
         with self._lock:
-            return self._enabled.get(stream_id, False)
+            return self._enabled.get(sid, self._enabled.get(stream_id, False))
 
     def set_enabled(self, stream_id: str, enabled: bool):
+        sid = stream_id.lower().replace("-", "_")
         with self._lock:
-            if stream_id in self._enabled:
-                self._enabled[stream_id] = enabled
+            self._enabled[sid] = enabled
+            self._enabled[stream_id] = enabled
 
     def get_all(self):
         with self._lock:
@@ -82,6 +86,13 @@ class AIConfigStore:
 
 class AIToggleRequest(BaseModel):
     enabled: bool
+
+
+class ZoneUpdateRequest(BaseModel):
+    zone: Optional[List[List[float]]] = None
+    line: Optional[List[List[float]]] = None
+    buffer_px: Optional[int] = None
+    required_consecutive_frames: Optional[int] = None
 
 
 def create_app(
@@ -136,10 +147,11 @@ def create_app(
 
     @app.get("/stream/{stream_id}")
     def stream_video(stream_id: str):
+        internal_id = stream_id.lower().replace("-", "_")
         def generate():
             import time
             while True:
-                data = frame_store.get(stream_id)
+                data = frame_store.get(internal_id) or frame_store.get(stream_id)
                 if data and "jpeg" in data:
                     yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + data["jpeg"] + b"\r\n"
                 time.sleep(0.033) # ~30fps poll rate
@@ -147,9 +159,66 @@ def create_app(
 
     @app.post("/cameras/{stream_id}/ai")
     def toggle_ai(stream_id: str, req: AIToggleRequest):
-        internal_id = stream_id.lower().replace("cam-", "cam_")
+        internal_id = stream_id.lower().replace("-", "_")
         ai_config.set_enabled(internal_id, req.enabled)
         return {"success": True, "aiEnabled": ai_config.is_enabled(internal_id)}
+
+    @app.post("/cameras/{stream_id}/zone")
+    @app.post("/cameras/{stream_id}/analytics")
+    def update_analytics_zone(stream_id: str, req: ZoneUpdateRequest):
+        internal_id = stream_id.lower().replace("-", "_")
+        if "analytics" not in pipeline_cfg:
+            pipeline_cfg["analytics"] = {}
+        if internal_id not in pipeline_cfg["analytics"]:
+            pipeline_cfg["analytics"][internal_id] = {}
+
+        target_cfg = pipeline_cfg["analytics"][internal_id]
+
+        if req.zone is not None:
+            target_cfg["zone"] = req.zone
+            target_cfg["type"] = "intrusion_zone"
+        if req.line is not None:
+            target_cfg["line"] = req.line
+            target_cfg["type"] = "traffic_count"
+        if req.buffer_px is not None:
+            target_cfg["buffer_px"] = req.buffer_px
+        if req.required_consecutive_frames is not None:
+            target_cfg["required_consecutive_frames"] = req.required_consecutive_frames
+
+        # Update live engine in memory if it exists!
+        if internal_id in analytics_engines:
+            engine = analytics_engines[internal_id]
+            if req.zone is not None and hasattr(engine, 'intrusion_zone'):
+                from shapely.geometry import Polygon
+                engine.zone_coords = req.zone
+                engine.intrusion_zone = Polygon(req.zone)
+                buffer_px = target_cfg.get("buffer_px", 0)
+                if buffer_px > 0:
+                    engine.detection_zone = engine.intrusion_zone.buffer(-buffer_px)
+                    if engine.detection_zone.is_empty:
+                        engine.detection_zone = engine.intrusion_zone
+                else:
+                    engine.detection_zone = engine.intrusion_zone
+                if hasattr(engine, 'reset'):
+                    engine.reset()
+            elif req.line is not None and hasattr(engine, 'counting_line'):
+                from shapely.geometry import LineString
+                engine.line_coords = req.line
+                engine.counting_line = LineString(req.line)
+                if hasattr(engine, 'reset'):
+                    engine.reset()
+
+        # Persist to pipeline.yaml on disk
+        try:
+            backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            yaml_path = os.path.join(backend_dir, "configs", "pipeline.yaml")
+            with open(yaml_path, "w", encoding="utf-8") as f:
+                yaml.dump(pipeline_cfg, f, default_flow_style=None, sort_keys=False)
+            logger.info("Saved updated analytics config for %s to %s", internal_id, yaml_path)
+        except Exception as e:
+            logger.error("Failed to persist pipeline.yaml: %s", e)
+
+        return {"success": True, "analytics": target_cfg}
 
     precomputed_cache = {}
 
@@ -251,7 +320,7 @@ def create_app(
             else:
                 last_frame_id = None
                 while True:
-                    metadata = frame_store.get(stream_id)
+                    metadata = frame_store.get(internal_id) or frame_store.get(stream_id)
                     if metadata is not None and isinstance(metadata, dict):
                         if metadata.get("frame_id") != last_frame_id:
                             import json

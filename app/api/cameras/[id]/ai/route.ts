@@ -5,7 +5,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const pipelineHost = process.env.PIPELINE_HOST || 'http://localhost:5555';
+  const pipelineHost = process.env.PIPELINE_HOST || 'http://127.0.0.1:5556';
   
   try {
     const data = await request.json();

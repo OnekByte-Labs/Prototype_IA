@@ -7,9 +7,325 @@ import { secondsOfDay, type Camera } from "@/lib/gotham/model";
 import { useConsole } from "../ConsoleProvider";
 import { useClock } from "../hooks";
 import { MicroLabel, StatusDot } from "../primitives";
+import { ZoneCalibrator } from "./ZoneCalibrator";
 
 const globalVideoTime = new Map<string, number>();
 const globalPrecomputedCache = new Map<string, any[]>();
+
+function drawCameraOverlay(
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  cam: Camera,
+  frameData: any,
+  addAlert: (alert: any) => void
+) {
+  if (!cam.aiEnabled || !frameData) return;
+
+  const boxes = frameData.detections;
+  
+  if (boxes) {
+    boxes.forEach((box: any) => {
+      const objClass = box.class?.toLowerCase() || 'obj';
+      const confidence = box.confidence || 0;
+      
+      // Thresholds: 30% for animals, 40% for everything else
+      const minConfidence = objClass === 'animal' ? 0.30 : 0.40;
+      if (confidence < minConfidence) return;
+
+      let x = box.x;
+      let y = box.y;
+      let w = box.w;
+      let h = box.h;
+      if (w < 0) { x += w; w = -w; }
+      if (h < 0) { y += h; h = -h; }
+      
+      // Check if this vehicle recently crossed the counting line
+      const isRecentlyCounted = frameData.events?.some(
+        (e: any) => e.type === 'traffic_count' && e.object_id === box.id && ((frameData.frame_id ?? 0) - e.frame_id) < 45 && ((frameData.frame_id ?? 0) - e.frame_id) >= 0
+      );
+
+      // Tactical UI Colors
+      const isVehicle = ['car', 'truck', 'bus', 'motorcycle'].includes(objClass);
+      // Emerald green if counted, sky blue for vehicles, amber for others
+      const strokeColor = isRecentlyCounted
+        ? 'rgba(34, 197, 94, 0.95)'
+        : isVehicle
+        ? 'rgba(56, 189, 248, 0.9)'
+        : 'rgba(251, 191, 36, 0.9)'; 
+      const bgColor = isRecentlyCounted
+        ? 'rgba(6, 78, 59, 0.9)'
+        : isVehicle
+        ? 'rgba(12, 74, 110, 0.85)'
+        : 'rgba(120, 53, 15, 0.85)';
+      
+      // 1. Thin main bounding box
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = Math.max(1, canvas.width / 1000);
+      ctx.strokeRect(x, y, w, h);
+      
+      // 2. Thick tactical corner accents
+      const cornerLen = Math.max(5, Math.min(w, h) * 0.15);
+      ctx.lineWidth = Math.max(2, canvas.width / 600);
+      
+      // Top-left
+      ctx.beginPath(); ctx.moveTo(x, y + cornerLen); ctx.lineTo(x, y); ctx.lineTo(x + cornerLen, y); ctx.stroke();
+      // Top-right
+      ctx.beginPath(); ctx.moveTo(x + w - cornerLen, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + cornerLen); ctx.stroke();
+      // Bottom-left
+      ctx.beginPath(); ctx.moveTo(x, y + h - cornerLen); ctx.lineTo(x, y + h); ctx.lineTo(x + cornerLen, y + h); ctx.stroke();
+      // Bottom-right
+      ctx.beginPath(); ctx.moveTo(x + w, y + h - cornerLen); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - cornerLen, y + h); ctx.stroke();
+      
+      // 3. Label text (e.g. "CAR · 85%" or "CAR · 85% ✓")
+      const confPercent = Math.round(confidence * 100);
+      const className = (box.class || 'OBJ').toUpperCase();
+      const mainLabel = isRecentlyCounted 
+        ? `${className} · ${confPercent}%  ✓` 
+        : `${className} · ${confPercent}%`;
+      
+      const fontSize = Math.max(10, canvas.width / 130);
+      ctx.font = `600 ${fontSize}px "Inter", sans-serif`;
+      const textWidth = ctx.measureText(mainLabel).width;
+      const textHeight = fontSize;
+      
+      // 4. Sleek dark label background
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(x, y - textHeight - 8, textWidth + 10, textHeight + 8);
+      
+      // 5. Crisp white text
+      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.fillText(mainLabel, x + 5, y - 5);
+      
+      let displayPlate = box.plate;
+      if (displayPlate) {
+         const plateStr = String(displayPlate).replace(/\s/g, '');
+         if (plateStr.length < 6) {
+            displayPlate = undefined;
+         }
+      }
+
+      if (displayPlate) {
+          ctx.font = `700 ${fontSize + 2}px monospace`;
+          const pWidth = ctx.measureText(displayPlate).width;
+          
+          // Draw at the bottom of the bounding box
+          ctx.fillStyle = "rgba(251, 191, 36, 0.95)"; // Bright amber
+          ctx.fillRect(x, y + h, pWidth + 16, textHeight + 12);
+          
+          ctx.fillStyle = "#000000"; // Black text
+          ctx.fillText(displayPlate, x + 8, y + h + textHeight + 5);
+      }
+
+      // In CAM-09, display the exact center point and coordinate tag used by IntrusionDetector
+      if (cam.id === 'CAM-09') {
+        const cx = Math.round(x + w / 2);
+        const cy = Math.round(y + h / 2);
+        const coordTag = `PT: [${cx}, ${cy}]`;
+
+        // 1. Center target dot
+        ctx.beginPath();
+        ctx.arc(cx, cy, Math.max(3.5, canvas.width / 450), 0, Math.PI * 2);
+        ctx.fillStyle = "#ef4444";
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 2. Coordinate badge below bounding box
+        const subFontSize = Math.max(9, canvas.width / 150);
+        ctx.font = `bold ${subFontSize}px monospace`;
+        const cWidth = ctx.measureText(coordTag).width;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+        ctx.fillRect(x, y + h + 3, cWidth + 10, subFontSize + 6);
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y + h + 3, cWidth + 10, subFontSize + 6);
+        ctx.fillStyle = "#38bdf8"; // bright cyan text
+        ctx.fillText(coordTag, x + 5, y + h + subFontSize + 5);
+      }
+    });
+  }
+
+  // Draw Custom Analytics Zones/Lines if configured
+  if (cam.analytics) {
+    const resParts = cam.resolution ? cam.resolution.split("×") : ["1920", "1080"];
+    const origW = parseInt(resParts[0], 10) || 1920;
+    const origH = parseInt(resParts[1], 10) || 1080;
+    const scaleX = canvas.width / origW;
+    const scaleY = canvas.height / origH;
+    
+    if (cam.analytics.type === 'traffic_count' && cam.analytics.line) {
+      const pts = cam.analytics.line;
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0] * scaleX, pts[0][1] * scaleY);
+      for (let i = 1; i < pts.length; i++) {
+        ctx.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
+      }
+      ctx.strokeStyle = "rgba(0, 200, 255, 0.9)";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Draw "COUNTING LINE" label at midpoint
+      const midIdx = Math.floor(pts.length / 2);
+      const lx = pts[midIdx][0] * scaleX;
+      const ly = pts[midIdx][1] * scaleY - 12;
+      ctx.font = "bold 11px monospace";
+      ctx.fillStyle = "rgba(0, 200, 255, 0.9)";
+      ctx.fillText("▼ COUNTING LINE", lx - 50, ly);
+
+      // Draw running traffic count badge (top-left HUD)
+      const countEvent = frameData.events?.find((e: any) => e.type === 'traffic_count');
+      const totalCount = countEvent?.total_count ?? 0;
+      
+      const scale = Math.max(canvas.width / 960, 1);
+      const badgeW = Math.round(140 * scale);
+      const badgeH = Math.round(56 * scale);
+      const bx = Math.round(14 * scale);
+      const by = Math.round(14 * scale);
+      const pad = Math.round(12 * scale);
+      // Glassy dark background
+      ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+      ctx.beginPath();
+      ctx.roundRect(bx, by, badgeW, badgeH, 8);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(0, 200, 255, 0.6)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, badgeW, badgeH, 8);
+      ctx.stroke();
+      // Label
+      ctx.font = `bold ${Math.round(14 * scale)}px monospace`;
+      ctx.fillStyle = "#00c8ff";
+      ctx.fillText("VEHICLES", bx + pad, by + Math.round(22 * scale));
+      // Count number
+      ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(String(totalCount), bx + pad, by + Math.round(48 * scale));
+
+      // Draw small green marks when cars cross the line
+      const crossingEvents = frameData.events?.filter(
+        (e: any) => e.type === 'traffic_count' && e.location && e.frame_id !== undefined
+      );
+      
+      if (crossingEvents && crossingEvents.length > 0) {
+        crossingEvents.forEach((ev: any) => {
+          const currentFid = frameData.frame_id ?? 0;
+          const age = currentFid - ev.frame_id;
+          if (age >= 0 && age < 45) { // show for ~1.5 seconds after crossing
+            const alpha = Math.max(0, 1 - age / 45);
+            const px = ev.location[0] * scaleX;
+            const py = ev.location[1] * scaleY;
+            const markerRadius = Math.max(5, canvas.width / 320);
+            const pulseRadius = markerRadius + (age / 45) * markerRadius * 2.5;
+            
+            // 1. Expanding fading ripple ring
+            ctx.beginPath();
+            ctx.arc(px, py, pulseRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(34, 197, 94, ${alpha * 0.85})`;
+            ctx.lineWidth = Math.max(1.5, canvas.width / 800);
+            ctx.stroke();
+            
+            // 2. Solid glowing green center pip
+            ctx.beginPath();
+            ctx.arc(px, py, markerRadius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(34, 197, 94, ${alpha})`;
+            ctx.fill();
+            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // 3. Crisp "+1" floating indicator
+            const fontSize = Math.max(11, canvas.width / 160);
+            ctx.font = `bold ${fontSize}px monospace`;
+            ctx.fillStyle = `rgba(34, 197, 94, ${alpha})`;
+            ctx.fillText("+1", px + markerRadius + 4, py - markerRadius);
+          }
+        });
+      }
+    } else if (cam.analytics.type === 'intrusion_zone' && cam.analytics.zone) {
+      const pts = cam.analytics.zone;
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0] * scaleX, pts[0][1] * scaleY);
+      for (let i = 1; i < pts.length; i++) {
+        ctx.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
+      }
+      ctx.closePath();
+      
+      const hasIntrusion = frameData.events?.some((e: any) => e.type === 'intrusion');
+      const zScale = Math.max(canvas.width / 960, 1);
+      
+      if (hasIntrusion) {
+        // RED alert zone
+        ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 0, 0, 0.9)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // "INTRUSION ZONE" label inside polygon
+        const labelX = pts[0][0] * scaleX + Math.round(20 * scaleX);
+        const labelY = (pts[0][1] * scaleY + pts[pts.length - 1][1] * scaleY) / 2;
+        ctx.font = `bold ${Math.round(18 * zScale)}px monospace`;
+        ctx.fillStyle = "rgba(255, 60, 60, 0.9)";
+        ctx.fillText("INTRUSION ZONE", labelX, labelY);
+        
+        // Flashing ALERT banner at top
+        const flash = Math.floor(Date.now() / 500) % 2 === 0;
+        if (flash) {
+          const bannerW = Math.round(260 * zScale);
+          const bannerH = Math.round(40 * zScale);
+          const bx = (canvas.width - bannerW) / 2;
+          const by = Math.round(12 * zScale);
+          ctx.fillStyle = "rgba(220, 0, 0, 0.9)";
+          ctx.beginPath();
+          ctx.roundRect(bx, by, bannerW, bannerH, 8);
+          ctx.fill();
+          ctx.font = `bold ${Math.round(16 * zScale)}px monospace`;
+          ctx.fillStyle = "#ffffff";
+          ctx.textAlign = "center";
+          ctx.fillText("⚠ INTRUSION ALERT", canvas.width / 2, by + Math.round(26 * zScale));
+          ctx.textAlign = "start";
+        }
+      } else {
+        // Green safe zone
+        ctx.fillStyle = "rgba(0, 255, 0, 0.25)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // "INTRUSION ZONE" label inside polygon
+        const labelX = pts[0][0] * scaleX + Math.round(20 * scaleX);
+        const labelY = (pts[0][1] * scaleY + pts[pts.length - 1][1] * scaleY) / 2;
+        ctx.font = `bold ${Math.round(18 * zScale)}px monospace`;
+        ctx.fillStyle = "rgba(0, 255, 0, 0.9)";
+        ctx.fillText("INTRUSION ZONE", labelX, labelY);
+      }
+    }
+  }
+
+  // Sync alerts natively to the sidebar feed
+  if (frameData.events) {
+    frameData.events.forEach((ev: any) => {
+      if (ev.type === 'intrusion') {
+        const alertId = `${cam.id}-evt-intrude-${ev.object_id}`;
+        addAlert({
+          id: alertId,
+          t: secondsOfDay(new Date()),
+          cameraId: cam.id,
+          zone: cam.zone,
+          cls: "person",
+          severity: "high",
+          confidence: 0.92,
+          status: "new",
+          live: true,
+        });
+      }
+    });
+  }
+}
 
 function DecoupledStream({ cam }: { cam: Camera }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -108,313 +424,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
             const diff2 = Math.abs((fullData[idx2].video_time_sec || 0) - currentTime);
             const closestData = diff1 <= diff2 ? fullData[idx1] : fullData[idx2];
 
-            const boxes = closestData.detections;
-            
-            // Always draw since video is perfectly synced with the lookup
-            if (boxes) {
-              boxes.forEach((box: any) => {
-                const objClass = box.class?.toLowerCase() || 'obj';
-                const confidence = box.confidence || 0;
-                
-                // Thresholds: 30% for animals, 40% for everything else
-                const minConfidence = objClass === 'animal' ? 0.30 : 0.40;
-                if (confidence < minConfidence) return;
-
-                let x = box.x;
-                let y = box.y;
-                let w = box.w;
-                let h = box.h;
-                if (w < 0) { x += w; w = -w; }
-                if (h < 0) { y += h; h = -h; }
-                
-                // Check if this vehicle recently crossed the counting line
-                const isRecentlyCounted = closestData.events?.some(
-                  (e: any) => e.type === 'traffic_count' && e.object_id === box.id && ((closestData.frame_id ?? 0) - e.frame_id) < 45 && ((closestData.frame_id ?? 0) - e.frame_id) >= 0
-                );
-
-                // Tactical UI Colors
-                const isVehicle = ['car', 'truck', 'bus', 'motorcycle'].includes(objClass);
-                // Emerald green if counted, sky blue for vehicles, amber for others
-                const strokeColor = isRecentlyCounted
-                  ? 'rgba(34, 197, 94, 0.95)'
-                  : isVehicle
-                  ? 'rgba(56, 189, 248, 0.9)'
-                  : 'rgba(251, 191, 36, 0.9)'; 
-                const bgColor = isRecentlyCounted
-                  ? 'rgba(6, 78, 59, 0.9)'
-                  : isVehicle
-                  ? 'rgba(12, 74, 110, 0.85)'
-                  : 'rgba(120, 53, 15, 0.85)';
-                
-                // 1. Thin main bounding box
-                ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = Math.max(1, canvas.width / 1000);
-                ctx.strokeRect(x, y, w, h);
-                
-                // 2. Thick tactical corner accents
-                const cornerLen = Math.max(5, Math.min(w, h) * 0.15);
-                ctx.lineWidth = Math.max(2, canvas.width / 600);
-                
-                // Top-left
-                ctx.beginPath(); ctx.moveTo(x, y + cornerLen); ctx.lineTo(x, y); ctx.lineTo(x + cornerLen, y); ctx.stroke();
-                // Top-right
-                ctx.beginPath(); ctx.moveTo(x + w - cornerLen, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + cornerLen); ctx.stroke();
-                // Bottom-left
-                ctx.beginPath(); ctx.moveTo(x, y + h - cornerLen); ctx.lineTo(x, y + h); ctx.lineTo(x + cornerLen, y + h); ctx.stroke();
-                // Bottom-right
-                ctx.beginPath(); ctx.moveTo(x + w, y + h - cornerLen); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - cornerLen, y + h); ctx.stroke();
-                
-                // 3. Label text (e.g. "CAR · 85%" or "CAR · 85% ✓")
-                const confPercent = Math.round(confidence * 100);
-                const className = (box.class || 'OBJ').toUpperCase();
-                const mainLabel = isRecentlyCounted 
-                  ? `${className} · ${confPercent}%  ✓` 
-                  : `${className} · ${confPercent}%`;
-                
-                const fontSize = Math.max(10, canvas.width / 130);
-                ctx.font = `600 ${fontSize}px "Inter", sans-serif`;
-                const textWidth = ctx.measureText(mainLabel).width;
-                const textHeight = fontSize;
-                
-                // 4. Sleek dark label background
-                ctx.fillStyle = bgColor;
-                ctx.fillRect(x, y - textHeight - 8, textWidth + 10, textHeight + 8);
-                
-                // 5. Crisp white text
-                ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-                ctx.fillText(mainLabel, x + 5, y - 5);
-                
-                let displayPlate = box.plate;
-                if (displayPlate) {
-                   const plateStr = String(displayPlate).replace(/\s/g, '');
-                   if (plateStr.length < 6) {
-                      displayPlate = undefined;
-                   }
-                }
-
-                if (displayPlate) {
-                    ctx.font = `700 ${fontSize + 2}px monospace`;
-                    const pWidth = ctx.measureText(displayPlate).width;
-                    
-                    // Draw at the bottom of the bounding box
-                    ctx.fillStyle = "rgba(251, 191, 36, 0.95)"; // Bright amber
-                    ctx.fillRect(x, y + h, pWidth + 16, textHeight + 12);
-                    
-                    ctx.fillStyle = "#000000"; // Black text
-                    ctx.fillText(displayPlate, x + 8, y + h + textHeight + 5);
-                }
-
-                // In CAM-09, display the exact center point and coordinate tag used by IntrusionDetector
-                if (cam.id === 'CAM-09') {
-                  const cx = Math.round(x + w / 2);
-                  const cy = Math.round(y + h / 2);
-                  const coordTag = `PT: [${cx}, ${cy}]`;
-
-                  // 1. Center target dot
-                  ctx.beginPath();
-                  ctx.arc(cx, cy, Math.max(3.5, canvas.width / 450), 0, Math.PI * 2);
-                  ctx.fillStyle = "#ef4444";
-                  ctx.fill();
-                  ctx.strokeStyle = "#ffffff";
-                  ctx.lineWidth = 1;
-                  ctx.stroke();
-
-                  // 2. Coordinate badge below bounding box
-                  const subFontSize = Math.max(9, canvas.width / 150);
-                  ctx.font = `bold ${subFontSize}px monospace`;
-                  const cWidth = ctx.measureText(coordTag).width;
-                  ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-                  ctx.fillRect(x, y + h + 3, cWidth + 10, subFontSize + 6);
-                  ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
-                  ctx.lineWidth = 1;
-                  ctx.strokeRect(x, y + h + 3, cWidth + 10, subFontSize + 6);
-                  ctx.fillStyle = "#38bdf8"; // bright cyan text
-                  ctx.fillText(coordTag, x + 5, y + h + subFontSize + 5);
-                }
-              });
-            }
-
-            // Draw Custom Analytics Zones/Lines if configured
-            if (cam.analytics) {
-              const resParts = cam.resolution ? cam.resolution.split("×") : ["1920", "1080"];
-              const origW = parseInt(resParts[0], 10) || 1920;
-              const origH = parseInt(resParts[1], 10) || 1080;
-              const scaleX = canvas.width / origW;
-              const scaleY = canvas.height / origH;
-              
-              if (cam.analytics.type === 'traffic_count' && cam.analytics.line) {
-                const pts = cam.analytics.line;
-                ctx.beginPath();
-                ctx.moveTo(pts[0][0] * scaleX, pts[0][1] * scaleY);
-                for (let i = 1; i < pts.length; i++) {
-                  ctx.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
-                }
-                ctx.strokeStyle = "rgba(0, 200, 255, 0.9)";
-                ctx.lineWidth = 3;
-                ctx.setLineDash([10, 6]);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                
-                // Draw "COUNTING LINE" label at midpoint
-                const midIdx = Math.floor(pts.length / 2);
-                const lx = pts[midIdx][0] * scaleX;
-                const ly = pts[midIdx][1] * scaleY - 12;
-                ctx.font = "bold 11px monospace";
-                ctx.fillStyle = "rgba(0, 200, 255, 0.9)";
-                ctx.fillText("▼ COUNTING LINE", lx - 50, ly);
-
-                // Draw running traffic count badge (top-left HUD)
-                // Now that the backend injects this persistently, we can always render it
-                const countEvent = closestData.events?.find((e: any) => e.type === 'traffic_count');
-                const totalCount = countEvent?.total_count ?? 0;
-                
-                const scale = Math.max(canvas.width / 960, 1); // scale relative to a 960px reference
-                const badgeW = Math.round(140 * scale);
-                const badgeH = Math.round(56 * scale);
-                const bx = Math.round(14 * scale);
-                const by = Math.round(14 * scale);
-                const pad = Math.round(12 * scale);
-                // Glassy dark background
-                ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-                ctx.beginPath();
-                ctx.roundRect(bx, by, badgeW, badgeH, 8);
-                ctx.fill();
-                ctx.strokeStyle = "rgba(0, 200, 255, 0.6)";
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.roundRect(bx, by, badgeW, badgeH, 8);
-                ctx.stroke();
-                // Label
-                ctx.font = `bold ${Math.round(14 * scale)}px monospace`;
-                ctx.fillStyle = "#00c8ff";
-                ctx.fillText("VEHICLES", bx + pad, by + Math.round(22 * scale));
-                // Count number
-                ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
-                ctx.fillStyle = "#ffffff";
-                ctx.fillText(String(totalCount), bx + pad, by + Math.round(48 * scale));
-
-                // Draw small green marks when cars cross the line
-                const crossingEvents = closestData.events?.filter(
-                  (e: any) => e.type === 'traffic_count' && e.location && e.frame_id !== undefined
-                );
-                
-                if (crossingEvents && crossingEvents.length > 0) {
-                  crossingEvents.forEach((ev: any) => {
-                    const currentFid = closestData.frame_id ?? 0;
-                    const age = currentFid - ev.frame_id;
-                    if (age >= 0 && age < 45) { // show for ~1.5 seconds after crossing
-                      const alpha = Math.max(0, 1 - age / 45);
-                      const px = ev.location[0] * scaleX;
-                      const py = ev.location[1] * scaleY;
-                      const markerRadius = Math.max(5, canvas.width / 320);
-                      const pulseRadius = markerRadius + (age / 45) * markerRadius * 2.5;
-                      
-                      // 1. Expanding fading ripple ring
-                      ctx.beginPath();
-                      ctx.arc(px, py, pulseRadius, 0, Math.PI * 2);
-                      ctx.strokeStyle = `rgba(34, 197, 94, ${alpha * 0.85})`;
-                      ctx.lineWidth = Math.max(1.5, canvas.width / 800);
-                      ctx.stroke();
-                      
-                      // 2. Solid glowing green center pip
-                      ctx.beginPath();
-                      ctx.arc(px, py, markerRadius, 0, Math.PI * 2);
-                      ctx.fillStyle = `rgba(34, 197, 94, ${alpha})`;
-                      ctx.fill();
-                      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
-                      ctx.lineWidth = 1;
-                      ctx.stroke();
-                      
-                      // 3. Crisp "+1" floating indicator
-                      const fontSize = Math.max(11, canvas.width / 160);
-                      ctx.font = `bold ${fontSize}px monospace`;
-                      ctx.fillStyle = `rgba(34, 197, 94, ${alpha})`;
-                      ctx.fillText("+1", px + markerRadius + 4, py - markerRadius);
-                    }
-                  });
-                }
-              } else if (cam.analytics.type === 'intrusion_zone' && cam.analytics.zone) {
-                const pts = cam.analytics.zone;
-                ctx.beginPath();
-                ctx.moveTo(pts[0][0] * scaleX, pts[0][1] * scaleY);
-                for (let i = 1; i < pts.length; i++) {
-                  ctx.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
-                }
-                ctx.closePath();
-                
-                const hasIntrusion = closestData.events?.some((e: any) => e.type === 'intrusion');
-                const zScale = Math.max(canvas.width / 960, 1);
-                
-                if (hasIntrusion) {
-                  // RED alert zone — matches screenshot style but red
-                  ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
-                  ctx.fill();
-                  ctx.strokeStyle = "rgba(255, 0, 0, 0.9)";
-                  ctx.lineWidth = 3;
-                  ctx.stroke();
-                  
-                  // "INTRUSION ZONE" label inside polygon
-                  const labelX = pts[0][0] * scaleX + Math.round(20 * scaleX);
-                  const labelY = (pts[0][1] * scaleY + pts[pts.length - 1][1] * scaleY) / 2;
-                  ctx.font = `bold ${Math.round(18 * zScale)}px monospace`;
-                  ctx.fillStyle = "rgba(255, 60, 60, 0.9)";
-                  ctx.fillText("INTRUSION ZONE", labelX, labelY);
-                  
-                  // Flashing ALERT banner at top
-                  const flash = Math.floor(Date.now() / 500) % 2 === 0;
-                  if (flash) {
-                    const bannerW = Math.round(260 * zScale);
-                    const bannerH = Math.round(40 * zScale);
-                    const bx = (canvas.width - bannerW) / 2;
-                    const by = Math.round(12 * zScale);
-                    ctx.fillStyle = "rgba(220, 0, 0, 0.9)";
-                    ctx.beginPath();
-                    ctx.roundRect(bx, by, bannerW, bannerH, 8);
-                    ctx.fill();
-                    ctx.font = `bold ${Math.round(16 * zScale)}px monospace`;
-                    ctx.fillStyle = "#ffffff";
-                    ctx.textAlign = "center";
-                    ctx.fillText("⚠ INTRUSION ALERT", canvas.width / 2, by + Math.round(26 * zScale));
-                    ctx.textAlign = "start";
-                  }
-                } else {
-                  // Green safe zone — matches screenshot exactly
-                  ctx.fillStyle = "rgba(0, 255, 0, 0.25)";
-                  ctx.fill();
-                  ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
-                  ctx.lineWidth = 2;
-                  ctx.stroke();
-                  
-                  // "INTRUSION ZONE" label inside polygon (matches screenshot)
-                  const labelX = pts[0][0] * scaleX + Math.round(20 * scaleX);
-                  const labelY = (pts[0][1] * scaleY + pts[pts.length - 1][1] * scaleY) / 2;
-                  ctx.font = `bold ${Math.round(18 * zScale)}px monospace`;
-                  ctx.fillStyle = "rgba(0, 255, 0, 0.9)";
-                  ctx.fillText("INTRUSION ZONE", labelX, labelY);
-                }
-              }
-            }
-
-            // Sync alerts natively to the sidebar feed
-            if (closestData.events) {
-              closestData.events.forEach((ev: any) => {
-                if (ev.type === 'intrusion') {
-                  const alertId = `${cam.id}-evt-intrude-${ev.object_id}`;
-                  addAlert({
-                    id: alertId,
-                    t: secondsOfDay(new Date()),
-                    cameraId: cam.id,
-                    zone: cam.zone,
-                    cls: "person",
-                    severity: "high",
-                    confidence: 0.92,
-                    status: "new",
-                    live: true,
-                  });
-                }
-              });
-            }
-            
+            drawCameraOverlay(ctx, canvas, cam, closestData, addAlert);
           }
         }
       }
@@ -424,6 +434,43 @@ function DecoupledStream({ cam }: { cam: Camera }) {
     animationId = requestAnimationFrame(renderLoop);
     return () => cancelAnimationFrame(animationId);
   }, [cam, addAlert]);
+
+  // Watchdog to prevent Chromium media freeze on tab switch or loop stall
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const resumePlayback = () => {
+      if (video && video.paused && !video.ended) {
+        video.play().catch(() => {});
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        resumePlayback();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    video.addEventListener("waiting", resumePlayback);
+    video.addEventListener("stalled", resumePlayback);
+    video.addEventListener("pause", resumePlayback);
+    video.addEventListener("ended", () => {
+      video.currentTime = 0;
+      resumePlayback();
+    });
+
+    const watchdog = setInterval(resumePlayback, 2000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      video.removeEventListener("waiting", resumePlayback);
+      video.removeEventListener("stalled", resumePlayback);
+      video.removeEventListener("pause", resumePlayback);
+      clearInterval(watchdog);
+    };
+  }, []);
 
   return (
     <>
@@ -448,6 +495,24 @@ function LiveMJPEGStream({ cam }: { cam: Camera }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const latestData = useRef<any>(null);
+  const { addAlert } = useConsole();
+  const [streamSrc, setStreamSrc] = useState<string>(() => cam.mjpegUrl || "");
+
+  useEffect(() => {
+    setStreamSrc(cam.mjpegUrl || "");
+  }, [cam.mjpegUrl]);
+
+  // Self-healing watchdog: reconnect MJPEG stream when returning to tab or on network recovery
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && cam.mjpegUrl) {
+        setStreamSrc(`${cam.mjpegUrl}?t=${Date.now()}`);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [cam.mjpegUrl]);
 
   useEffect(() => {
     if (!cam.metadataUrl || !cam.aiEnabled) {
@@ -455,14 +520,25 @@ function LiveMJPEGStream({ cam }: { cam: Camera }) {
       return;
     }
     
-    const evtSource = new EventSource(cam.metadataUrl);
-    evtSource.onmessage = (event) => {
-      try {
-        latestData.current = JSON.parse(event.data);
-      } catch (e) {}
-    };
+    let evtSource: EventSource | null = null;
+    try {
+      evtSource = new EventSource(cam.metadataUrl);
+      evtSource.onmessage = (event) => {
+        try {
+          latestData.current = JSON.parse(event.data);
+        } catch (e) {}
+      };
+      evtSource.onerror = () => {
+        // SSE auto-reconnects, but clear stale overlay if stream drops
+        latestData.current = null;
+      };
+    } catch (e) {
+      console.warn("SSE init error for", cam.id, e);
+    }
 
-    return () => evtSource.close();
+    return () => {
+      if (evtSource) evtSource.close();
+    };
   }, [cam.metadataUrl, cam.aiEnabled]);
 
   useEffect(() => {
@@ -474,68 +550,17 @@ function LiveMJPEGStream({ cam }: { cam: Camera }) {
       if (img && canvas) {
         const ctx = canvas.getContext("2d");
         if (ctx) {
-          if (canvas.width !== img.naturalWidth && img.naturalWidth > 0) {
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
+          const w = img.naturalWidth || (cam.resolution ? parseInt(cam.resolution.split("×")[0]) : 1920);
+          const h = img.naturalHeight || (cam.resolution ? parseInt(cam.resolution.split("×")[1]) : 1080);
+          if (canvas.width !== w && w > 0) {
+            canvas.width = w;
+            canvas.height = h;
           }
 
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-          if (cam.aiEnabled && latestData.current && latestData.current.detections) {
-            const boxes = latestData.current.detections;
-            
-            boxes.forEach((box: any) => {
-                let x = box.x;
-                let y = box.y;
-                let w = box.w;
-                let h = box.h;
-                if (w < 0) { x += w; w = -w; }
-                if (h < 0) { y += h; h = -h; }
-                
-                // Tactical UI Colors
-                const isVehicle = ['car', 'truck', 'bus', 'motorcycle'].includes(box.class?.toLowerCase());
-                const strokeColor = isVehicle ? 'rgba(56, 189, 248, 0.9)' : 'rgba(251, 191, 36, 0.9)'; 
-                const bgColor = isVehicle ? 'rgba(12, 74, 110, 0.85)' : 'rgba(120, 53, 15, 0.85)';
-                
-                ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = Math.max(1, canvas.width / 1000);
-                ctx.strokeRect(x, y, w, h);
-                
-                const cornerLen = Math.max(5, Math.min(w, h) * 0.15);
-                ctx.lineWidth = Math.max(2, canvas.width / 600);
-                
-                ctx.beginPath(); ctx.moveTo(x, y + cornerLen); ctx.lineTo(x, y); ctx.lineTo(x + cornerLen, y); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(x + w - cornerLen, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + cornerLen); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(x, y + h - cornerLen); ctx.lineTo(x, y + h); ctx.lineTo(x + cornerLen, y + h); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(x + w, y + h - cornerLen); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - cornerLen, y + h); ctx.stroke();
-                
-                const confPercent = Math.round((box.confidence || 0) * 100);
-                const className = (box.class || 'OBJ').toUpperCase();
-                const mainLabel = `${className} · ${confPercent}%`;
-                
-                const fontSize = Math.max(10, canvas.width / 130);
-                ctx.font = `600 ${fontSize}px "Inter", sans-serif`;
-                const textWidth = ctx.measureText(mainLabel).width;
-                const textHeight = fontSize;
-                
-                ctx.fillStyle = bgColor;
-                ctx.fillRect(x, y - textHeight - 8, textWidth + 10, textHeight + 8);
-                
-                ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-                ctx.fillText(mainLabel, x + 5, y - 5);
-                
-                if (box.plate) {
-                    const plateLabel = box.plate;
-                    ctx.font = `700 ${fontSize + 2}px monospace`;
-                    const pWidth = ctx.measureText(plateLabel).width;
-                    
-                    ctx.fillStyle = "rgba(251, 191, 36, 0.95)";
-                    ctx.fillRect(x, y + h, pWidth + 16, textHeight + 12);
-                    
-                    ctx.fillStyle = "#000000";
-                    ctx.fillText(plateLabel, x + 8, y + h + textHeight + 5);
-                }
-            });
+          if (cam.aiEnabled && latestData.current) {
+            drawCameraOverlay(ctx, canvas, cam, latestData.current, addAlert);
           }
         }
       }
@@ -544,14 +569,22 @@ function LiveMJPEGStream({ cam }: { cam: Camera }) {
     
     animationId = requestAnimationFrame(renderLoop);
     return () => cancelAnimationFrame(animationId);
-  }, [cam.aiEnabled]);
+  }, [cam, addAlert]);
 
   return (
     <>
       <img
         ref={imgRef}
-        src={cam.mjpegUrl}
+        src={streamSrc}
         alt={cam.name}
+        onError={() => {
+          // Re-trigger reload on stream stall / socket drop
+          setTimeout(() => {
+            if (cam.mjpegUrl) {
+              setStreamSrc(`${cam.mjpegUrl}?t=${Date.now()}`);
+            }
+          }, 1500);
+        }}
         className="absolute inset-0 w-full h-full object-contain z-0"
       />
       <canvas
@@ -573,8 +606,9 @@ function Tile({
   focused?: boolean;
   onClick: () => void;
 }) {
-  const { toggleAi } = useConsole();
+  const { toggleAi, updateZone } = useConsole();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isCalibrating, setIsCalibrating] = useState<boolean>(false);
   
   const isLiveMode = !!cam.mjpegUrl;
   const isMockMode = !isLiveMode && !!cam.metadataUrl;
@@ -612,13 +646,19 @@ function Tile({
   }, [cam.hlsUrl, cam.online, isLiveMode, isMockMode]);
 
   return (
-    <button
-      type="button"
+    <div
       data-testid={`cam-tile-${cam.id}`}
       data-online={cam.online}
-      onClick={onClick}
+      onClick={(e) => {
+        if (isCalibrating) return;
+        const target = e.target as HTMLElement;
+        if (target.closest('button, [role="button"], input, textarea, select')) {
+          return;
+        }
+        onClick();
+      }}
       title={`${cam.id} · ${cam.name}`}
-      className={`relative bg-g-bg border rounded-[2px] flex flex-col justify-between p-1.5 text-left overflow-hidden transition-none w-full h-full ${
+      className={`relative bg-g-bg border rounded-[2px] flex flex-col justify-between p-1.5 text-left overflow-hidden transition-none w-full h-full cursor-pointer select-none ${
         focused ? "border-g-blue" : "border-g-border hover:border-g-border-strong hover:bg-g-hover"
       }`}
     >
@@ -630,6 +670,25 @@ function Tile({
           cam.recording ? (
             <span className="flex items-center gap-1 shrink-0">
               <StatusDot tone={cam.aiEnabled ? "red" : "idle"} className={cam.aiEnabled ? "animate-pulse" : ""} />
+              {cam.analytics && (
+                <span
+                  role="button"
+                  title="Calibrate Perimeter / Zone"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!focused) onClick();
+                    setIsCalibrating(true);
+                  }}
+                  className={`text-micro px-1 py-0.5 rounded-[2px] transition-colors cursor-pointer flex items-center gap-0.5 ${
+                    isCalibrating
+                      ? "bg-g-blue text-white"
+                      : "bg-g-bg border border-g-border text-g-blue hover:border-g-blue hover:bg-g-blue/10"
+                  }`}
+                >
+                  <Icon name="tune" size={11} />
+                  <span>ZONE</span>
+                </span>
+              )}
               {(isLiveMode || isMockMode) ? (
                 <span
                   role="button"
@@ -674,8 +733,19 @@ function Tile({
                 className="absolute inset-0 w-full h-full object-contain z-0"
               />
             )}
+            {isCalibrating && (
+              <ZoneCalibrator
+                cam={cam}
+                onClose={() => setIsCalibrating(false)}
+                onSave={async (newPoints) => {
+                  const isLine = cam.analytics?.type === "traffic_count";
+                  const payload = isLine ? { line: newPoints } : { zone: newPoints };
+                  return await updateZone(cam.id, payload);
+                }}
+              />
+            )}
             {/* Overlay icon only when focused or on hover? Actually, let's keep it clean if video is playing */}
-            {focused && <Icon name="videocam" size={40} className="text-white/20 absolute z-10 pointer-events-none" />}
+            {focused && !isCalibrating && <Icon name="videocam" size={40} className="text-white/20 absolute z-10 pointer-events-none" />}
           </>
         ) : (
           <span className="flex flex-col items-center gap-1 text-g-red z-10 relative">
@@ -691,7 +761,7 @@ function Tile({
           {cam.online ? clock : "--:--:--"}
         </span>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -732,18 +802,29 @@ export function CameraWall({ cameras }: { cameras: Camera[] }) {
         </div>
       </header>
 
-      <div className="flex-1 min-h-0 p-2">
-        {focused ? (
-          <div className="h-full" data-testid="wall-focus">
-            <Tile cam={focused} clock={clock} focused onClick={() => setFocusId(null)} />
-          </div>
-        ) : (
-          <div className="h-full grid grid-cols-3 grid-rows-3 gap-2">
-            {cameras.slice(0, 9).map((c) => (
-              <Tile key={c.id} cam={c} clock={clock} onClick={() => setFocusId(c.id)} />
-            ))}
-          </div>
-        )}
+      <div className="flex-1 min-h-0 p-2 relative">
+        <div className="h-full grid grid-cols-3 grid-rows-3 gap-2">
+          {cameras.slice(0, 9).map((c) => {
+            const isThisFocused = c.id === focusId;
+            return (
+              <div
+                key={c.id}
+                className={
+                  isThisFocused
+                    ? "absolute inset-2 z-30 bg-g-panel"
+                    : "relative w-full h-full min-h-0 overflow-hidden"
+                }
+              >
+                <Tile
+                  cam={c}
+                  clock={clock}
+                  focused={isThisFocused}
+                  onClick={() => setFocusId(isThisFocused ? null : c.id)}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

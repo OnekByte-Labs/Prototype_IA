@@ -30,16 +30,6 @@ class TrafficCounter(BaseAnalytics):
 
     def process_frame(self, frame: np.ndarray, tracks: list, frame_id: int) -> list:
         events = []
-        
-        # Draw the counting line on the frame (red)
-        pts = np.array(self.line_coords, np.int32)
-        pts = pts.reshape((-1, 1, 2))
-        cv2.polylines(frame, [pts], False, (0, 0, 255), 4)
-        
-        # Draw total count
-        cv2.putText(frame, f"Traffic Count: {self.total_count}", (50, 100), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 255), 4)
-
         current_track_ids = set()
 
         for track in tracks:
@@ -82,9 +72,6 @@ class TrafficCounter(BaseAnalytics):
                         "total_count": self.total_count,
                         "location": [center_x, center_y]
                     })
-                    
-                    # Optional visual feedback: brief flash or marker
-                    cv2.circle(frame, (int(center_x), int(center_y)), 20, (0, 255, 0), -1)
 
         # Cleanup old tracks
         dead_tracks = set(self.history.keys()) - current_track_ids

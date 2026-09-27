@@ -1,38 +1,22 @@
 models:
-  primary_detector:
-    # Path is relative to the project root
-    path: "models/yolo11n.onnx"
-    conf_threshold: 0.25
-    iou_threshold: 0.45
-  plate_detector:
-    path: "models/yolov8n_plate.onnx"
-    conf_threshold: 0.30
-    iou_threshold: 0.45
-  ocr:
-    model_path: "models/cct-xs-v2-global-model.onnx"
-    config_path: "models/plate_config.yaml"
-
-server:
-  host: "0.0.0.0"
-  port: 5556
-
+  primary_detector: {path: models/yolo11n.onnx, conf_threshold: 0.25, iou_threshold: 0.45}
+  plate_detector: {path: models/yolov8n_plate.onnx, conf_threshold: 0.3, iou_threshold: 0.45}
+  ocr: {model_path: models/cct-xs-v2-global-model.onnx, config_path: models/plate_config.yaml}
+server: {host: 0.0.0.0, port: 5556}
 analytics:
   cam_01:
     type: traffic_count
     line:
-      - [20, 1700]
-      - [1920, 1200]
-      - [3820, 1400]
+    - [20, 1700]
+    - [1920, 1200]
+    - [3820, 1400]
   cam_09:
     type: intrusion_zone
     zone:
-      - [0, 80]
-      - [780, 80]
-      - [670, 650]
-      - [380, 830]
-      - [0, 750]
-    # Detection uses a 30px inward buffer to avoid near-miss false triggers
+    - [0.0, 0.0]
+    - [859.0, 441.0]
+    - [682.0, 651.0]
+    - [257.0, 1017.0]
+    - [4.0, 1017.0]
     buffer_px: 15
     required_consecutive_frames: 8
-
-
