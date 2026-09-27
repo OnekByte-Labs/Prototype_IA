@@ -127,11 +127,24 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                 if (w < 0) { x += w; w = -w; }
                 if (h < 0) { y += h; h = -h; }
                 
+                // Check if this vehicle recently crossed the counting line
+                const isRecentlyCounted = closestData.events?.some(
+                  (e: any) => e.type === 'traffic_count' && e.object_id === box.id && ((closestData.frame_id ?? 0) - e.frame_id) < 45 && ((closestData.frame_id ?? 0) - e.frame_id) >= 0
+                );
+
                 // Tactical UI Colors
                 const isVehicle = ['car', 'truck', 'bus', 'motorcycle'].includes(objClass);
-                // Sky blue for vehicles, amber for others
-                const strokeColor = isVehicle ? 'rgba(56, 189, 248, 0.9)' : 'rgba(251, 191, 36, 0.9)'; 
-                const bgColor = isVehicle ? 'rgba(12, 74, 110, 0.85)' : 'rgba(120, 53, 15, 0.85)';
+                // Emerald green if counted, sky blue for vehicles, amber for others
+                const strokeColor = isRecentlyCounted
+                  ? 'rgba(34, 197, 94, 0.95)'
+                  : isVehicle
+                  ? 'rgba(56, 189, 248, 0.9)'
+                  : 'rgba(251, 191, 36, 0.9)'; 
+                const bgColor = isRecentlyCounted
+                  ? 'rgba(6, 78, 59, 0.9)'
+                  : isVehicle
+                  ? 'rgba(12, 74, 110, 0.85)'
+                  : 'rgba(120, 53, 15, 0.85)';
                 
                 // 1. Thin main bounding box
                 ctx.strokeStyle = strokeColor;
@@ -151,10 +164,12 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                 // Bottom-right
                 ctx.beginPath(); ctx.moveTo(x + w, y + h - cornerLen); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - cornerLen, y + h); ctx.stroke();
                 
-                // 3. Label text (e.g. "CAR · 85%")
+                // 3. Label text (e.g. "CAR · 85%" or "CAR · 85% ✓")
                 const confPercent = Math.round(confidence * 100);
                 const className = (box.class || 'OBJ').toUpperCase();
-                const mainLabel = `${className} · ${confPercent}%`;
+                const mainLabel = isRecentlyCounted 
+                  ? `${className} · ${confPercent}%  ✓` 
+                  : `${className} · ${confPercent}%`;
                 
                 const fontSize = Math.max(10, canvas.width / 130);
                 ctx.font = `600 ${fontSize}px "Inter", sans-serif`;
@@ -249,6 +264,47 @@ function DecoupledStream({ cam }: { cam: Camera }) {
                 ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
                 ctx.fillStyle = "#ffffff";
                 ctx.fillText(String(totalCount), bx + pad, by + Math.round(48 * scale));
+
+                // Draw small green marks when cars cross the line
+                const crossingEvents = closestData.events?.filter(
+                  (e: any) => e.type === 'traffic_count' && e.location && e.frame_id !== undefined
+                );
+                
+                if (crossingEvents && crossingEvents.length > 0) {
+                  crossingEvents.forEach((ev: any) => {
+                    const currentFid = closestData.frame_id ?? 0;
+                    const age = currentFid - ev.frame_id;
+                    if (age >= 0 && age < 45) { // show for ~1.5 seconds after crossing
+                      const alpha = Math.max(0, 1 - age / 45);
+                      const px = ev.location[0] * scaleX;
+                      const py = ev.location[1] * scaleY;
+                      const markerRadius = Math.max(5, canvas.width / 320);
+                      const pulseRadius = markerRadius + (age / 45) * markerRadius * 2.5;
+                      
+                      // 1. Expanding fading ripple ring
+                      ctx.beginPath();
+                      ctx.arc(px, py, pulseRadius, 0, Math.PI * 2);
+                      ctx.strokeStyle = `rgba(34, 197, 94, ${alpha * 0.85})`;
+                      ctx.lineWidth = Math.max(1.5, canvas.width / 800);
+                      ctx.stroke();
+                      
+                      // 2. Solid glowing green center pip
+                      ctx.beginPath();
+                      ctx.arc(px, py, markerRadius, 0, Math.PI * 2);
+                      ctx.fillStyle = `rgba(34, 197, 94, ${alpha})`;
+                      ctx.fill();
+                      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+                      ctx.lineWidth = 1;
+                      ctx.stroke();
+                      
+                      // 3. Crisp "+1" floating indicator
+                      const fontSize = Math.max(11, canvas.width / 160);
+                      ctx.font = `bold ${fontSize}px monospace`;
+                      ctx.fillStyle = `rgba(34, 197, 94, ${alpha})`;
+                      ctx.fillText("+1", px + markerRadius + 4, py - markerRadius);
+                    }
+                  });
+                }
               } else if (cam.analytics.type === 'intrusion_zone' && cam.analytics.zone) {
                 const pts = cam.analytics.zone;
                 ctx.beginPath();
