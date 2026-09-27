@@ -17,9 +17,11 @@ import {
   seedAlerts,
   secondsOfDay,
   type Alert,
+  type AlertClass,
   type Camera,
+  type Severity,
 } from "@/lib/gotham/model";
-import { intRange, mulberry32 } from "@/lib/gotham/rng";
+import { mulberry32 } from "@/lib/gotham/rng";
 import { useToast } from "./Toast";
 import useSWR, { useSWRConfig } from "swr";
 
@@ -31,6 +33,7 @@ type ConsoleState = {
   ack: (id: string) => void;
   ackMany: (ids: string[]) => void;
   dispatch: (id: string) => void;
+  triggerAlert: (cameraId?: string, cls?: AlertClass, severity?: Severity) => void;
   muted: boolean;
   toggleMute: () => void;
   liveOn: boolean;
@@ -92,7 +95,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   const [alerts, setAlerts] = useState<Alert[]>(() => seedAlerts());
   const [muted, setMuted] = useState(false);
   const [liveOn, setLiveOn] = useState(true);
-  const [degraded, setDegraded] = useState<string[]>([]);
+  const [degraded] = useState<string[]>([]);
 
   const rng = useRef(mulberry32(0x9e4f));
   // The generator effect must not restart when the operator toggles mute, so the
@@ -102,47 +105,21 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     mutedRef.current = muted;
   }, [muted]);
 
-  /* ---- live alert feed: one new event every 15–25s ---- */
-  useEffect(() => {
-    if (!liveOn) return;
-    let timer: ReturnType<typeof setTimeout>;
-
-    const schedule = () => {
-      timer = setTimeout(
-        () => {
-          const a = nextAlert(rng.current, new Date());
-          setAlerts((prev) => [a, ...prev]);
-          if (a.severity === "high" && !mutedRef.current) beep();
-          schedule();
-        },
-        intRange(rng.current, 15, 25) * 1000,
-      );
-    };
-
-    schedule();
-    return () => clearTimeout(timer);
-  }, [liveOn]);
-
-  /* ---- health simulation removed ---- */
-
-interface ApiCamera {
-  id: string;
-  name: string;
-  label: string;
-  online: boolean;
-  hlsUrl: string;
-  webrtcUrl?: string;
-  rtspUrl?: string;
-  mjpegUrl?: string;
-  metadataUrl?: string;
-  aiEnabled?: boolean;
-}
-
-  // Fetch live camera statuses from our API proxy
-  const { data: apiCameras } = useSWR<ApiCamera[]>('/api/cameras', fetcher, {
-    refreshInterval: 10000,
-    fallbackData: [],
-  });
+  /** Manual trigger for explicit operator / diagnostic testing only — no spurious auto alerts */
+  const triggerAlert = useCallback(
+    (cameraId?: string, cls?: AlertClass, severity?: Severity) => {
+      const a = nextAlert(rng.current, new Date());
+      if (cameraId) a.cameraId = cameraId;
+      if (cls) a.cls = cls;
+      if (severity) a.severity = severity;
+      a.status = "new";
+      a.live = true;
+      setAlerts((prev) => [a, ...prev]);
+      if (a.severity === "high" && !mutedRef.current) beep();
+      toast(`ALERT: ${a.cls.toUpperCase()} on ${a.cameraId}`, "err");
+    },
+    [toast],
+  );
 
   const ack = useCallback(
     (id: string) => {
@@ -259,6 +236,7 @@ interface ApiCamera {
       ack,
       ackMany,
       dispatch,
+      triggerAlert,
       muted,
       toggleMute,
       liveOn,
@@ -267,7 +245,7 @@ interface ApiCamera {
       degraded,
       toggleAi,
     }),
-    [alerts, unacked, ack, ackMany, dispatch, muted, toggleMute, liveOn, toggleLive, cameras, degraded, toggleAi],
+    [alerts, unacked, ack, ackMany, dispatch, triggerAlert, muted, toggleMute, liveOn, toggleLive, cameras, degraded],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

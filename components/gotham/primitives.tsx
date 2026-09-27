@@ -69,12 +69,14 @@ export function StatusDot({ tone = "idle", className = "" }: { tone?: string; cl
 /* ------------------------------------------------------------------ class tag */
 
 const CLASS_STYLE: Record<AlertClass, string> = {
+  intrusion: "text-g-red border-g-red/50 bg-red-950/30 font-bold",
   person: "text-g-blue border-g-blue/40",
   vehicle: "text-g-violet border-g-violet/40",
   animal: "text-g-green border-g-green/40",
 };
 
 const CLASS_TEXT: Record<AlertClass, string> = {
+  intrusion: "Intrusion",
   person: "Person",
   vehicle: "Vehicle",
   animal: "Animal",
@@ -183,7 +185,7 @@ export function KpiCard({ label, value, note, tone = "default", onClick, active 
 
 type BtnProps = {
   children: ReactNode;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   variant?: "default" | "primary" | "danger" | "ghost";
   size?: "sm" | "md";
   title?: string;
