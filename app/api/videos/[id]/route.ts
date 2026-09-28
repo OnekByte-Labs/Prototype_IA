@@ -21,6 +21,49 @@ const CAM_FILES: Record<string, string> = {
 
 const CHUNK_SIZE_MAX = 4 * 1024 * 1024; // 4MB maximum chunk per range response
 
+function nodeStreamToWebStream(stream: fs.ReadStream): ReadableStream {
+  let isClosed = false;
+  return new ReadableStream({
+    start(controller) {
+      stream.on("data", (chunk) => {
+        if (isClosed) return;
+        try {
+          controller.enqueue(chunk);
+        } catch {
+          isClosed = true;
+          stream.destroy();
+        }
+      });
+      stream.on("end", () => {
+        if (isClosed) return;
+        isClosed = true;
+        try {
+          controller.close();
+        } catch {}
+      });
+      stream.on("error", (err) => {
+        if (isClosed) return;
+        isClosed = true;
+        try {
+          controller.error(err);
+        } catch {}
+      });
+      stream.on("close", () => {
+        if (!isClosed) {
+          isClosed = true;
+          try {
+            controller.close();
+          } catch {}
+        }
+      });
+    },
+    cancel() {
+      isClosed = true;
+      stream.destroy();
+    },
+  });
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -55,13 +98,7 @@ export async function GET(
     const chunksize = (end - start) + 1;
     
     const file = fs.createReadStream(videoPath, { start, end });
-
-    // Handle client abort / connection close cleanly
-    request.signal.addEventListener("abort", () => {
-      file.destroy();
-    });
-
-    const webStream = Readable.toWeb(file);
+    const webStream = nodeStreamToWebStream(file);
     
     return new NextResponse(webStream as any, {
       status: 206,
@@ -78,12 +115,8 @@ export async function GET(
     const end = Math.min(CHUNK_SIZE_MAX - 1, fileSize - 1);
     const chunksize = end + 1;
     const file = fs.createReadStream(videoPath, { start: 0, end });
+    const webStream = nodeStreamToWebStream(file);
     
-    request.signal.addEventListener("abort", () => {
-      file.destroy();
-    });
-
-    const webStream = Readable.toWeb(file);
     return new NextResponse(webStream as any, {
       status: 200,
       headers: {

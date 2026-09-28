@@ -458,7 +458,7 @@ interface ApiCamera {
 
       const aiEnabled = aiOverrides[c.id] !== undefined
         ? aiOverrides[c.id]
-        : (liveData?.aiEnabled ?? c.aiEnabled ?? false);
+        : (liveData?.aiEnabled ?? c.aiEnabled ?? true);
 
       const analytics = analyticsOverrides[c.id] !== undefined
         ? analyticsOverrides[c.id]

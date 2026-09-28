@@ -23,37 +23,48 @@ logger = logging.getLogger(__name__)
 
 
 class KalmanBoxState:
-    """Simple Kalman-like state for a bounding box: [cx, cy, w, h, vx, vy, vw, vh]."""
+    """Simple Kalman-like state for a bounding box: [cx, cy, w, h, vx, vy]."""
 
     def __init__(self, bbox: Tuple[int, int, int, int]):
         x1, y1, x2, y2 = bbox
         cx = (x1 + x2) / 2.0
         cy = (y1 + y2) / 2.0
-        w = x2 - x1
-        h = y2 - y1
-        self.state = np.array([cx, cy, w, h, 0.0, 0.0, 0.0, 0.0], dtype=np.float64)
+        w = max(10.0, float(abs(x2 - x1)))
+        h = max(10.0, float(abs(y2 - y1)))
+        # [cx, cy, w, h, vx, vy]
+        self.state = np.array([cx, cy, w, h, 0.0, 0.0], dtype=np.float64)
 
     def predict(self):
-        """Advance state by one timestep using constant-velocity model."""
-        self.state[:4] += self.state[4:]
+        """Advance position by velocity. Size stays stable without runaway drift."""
+        self.state[0] += self.state[4]  # cx += vx
+        self.state[1] += self.state[5]  # cy += vy
+        self.state[4] *= 0.9  # velocity damping
+        self.state[5] *= 0.9
 
     def update(self, bbox: Tuple[int, int, int, int]):
         """Update state with a new measurement."""
         x1, y1, x2, y2 = bbox
         cx = (x1 + x2) / 2.0
         cy = (y1 + y2) / 2.0
-        w = x2 - x1
-        h = y2 - y1
-        measurement = np.array([cx, cy, w, h], dtype=np.float64)
-        # Simple exponential moving average update (α = 0.6)
-        alpha = 0.6
-        velocity = measurement - self.state[:4]
-        self.state[:4] = alpha * measurement + (1 - alpha) * self.state[:4]
-        self.state[4:] = alpha * velocity + (1 - alpha) * self.state[4:]
+        w = max(10.0, float(abs(x2 - x1)))
+        h = max(10.0, float(abs(y2 - y1)))
+
+        vx = cx - self.state[0]
+        vy = cy - self.state[1]
+
+        alpha = 0.7
+        self.state[0] = alpha * cx + (1.0 - alpha) * self.state[0]
+        self.state[1] = alpha * cy + (1.0 - alpha) * self.state[1]
+        self.state[2] = alpha * w + (1.0 - alpha) * self.state[2]
+        self.state[3] = alpha * h + (1.0 - alpha) * self.state[3]
+        self.state[4] = alpha * vx + (1.0 - alpha) * self.state[4]
+        self.state[5] = alpha * vy + (1.0 - alpha) * self.state[5]
 
     @property
     def bbox(self) -> Tuple[int, int, int, int]:
         cx, cy, w, h = self.state[:4]
+        w = max(10.0, w)
+        h = max(10.0, h)
         return (
             int(cx - w / 2),
             int(cy - h / 2),
@@ -291,4 +302,4 @@ class ByteTracker:
         # ── Remove dead tracks ──
         self.tracks = [t for t in self.tracks if t.time_since_update <= self.max_age]
 
-        return [t for t in self.tracks if t.is_confirmed]
+        return [t for t in self.tracks if t.is_confirmed and t.time_since_update <= 1]
