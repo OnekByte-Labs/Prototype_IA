@@ -89,6 +89,7 @@ class AIToggleRequest(BaseModel):
 
 
 class ZoneUpdateRequest(BaseModel):
+    type: Optional[str] = None
     zone: Optional[List[List[float]]] = None
     line: Optional[List[List[float]]] = None
     buffer_px: Optional[int] = None
@@ -172,7 +173,24 @@ def create_app(
         if internal_id not in pipeline_cfg["analytics"]:
             pipeline_cfg["analytics"][internal_id] = {}
 
+        if req.type == "none":
+            pipeline_cfg["analytics"].pop(internal_id, None)
+            if internal_id in analytics_engines:
+                del analytics_engines[internal_id]
+            try:
+                backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                yaml_path = os.path.join(backend_dir, "configs", "pipeline.yaml")
+                with open(yaml_path, "w", encoding="utf-8") as f:
+                    yaml.dump(pipeline_cfg, f, default_flow_style=None, sort_keys=False)
+                logger.info("Removed analytics config for %s from %s", internal_id, yaml_path)
+            except Exception as e:
+                logger.error("Failed to persist pipeline.yaml: %s", e)
+            return {"success": True, "analytics": None}
+
         target_cfg = pipeline_cfg["analytics"][internal_id]
+
+        if req.type is not None:
+            target_cfg["type"] = req.type
 
         if req.zone is not None:
             target_cfg["zone"] = req.zone
@@ -207,6 +225,15 @@ def create_app(
                 engine.counting_line = LineString(req.line)
                 if hasattr(engine, 'reset'):
                     engine.reset()
+        else:
+            try:
+                from src.analytics import create_analytics
+                new_engine = create_analytics(internal_id, target_cfg)
+                if new_engine:
+                    analytics_engines[internal_id] = new_engine
+                    logger.info("Dynamically created live analytics engine for %s", internal_id)
+            except Exception as e:
+                logger.warning("Could not dynamically create engine for %s: %s", internal_id, e)
 
         # Persist to pipeline.yaml on disk
         try:

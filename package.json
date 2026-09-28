@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "mock": "backend\\venv\\Scripts\\python.exe backend\\src\\run_mock.py",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

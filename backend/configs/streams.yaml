@@ -37,3 +37,4 @@ streams:
   - id: cam_09
     video_path: "Dataset/Test/feed-worker-zone-intrusion.mp4"
     label: "CAM-09 · WAREHOUSE 1"
+

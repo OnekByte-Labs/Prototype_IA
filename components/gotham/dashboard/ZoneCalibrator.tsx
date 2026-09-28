@@ -11,15 +11,27 @@ interface ZoneCalibratorProps {
 
 export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
   const isLine = cam.analytics?.type === "traffic_count";
-  const initialPoints: number[][] = isLine
-    ? cam.analytics?.line || [[20, 1700], [1920, 1200], [3820, 1400]]
-    : cam.analytics?.zone || [[0, 80], [780, 80], [670, 650], [380, 830], [0, 750]];
+
+  const resParts = cam.resolution ? cam.resolution.split("×") : ["1920", "1080"];
+  const origW = parseInt(resParts[0], 10) || 1920;
+  const origH = parseInt(resParts[1], 10) || 1080;
+
+  const hasExistingGeometry = isLine
+    ? Boolean(cam.analytics?.line && cam.analytics.line.length >= 2)
+    : Boolean(cam.analytics?.zone && cam.analytics.zone.length >= 3);
+
+  const initialPoints: number[][] = hasExistingGeometry
+    ? (isLine ? cam.analytics!.line! : cam.analytics!.zone!)
+    : [];
 
   const [points, setPoints] = useState<number[][]>(() => initialPoints.map(p => [...p]));
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [isPlotting, setIsPlotting] = useState<boolean>(() => !hasExistingGeometry);
+  const [cursorCoords, setCursorCoords] = useState<[number, number] | null>(null);
+  const previousPointsRef = useRef<number[][]>(initialPoints);
   const [showYamlModal, setShowYamlModal] = useState<boolean>(false);
   const [yamlText, setYamlText] = useState<string>("");
   const [saving, setSaving] = useState<boolean>(false);
@@ -28,10 +40,6 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
   const justDraggedRef = useRef<boolean>(false);
   const isDraggingRef = useRef<boolean>(false);
   const dragIdxRef = useRef<number | null>(null);
-
-  const resParts = cam.resolution ? cam.resolution.split("×") : ["1920", "1080"];
-  const origW = parseInt(resParts[0], 10) || 1920;
-  const origH = parseInt(resParts[1], 10) || 1080;
 
   const generateYaml = useCallback((pts: number[][]) => {
     const key = isLine ? "line" : "zone";
@@ -140,6 +148,45 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
     };
   }, [clientToNative]);
 
+  const startPlotting = () => {
+    previousPointsRef.current = points.map(p => [...p]);
+    setPoints([]);
+    setSelectedIdx(null);
+    setCursorCoords(null);
+    setIsPlotting(true);
+  };
+
+  const cancelPlotting = () => {
+    setPoints(previousPointsRef.current.map(p => [...p]));
+    setIsPlotting(false);
+    setCursorCoords(null);
+  };
+
+  const finishPlotting = () => {
+    const minPoints = isLine ? 2 : 3;
+    if (points.length < minPoints) return;
+    setIsPlotting(false);
+    setCursorCoords(null);
+    setSelectedIdx(0);
+  };
+
+  const undoLastPoint = () => {
+    setPoints(prev => prev.slice(0, -1));
+  };
+
+  const addWaypoint = () => {
+    if (points.length < 2) {
+      startPlotting();
+      return;
+    }
+    const last = points[points.length - 1];
+    const prev = points[points.length - 2];
+    const newX = Math.round(Math.min(origW - 40, last[0] + (last[0] - prev[0]) * 0.35));
+    const newY = Math.round(Math.min(origH - 40, last[1] + (last[1] - prev[1]) * 0.35));
+    setPoints(curr => [...curr, [newX, newY]]);
+    setSelectedIdx(points.length);
+  };
+
   const handleSvgClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (e.button !== 0) return;
@@ -147,8 +194,41 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
     const coords = clientToNative(e.clientX, e.clientY);
     if (!coords) return;
 
-    setPoints(prev => [...prev, coords]);
-    setSelectedIdx(points.length);
+    if (isPlotting) {
+      if (isLine) {
+        const next = [...points, coords];
+        setPoints(next);
+        if (next.length === 2) {
+          // Tripwire complete! 2 points define the line
+          setIsPlotting(false);
+          setCursorCoords(null);
+          setSelectedIdx(1);
+        }
+        return;
+      }
+
+      // If polygon, check if clicking near first node to close
+      if (!isLine && points.length >= 3) {
+        const first = points[0];
+        const dist = Math.hypot(first[0] - coords[0], first[1] - coords[1]);
+        if (dist < origW * 0.04) {
+          finishPlotting();
+          return;
+        }
+      }
+      setPoints(prev => [...prev, coords]);
+      return;
+    }
+
+    // In normal view/edit mode, clicking background deselects handles
+    setSelectedIdx(null);
+  };
+
+  const handleSvgMouseMove = (e: React.MouseEvent) => {
+    if (isPlotting) {
+      const coords = clientToNative(e.clientX, e.clientY);
+      setCursorCoords(coords);
+    }
   };
 
   const removeSelected = () => {
@@ -161,6 +241,8 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
   const resetDefault = () => {
     setPoints(initialPoints.map(p => [...p]));
     setSelectedIdx(null);
+    setIsPlotting(false);
+    setCursorCoords(null);
   };
 
   const handleSave = async () => {
@@ -233,7 +315,68 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
         </div>
 
         <div className="flex items-center gap-1.5">
-          {selectedIdx !== null && points.length > (isLine ? 2 : 3) && (
+          {!isPlotting ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={startPlotting}
+                className="h-6 px-2.5 rounded-[2px] bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/60 text-cyan-300 font-mono text-[10px] font-bold tracking-wider flex items-center gap-1.5 transition-colors shadow-sm"
+                title={isLine ? "Click 2 points anywhere on the screen to draw a tripwire" : "Click anywhere on screen to plot perimeter boundary"}
+              >
+                <svg className="w-3 h-3 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+                <span>{points.length > 0 ? (isLine ? "REDRAW TRIPWIRE" : "REDRAW PERIMETER") : (isLine ? "DRAW TRIPWIRE" : "DRAW PERIMETER")}</span>
+              </button>
+
+              {isLine && points.length >= 2 && (
+                <button
+                  type="button"
+                  onClick={addWaypoint}
+                  className="h-6 px-2 rounded-[2px] bg-g-panel border border-g-border text-g-text-2 hover:text-white hover:border-g-blue/50 flex items-center gap-1 text-[9.5px] font-mono tracking-wider transition-colors"
+                  title="Add additional waypoint node to line"
+                >
+                  <span>+ WAYPOINT</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded-[1px] bg-cyan-950/80 border border-cyan-500/60 text-cyan-300 font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                DRAWING ACTIVE
+              </span>
+              {points.length > 0 && (
+                <button
+                  type="button"
+                  onClick={undoLastPoint}
+                  className="h-6 px-2 rounded-[2px] bg-g-panel border border-g-border text-g-text hover:text-white font-mono text-[9px] transition-colors"
+                >
+                  UNDO
+                </button>
+              )}
+              {points.length >= (isLine ? 2 : 3) && (
+                <button
+                  type="button"
+                  onClick={finishPlotting}
+                  className="h-6 px-2.5 rounded-[2px] bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 font-mono text-[9px] font-bold tracking-wider transition-colors"
+                >
+                  {isLine ? "FINISH TRIPWIRE" : "CLOSE PERIMETER"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={cancelPlotting}
+                className="h-6 px-2 rounded-[2px] bg-red-950/40 border border-red-500/40 text-red-400 hover:bg-red-900/40 font-mono text-[9px] transition-colors"
+              >
+                CANCEL
+              </button>
+            </div>
+          )}
+
+          {selectedIdx !== null && points.length > (isLine ? 2 : 3) && !isPlotting && (
             <button
               type="button"
               onClick={removeSelected}
@@ -278,8 +421,8 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving}
-            className="h-6 px-2.5 rounded-[2px] bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/50 text-emerald-400 font-mono text-[10px] font-bold tracking-wider flex items-center gap-1 transition-colors"
+            disabled={saving || isPlotting}
+            className="h-6 px-2.5 rounded-[2px] bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/50 text-emerald-400 font-mono text-[10px] font-bold tracking-wider flex items-center gap-1 transition-colors disabled:opacity-50"
           >
             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <polyline points="20 6 9 17 4 12" />
@@ -304,13 +447,119 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
       {/* Main Interactive Canvas Area */}
       <div
         ref={containerRef}
-        className="flex-1 relative overflow-hidden cursor-crosshair"
+        className="flex-1 relative overflow-hidden cursor-crosshair bg-black flex items-center justify-center"
       >
+        {/* Plotting HUD Guide Banner */}
+        {isPlotting && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-[2px] bg-black/90 border border-cyan-500/70 shadow-2xl flex items-center gap-3 backdrop-blur-md pointer-events-auto">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+              <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-300 uppercase">
+                {points.length === 0
+                  ? "STEP 1: CLICK ANYWHERE ON SCREEN TO SET POINT A (START)"
+                  : points.length === 1
+                  ? (isLine
+                      ? "STEP 2: CLICK ANYWHERE ELSE TO SET POINT B (END)"
+                      : "STEP 2: CLICK TO PLACE NODE 02")
+                  : isLine
+                  ? `NODE ${points.length} PLACED · CLICK TO EXTEND OR 'FINISH'`
+                  : `NODE ${points.length} PLACED · CLICK TO EXTEND OR CLICK NODE 01 TO CLOSE`}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 border-l border-white/20 pl-2">
+              {points.length > 0 && (
+                <button
+                  type="button"
+                  onClick={undoLastPoint}
+                  className="px-2 py-0.5 rounded-[1px] bg-white/10 hover:bg-white/20 text-white font-mono text-[9px] font-bold"
+                >
+                  UNDO
+                </button>
+              )}
+              {points.length >= (isLine ? 2 : 3) && (
+                <button
+                  type="button"
+                  onClick={finishPlotting}
+                  className="px-2.5 py-0.5 rounded-[1px] bg-emerald-500/25 hover:bg-emerald-500/40 border border-emerald-500/60 text-emerald-300 font-mono text-[9px] font-bold uppercase tracking-wider"
+                >
+                  {isLine ? "FINISH" : "CLOSE"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={cancelPlotting}
+                className="px-2 py-0.5 rounded-[1px] bg-red-500/20 hover:bg-red-500/30 text-red-300 font-mono text-[9px]"
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State when no points defined */}
+        {points.length === 0 && !isPlotting && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-20">
+            <div className="p-4 rounded-[3px] bg-black/90 border border-g-border shadow-2xl flex flex-col items-center text-center gap-2 pointer-events-auto backdrop-blur-md">
+              <div className="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/50 flex items-center justify-center text-cyan-400">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+              </div>
+              <span className="text-[11px] font-mono font-bold text-white tracking-wider uppercase">
+                {isLine ? "NO TRIPWIRE DEFINED" : "NO PERIMETER DEFINED"}
+              </span>
+              <span className="text-[9.5px] font-mono text-g-muted max-w-[240px]">
+                {isLine
+                  ? "Click below to place 2 points anywhere on the live video stream."
+                  : "Click below to plot perimeter boundary vertices."}
+              </span>
+              <button
+                type="button"
+                onClick={startPlotting}
+                className="mt-1 h-7 px-3.5 rounded-[2px] bg-cyan-500/25 hover:bg-cyan-500/35 border border-cyan-500/60 text-cyan-300 font-mono text-[10px] font-bold tracking-wider transition-colors"
+              >
+                {isLine ? "DRAW TRIPWIRE LINE" : "DRAW PERIMETER"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Start Point Crosshair Hint when isPlotting and 0 points */}
+        {isPlotting && points.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-10">
+            <div className="px-4 py-2 rounded-[2px] bg-black/75 border border-dashed border-cyan-500/50 text-cyan-300 font-mono text-[10.5px] tracking-wider uppercase flex items-center gap-2 backdrop-blur-xs">
+              <span className="text-cyan-400 font-bold text-sm">+</span>
+              <span>CLICK ANYWHERE ON STREAM TO SET POINT A (START)</span>
+            </div>
+          </div>
+        )}
+
+        {/* Background Camera Video Feed */}
+        {cam.mjpegUrl ? (
+          <img
+            src={cam.mjpegUrl}
+            alt={cam.name}
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none z-0"
+          />
+        ) : (
+          <video
+            src={`/api/videos/${cam.id}`}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none z-0"
+          />
+        )}
+
         <svg
           viewBox="0 0 1000 562.5"
           preserveAspectRatio="xMidYMid meet"
           onClick={handleSvgClick}
-          className="absolute inset-0 w-full h-full pointer-events-auto"
+          onMouseMove={handleSvgMouseMove}
+          className="absolute inset-0 w-full h-full pointer-events-auto z-10"
         >
           <defs>
             <radialGradient id="tacticalActiveGlow" cx="50%" cy="50%" r="50%">
@@ -324,7 +573,7 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
           </defs>
 
           {/* Polygon Fill */}
-          {isLine ? (
+          {points.length >= 2 && (isLine ? (
             <polyline
               points={polyPointsString}
               fill="none"
@@ -340,6 +589,46 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
               strokeWidth="2"
               strokeDasharray="6 3"
             />
+          ))}
+
+          {/* Live Rubberband Guideline When Plotting */}
+          {isPlotting && points.length > 0 && cursorCoords && (
+            <g className="pointer-events-none">
+              <line
+                x1={toSvgX(points[points.length - 1][0])}
+                y1={toSvgY(points[points.length - 1][1])}
+                x2={toSvgX(cursorCoords[0])}
+                y2={toSvgY(cursorCoords[1])}
+                stroke={isLine ? "#38bdf8" : "#22c55e"}
+                strokeWidth="2"
+                strokeDasharray="6 4"
+              />
+              {!isLine && points.length >= 2 && (
+                <line
+                  x1={toSvgX(cursorCoords[0])}
+                  y1={toSvgY(cursorCoords[1])}
+                  x2={toSvgX(points[0][0])}
+                  y2={toSvgY(points[0][1])}
+                  stroke="rgba(34, 197, 94, 0.4)"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 4"
+                />
+              )}
+              <circle
+                cx={toSvgX(cursorCoords[0])}
+                cy={toSvgY(cursorCoords[1])}
+                r="6"
+                fill="none"
+                stroke={isLine ? "#38bdf8" : "#22c55e"}
+                strokeWidth="1.5"
+              />
+              <circle
+                cx={toSvgX(cursorCoords[0])}
+                cy={toSvgY(cursorCoords[1])}
+                r="1.5"
+                fill="#ffffff"
+              />
+            </g>
           )}
 
           {/* Segment Connector Lines */}

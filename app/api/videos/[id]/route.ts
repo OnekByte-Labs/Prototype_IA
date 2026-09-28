@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { Readable } from "stream";
 
 // Map internal camera IDs to their actual video filenames in the dataset
 const CAM_FILES: Record<string, string> = {
@@ -12,8 +13,13 @@ const CAM_FILES: Record<string, string> = {
   "cam_06": "Traffic Control CCTV.mp4",
   "cam_07": "pedestrian_2.mp4",
   "cam_08": "person-bicycle-car-detection.mp4",
-  "cam_09": "feed-worker-zone-intrusion.mp4"
+  "cam_09": "feed-worker-zone-intrusion.mp4",
+  "cam_10": "pedestrian_2.mp4",
+  "cam_11": "Animal_car.mp4",
+  "cam_12": "Person_crossing_line.mp4"
 };
+
+const CHUNK_SIZE_MAX = 4 * 1024 * 1024; // 4MB maximum chunk per range response
 
 export async function GET(
   request: NextRequest,
@@ -41,26 +47,50 @@ export async function GET(
   if (range) {
     const parts = range.replace(/bytes=/, "").split("-");
     const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    // If range is open-ended (e.g. bytes=0-), cap to CHUNK_SIZE_MAX so 444MB 4K files don't choke the socket
+    let end = parts[1] ? parseInt(parts[1], 10) : start + CHUNK_SIZE_MAX - 1;
+    if (end >= fileSize) {
+      end = fileSize - 1;
+    }
     const chunksize = (end - start) + 1;
-    const file = fs.createReadStream(videoPath, { start, end });
     
-    return new NextResponse(file as any, {
+    const file = fs.createReadStream(videoPath, { start, end });
+
+    // Handle client abort / connection close cleanly
+    request.signal.addEventListener("abort", () => {
+      file.destroy();
+    });
+
+    const webStream = Readable.toWeb(file);
+    
+    return new NextResponse(webStream as any, {
       status: 206,
       headers: {
         "Content-Range": `bytes ${start}-${end}/${fileSize}`,
         "Accept-Ranges": "bytes",
         "Content-Length": chunksize.toString(),
         "Content-Type": "video/mp4",
+        "Cache-Control": "public, max-age=3600, immutable",
       },
     });
   } else {
-    const file = fs.createReadStream(videoPath);
-    return new NextResponse(file as any, {
+    // Return first 4MB if no range specified
+    const end = Math.min(CHUNK_SIZE_MAX - 1, fileSize - 1);
+    const chunksize = end + 1;
+    const file = fs.createReadStream(videoPath, { start: 0, end });
+    
+    request.signal.addEventListener("abort", () => {
+      file.destroy();
+    });
+
+    const webStream = Readable.toWeb(file);
+    return new NextResponse(webStream as any, {
       status: 200,
       headers: {
-        "Content-Length": fileSize.toString(),
+        "Accept-Ranges": "bytes",
+        "Content-Length": chunksize.toString(),
         "Content-Type": "video/mp4",
+        "Cache-Control": "public, max-age=3600, immutable",
       },
     });
   }
