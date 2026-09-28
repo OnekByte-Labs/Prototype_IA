@@ -16,9 +16,9 @@ type RailItem = { label: string; icon: string; href?: string };
 const RAIL: RailItem[] = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard" },
   { label: "Alerts", icon: "warning", href: "/alerts" },
-  { label: "Cameras", icon: "videocam", href: "/cameras" },
   { label: "Map", icon: "map", href: "/map" },
   { label: "Devices", icon: "router", href: "/devices" },
+  { label: "Cameras", icon: "videocam", href: "/cameras" },
   { label: "Reports", icon: "description" },
   { label: "Wall", icon: "grid_on" },
   { label: "Admin", icon: "admin_panel_settings", href: "/admin" },
@@ -81,12 +81,9 @@ export function IconRail() {
 
 /* --------------------------------------------------------------------- top bar */
 
-import { DatasetRegistryModal } from "./dashboard/DatasetRegistryModal";
-
 const TITLES: { match: string; crumb: string[] }[] = [
   { match: "/dashboard", crumb: ["Watchfloor", "Dashboard"] },
   { match: "/alerts", crumb: ["Watchfloor", "Alert console"] },
-  { match: "/cameras", crumb: ["Watchfloor", "Tactical cameras"] },
   { match: "/map", crumb: ["Watchfloor", "Tactical map"] },
   { match: "/devices", crumb: ["Watchfloor", "Device health"] },
   { match: "/cameras", crumb: ["Watchfloor", "Cameras"] },
@@ -99,7 +96,6 @@ export function TopBar() {
   const clock = useClock();
   const { unacked, muted, toggleMute } = useConsole();
   const [helpOpen, setHelpOpen] = useState(false);
-  const [registryOpen, setRegistryOpen] = useState(false);
 
   const crumb = TITLES.find((t) => isActivePath(pathname, t.match))?.crumb ?? ["Watchfloor"];
 
@@ -123,17 +119,7 @@ export function TopBar() {
         <MicroLabel>HRS</MicroLabel>
       </div>
 
-      <div className="flex items-center gap-2 justify-end">
-        <button
-          type="button"
-          onClick={() => setRegistryOpen(true)}
-          title="Datasets & Agent Skills Registry"
-          className="h-7 px-2 flex items-center gap-1 text-[11px] font-mono bg-g-bg border border-g-border hover:border-g-blue text-g-text-2 hover:text-white rounded-[2px]"
-        >
-          <Icon name="database" size={14} className="text-cyan-400" />
-          <span>DATASETS & SKILLS</span>
-        </button>
-
+      <div className="flex items-center gap-2 w-64 justify-end">
         <button
           type="button"
           title={muted ? "Unmute alert tone" : "Mute alert tone"}
@@ -168,7 +154,6 @@ export function TopBar() {
       </div>
 
       {helpOpen && <ShortcutHelp onClose={() => setHelpOpen(false)} />}
-      <DatasetRegistryModal isOpen={registryOpen} onClose={() => setRegistryOpen(false)} />
     </header>
   );
 }
