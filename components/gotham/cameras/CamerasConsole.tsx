@@ -77,12 +77,36 @@ function SelectedCameraStream({ cam }: { cam: Camera }) {
 
   useEffect(() => {
     setLiveCount((cam.id.charCodeAt(5) || 1) * 7 + 14);
-    if (cam.analytics?.type !== "traffic_count") return;
-    const interval = setInterval(() => {
-      setLiveCount(prev => prev + 1);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [cam.id, cam.analytics?.type]);
+    if (!cam.metadataUrl && cam.analytics?.type === "traffic_count") {
+      const interval = setInterval(() => {
+        setLiveCount(prev => prev + 1);
+      }, 4500);
+      return () => clearInterval(interval);
+    }
+  }, [cam.id, cam.analytics?.type, cam.metadataUrl]);
+
+  useEffect(() => {
+    if (!cam.metadataUrl) return;
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource(cam.metadataUrl);
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data?.events && Array.isArray(data.events)) {
+            for (const ev of data.events) {
+              if (ev.type === "traffic_count" && typeof ev.total_count === "number") {
+                setLiveCount(ev.total_count);
+              }
+            }
+          }
+        } catch {}
+      };
+    } catch {}
+    return () => {
+      if (es) es.close();
+    };
+  }, [cam.metadataUrl]);
 
   useEffect(() => {
     const video = videoRef.current;

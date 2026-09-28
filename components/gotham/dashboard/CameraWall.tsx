@@ -77,6 +77,21 @@ function drawCameraOverlay(
   const scaleY = canvas.height / origH;
   const currentFrameId = frameData?.frame_id ?? 0;
 
+  // Sync live backend traffic count & intrusion events if present
+  if (frameData?.events && Array.isArray(frameData.events)) {
+    for (const ev of frameData.events) {
+      if (ev.type === 'traffic_count') {
+        if (typeof ev.total_count === 'number') {
+          trackingState.count = Math.max(trackingState.count, ev.total_count);
+        }
+        if (ev.object_id !== undefined) {
+          trackingState.crossedIds.add(ev.object_id);
+          trackingState.recentCrossed.set(ev.object_id, currentFrameId);
+        }
+      }
+    }
+  }
+
   // 1. Process Tripwire Line Crossings (Active across ALL cameras with a tripwire line)
   if (cam.analytics?.type === 'traffic_count' && cam.analytics.line && cam.analytics.line.length >= 2) {
     const line = cam.analytics.line;
@@ -764,8 +779,11 @@ function LiveMJPEGStream({ cam }: { cam: Camera }) {
       if (img && canvas) {
         const ctx = canvas.getContext("2d");
         if (ctx) {
-          const w = img.naturalWidth || (cam.resolution ? parseInt(cam.resolution.split("×")[0]) : 1920);
-          const h = img.naturalHeight || (cam.resolution ? parseInt(cam.resolution.split("×")[1]) : 1080);
+          const resParts = cam.resolution ? cam.resolution.split("×") : ["1920", "1080"];
+          const origW = parseInt(resParts[0], 10) || 1920;
+          const origH = parseInt(resParts[1], 10) || 1080;
+          const w = (img.naturalWidth && img.naturalWidth > 0) ? img.naturalWidth : origW;
+          const h = (img.naturalHeight && img.naturalHeight > 0) ? img.naturalHeight : origH;
           if (canvas.width !== w && w > 0) {
             canvas.width = w;
             canvas.height = h;
@@ -775,7 +793,7 @@ function LiveMJPEGStream({ cam }: { cam: Camera }) {
 
           if (latestData.current) {
             drawCameraOverlay(ctx, canvas, cam, latestData.current, addAlert, alertedIdsRef, trackingStateRef.current);
-          } else if (hasAnalytics) {
+          } else if (hasAnalytics || cam.aiEnabled) {
             drawCameraOverlay(ctx, canvas, cam, null, addAlert, alertedIdsRef, trackingStateRef.current);
           }
         }

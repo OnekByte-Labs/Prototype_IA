@@ -384,6 +384,7 @@ def run_server(
     host: str = "0.0.0.0",
     port: int = 5555,
     mode: str = "mock",
+    analytics_engines: Optional[dict] = None,
 ):
     """Start the FastAPI output server in a daemon thread via Uvicorn."""
     import yaml
@@ -393,14 +394,15 @@ def run_server(
     with open(os.path.join(backend_dir, "configs", "pipeline.yaml"), "r", encoding="utf-8") as f:
         pipeline_cfg = yaml.safe_load(f)
 
-    # Initialize analytics engines dynamically for Mock mode
-    from src.analytics import create_analytics
-    analytics_engines = {}
-    if "analytics" in pipeline_cfg:
-        for asid, acfg in pipeline_cfg["analytics"].items():
-            engine = create_analytics(asid, acfg)
-            if engine:
-                analytics_engines[asid] = engine
+    # Initialize analytics engines dynamically if not passed from caller
+    if analytics_engines is None:
+        from src.analytics import create_analytics
+        analytics_engines = {}
+        if "analytics" in pipeline_cfg:
+            for asid, acfg in pipeline_cfg["analytics"].items():
+                engine = create_analytics(asid, acfg)
+                if engine:
+                    analytics_engines[asid] = engine
 
     app = create_app(frame_store, event_store, ai_config, stream_configs, pipeline_cfg, analytics_engines, mode=mode)
     

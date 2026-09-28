@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "mock": "backend\\venv\\Scripts\\python.exe backend\\src\\run_mock.py",
+    "live": "backend\\venv\\Scripts\\python.exe backend\\src\\run_live.py",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

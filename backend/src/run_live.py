@@ -116,10 +116,6 @@ def main():
         events_file.write(json.dumps(event) + "\n")
         events_file.flush()
 
-    # ── Start output server ──
-    server_cfg = pipeline_cfg["server"]
-    run_server(frame_store, event_store, ai_config, stream_list, host=server_cfg["host"], port=server_cfg["port"], mode="live")
-
     # ── Initialize Analytics ──
     from src.analytics import create_analytics
     analytics_engines = {}
@@ -129,6 +125,19 @@ def main():
             if engine:
                 analytics_engines[sid] = engine
                 logger.info("Initialized analytics %s for stream %s", cfg.get("type"), sid)
+
+    # ── Start output server ──
+    server_cfg = pipeline_cfg["server"]
+    run_server(
+        frame_store,
+        event_store,
+        ai_config,
+        stream_list,
+        host=server_cfg["host"],
+        port=server_cfg["port"],
+        mode="live",
+        analytics_engines=analytics_engines,
+    )
 
 
     # ── Initialize per-stream readers and trackers ──
@@ -345,8 +354,10 @@ def main():
                     # AI is disabled for this stream
                     metadata = {
                         "frame_id": packet.frame_id,
+                        "video_time_sec": packet.video_time_sec,
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                         "detections": [],
+                        "events": [],
                     }
 
                 # Encode raw frame to JPEG for MJPEG stream
