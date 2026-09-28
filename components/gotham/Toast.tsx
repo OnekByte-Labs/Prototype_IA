@@ -29,8 +29,16 @@ const TONE: Record<ToastTone, string> = {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const next = useRef(0);
+  const lastToastRef = useRef<{ text: string; time: number }>({ text: "", time: 0 });
 
   const push = useCallback((text: string, tone: ToastTone = "default") => {
+    const now = Date.now();
+    // Prevent duplicate notification popups within 1200ms
+    if (lastToastRef.current.text === text && now - lastToastRef.current.time < 1200) {
+      return;
+    }
+    lastToastRef.current = { text, time: now };
+
     const id = ++next.current;
     setToasts((t) => [...t, { id, text, tone }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3000);

@@ -1,10 +1,16 @@
 import os
+import sys
 import cv2
 import json
 import yaml
 import time
 from datetime import datetime, timezone
 import logging
+
+# Ensure backend directory is in sys.path so 'src' can be imported
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if base_dir not in sys.path:
+    sys.path.insert(0, base_dir)
 
 from inference.detector import YOLODetector
 from tracking.tracker import ByteTracker
@@ -42,6 +48,16 @@ def run():
         model_path=os.path.join(base_dir, "models", "cct-xs-v2-global-model.onnx"),
         config_path=os.path.join(base_dir, "models", "plate_config.yaml")
     )
+
+    from src.analytics import create_analytics
+    pipeline_cfg = load_yaml(os.path.join(configs_dir, "pipeline.yaml"))
+    analytics_engines = {}
+    if "analytics" in pipeline_cfg:
+        for asid, acfg in pipeline_cfg["analytics"].items():
+            engine = create_analytics(asid, acfg)
+            if engine:
+                analytics_engines[asid] = engine
+                logger.info(f"Initialized analytics {acfg.get('type')} for stream {asid}")
 
     output_dir = os.path.join(base_dir, "backend", "outputs", "precomputed")
     os.makedirs(output_dir, exist_ok=True)
@@ -81,7 +97,13 @@ def run():
 
             # 1. Primary detection
             detections = detector.detect(frame)
-            filtered_detections = [d for d in detections if d.class_id in allowed_class_ids]
+            filtered_detections = []
+            for d in detections:
+                if d.class_id in allowed_class_ids:
+                    obj_class = str(class_names.get(d.class_id, "")).lower()
+                    min_conf = 0.30 if obj_class == "animal" else 0.40
+                    if d.confidence >= min_conf:
+                        filtered_detections.append(d)
             
             # 2. Tracking
             det_tuples = [(d.bbox, d.confidence, d.class_id) for d in filtered_detections]
@@ -107,7 +129,9 @@ def run():
                     if plate_crop.size > 0:
                         text = plate_ocr.recognize(plate_crop)
                         if text:
-                            plate_texts[track.track_id] = text
+                            text_clean = str(text).replace(" ", "")
+                            if len(text_clean) >= 6 and best_p.confidence >= 0.30:
+                                plate_texts[track.track_id] = text
 
             # 4. Generate Metadata
             detections_list = []
@@ -125,6 +149,13 @@ def run():
                     det["plate"] = plate_texts[track.track_id]
                 detections_list.append(det)
 
+            # 5. Custom Analytics
+            analytics_events = []
+            if sid in analytics_engines:
+                analytics_events = analytics_engines[sid].process_frame(frame, confirmed_tracks, frame_id)
+                for ev in analytics_events:
+                    ev["ts"] = datetime.now(timezone.utc).isoformat()
+
             video_time_sec = frame_id / max(native_fps, 1.0)
             
             metadata = {
@@ -132,6 +163,7 @@ def run():
                 "video_time_sec": video_time_sec,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "detections": detections_list,
+                "events": analytics_events,
             }
             
             all_metadata.append(metadata)

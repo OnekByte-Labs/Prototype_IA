@@ -31,6 +31,7 @@ export type Camera = {
   mjpegUrl?: string;
   metadataUrl?: string;
   aiEnabled?: boolean;
+  analytics?: any;
 };
 
 export const CAMERAS: Camera[] = TACTICAL_CAMERAS.map((tc) => ({
@@ -148,9 +149,9 @@ export function alertId(n: number) {
 }
 
 function makeAlert(rng: Rng, t: number, n: number, live?: boolean): Alert {
-  const online = CAMERAS.filter((c) => c.online);
-  const cam = pick(rng, online);
-  const cls = drawClass(rng);
+  // Only CAM-05 has implemented behavior analytics for now
+  const cam = CAMERAS.find((c) => c.id === "CAM-05")!;
+  const cls = drawClass(rng, cam.id);
   const [lo, hi] = CONF[cls];
   return {
     id: alertId(n),

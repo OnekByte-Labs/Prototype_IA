@@ -1,63 +1,177 @@
-# Prototype IA - Tactical Surveillance Dashboard
+# Tactical AI Surveillance & Reconnaissance Console
 
-A highly performant, tactical surveillance dashboard prototype built with Next.js and Python. It simulates a live AI security system by decoupling the heavy AI inference from the video playback, allowing 9 simultaneous 4K/1080p camera feeds to be rendered at 60 FPS in the browser with perfectly synchronized AI bounding boxes.
-
-## 🏗 Architecture (The "Mock" Decoupled Pipeline)
-
-Running YOLOv11 + License Plate OCR on 9 simultaneous 4K streams in real-time requires a massive server farm. For this prototype, we use a **Decoupled Architecture**:
-
-1. **Precomputation (`precompute.py`)**: A Python script runs the heavy AI models (YOLOv11 + SORT Tracking + OCR) on the sample `.mp4` videos *once*, saving the frame-by-frame tracking coordinates into lightweight JSON files.
-2. **Mock Server (`run_mock.py`)**: A lightweight Python ASGI server that simulates a live system by streaming those JSON coordinates over Server-Sent Events (SSE).
-3. **Frontend (`CameraWall.tsx`)**: The Next.js dashboard plays the raw `.mp4` videos normally, while reading the SSE JSON stream and painting the tactical bounding boxes directly onto an invisible HTML5 `<canvas>` layered on top of the video in perfect synchronization.
+A real-time, military-grade surveillance operations dashboard built with **Next.js 16 (React 19)**, **Tailwind CSS**, and a high-performance **Python/ONNX live inference backend**. The system provides multi-camera monitoring, real-time object detection, multi-object tracking (ByteTrack), automatic number plate recognition (ANPR), and dynamic spatial analytics (tripwire counting and intrusion zones).
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Key Features
 
-Follow these steps to run the full prototype on your local Windows PC.
+* **Multi-Camera Tactical Wall:** Monitor up to 12 simultaneous video feeds in customizable grid configurations (4, 6, 9, 12 layout tiles).
+* **Live AI Inference Pipeline (`run_live`):**
+  * **Primary Object Detection:** YOLOv8/YOLO11 ONNX inference for vehicles, persons, animals, and tactical objects.
+  * **Multi-Object Tracking:** Real-time ByteTrack tracking with ID persistence across occlusions.
+  * **High-Speed ANPR Cascade:** Vehicle plate localization + Fast-Plate-OCR with intelligent track caching and frame throttling.
+  * **Spatial Analytics:** Interactive tripwire line-crossing (traffic counting) and polygon intrusion perimeter monitoring.
+  * **Zero Precompute Dependency:** Fully standalone real-time execution directly on incoming video feeds.
+* **Instant Inference Toggle:** Disable/enable AI models per camera on the fly with **0% wasted compute** on disabled feeds.
+* **Interactive Geometry Calibration:** Calibrate and move tripwires and polygon boundaries directly on the live camera canvas in real time.
+* **Lightweight Mock Replay Mode (`run_mock`):** Instantly simulate full operational feeds using precomputed metadata without requiring GPU or model computation.
 
-### Step 1: Precompute the AI Metadata
-Before starting the servers, you must generate the AI tracking data for the videos. The script utilizes **Microsoft DirectML** to hardware-accelerate the ONNX models directly on your Intel Arc iGPU!
+---
 
-Open a terminal and run:
-```powershell
-backend\venv\Scripts\python backend\src\precompute.py
-```
-*Note: This will take some time (especially for the 4K video). It processes sequentially to prevent your iGPU from crashing. It saves the results to `backend/outputs/precomputed/`.*
+## 📋 System Requirements
 
-### Step 2: Start the Mock AI Backend
-Once the JSON files are generated, start the mock metadata server.
+* **Node.js:** v18.0.0 or higher (v20+ recommended)
+* **npm:** v9.0.0 or higher (or pnpm / yarn)
+* **Python:** 3.10 – 3.13
+* **OS:** Windows 10/11, Linux (Ubuntu 20.04+), or macOS
+* **Hardware:** Any modern multi-core CPU. NVIDIA GPU with CUDA recommended for real-time live inference on multiple 4K streams (CPU fallback supported).
 
-```powershell
-backend\venv\Scripts\python backend\src\run_mock.py
-```
-*The mock server will start on `http://127.0.0.1:5556` and begin serving the precomputed metadata.*
+---
 
-### Step 3: Start the Next.js Dashboard
-Open a **new terminal window** and start the frontend:
+## ⚡ Quick Start Guide
 
-```powershell
-# Install dependencies (only needed the first time)
+Running the project requires starting two processes: the **Python Backend** and the **Next.js Frontend**.
+
+### Step 1: Clone & Frontend Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/OnekByte-Labs/Prototype_IA.git
+cd Prototype_IA
+
+# Install Node dependencies
 npm install
-
-# Start the dashboard
-npm run dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser. The dashboard will automatically pull the MP4 videos and the SSE mock data, perfectly syncing them together with the bi-directional snap logic!
 
 ---
 
-## ⚙️ Configuration
+### Step 2: Python Backend Environment Setup
 
-- **Video Streams:** Add or modify video feeds in `backend/configs/streams.yaml` and `prototype/configs/streams.yaml`.
-- **Classes:** Define what objects you want YOLO to track (e.g., just cars and people) in `configs/classes.yaml`.
-
-## 📡 Live Execution Mode (Optional)
-
-If you have a powerful enough server (or if you are only running 1-2 cameras), you can run the system in completely **live** mode without precomputing. This streams the MJPEG video natively with the AI bounding boxes burned in.
-
+#### Windows (PowerShell / Command Prompt):
 ```powershell
-backend\venv\Scripts\python backend\src\run_live.py
+# Create Python virtual environment inside backend/
+python -m venv backend/venv
+
+# Activate virtual environment
+# In PowerShell:
+.\backend\venv\Scripts\Activate.ps1
+# In CMD:
+.\backend\venv\Scripts\activate.bat
+
+# Upgrade pip and install dependencies
+python -m pip install --upgrade pip
+pip install -r backend/requirements.txt
 ```
-*Note: This starts the live FastAPI server on `http://127.0.0.1:5556`.*
+
+#### Linux / macOS:
+```bash
+# Create Python virtual environment
+python3 -m venv backend/venv
+
+# Activate virtual environment
+source backend/venv/bin/activate
+
+# Upgrade pip and install dependencies
+pip install --upgrade pip
+pip install -r backend/requirements.txt
+```
+
+> **Note for CPU-only systems (No NVIDIA CUDA GPU):**  
+> If your machine does not have an NVIDIA GPU or CUDA installed, install the CPU runtime:
+> ```bash
+> pip install onnxruntime
+> ```
+
+---
+
+### Step 3: Launch the Application
+
+You can run the backend in either **Live AI Mode** (real models running live) or **Mock Mode** (lightweight instant replay):
+
+#### Mode A: Real-Time Live AI Inference (Recommended)
+
+1. **Terminal 1 — Start Live Backend:**
+   ```bash
+   # Windows convenience shortcut:
+   npm run live
+
+   # Or manually with activated venv:
+   python backend/src/run_live.py
+   ```
+   *The live backend will start on `http://127.0.0.1:5556`.*
+
+2. **Terminal 2 — Start Frontend Dashboard:**
+   ```bash
+   npm run dev
+   ```
+   *The tactical UI dashboard will start on `http://localhost:3000`.*
+
+---
+
+#### Mode B: Fast Mock Replay Mode (Zero GPU / Ultra-Lightweight)
+
+1. **Terminal 1 — Start Mock Backend:**
+   ```bash
+   # Windows convenience shortcut:
+   npm run mock
+
+   # Or manually with activated venv:
+   python backend/src/run_mock.py
+   ```
+   *The mock backend will start on `http://127.0.0.1:5556`.*
+
+2. **Terminal 2 — Start Frontend Dashboard:**
+   ```bash
+   npm run dev
+   ```
+
+---
+
+### Step 4: Access the Console
+
+Open your web browser and navigate to:
+```
+http://localhost:3000
+```
+
+* **Dashboard View:** Shows the live Camera Wall grid with telemetry, alerts, and active detections.
+* **Cameras Console:** Click on any camera feed to view detailed telemetry, inspect license plates, toggle AI on/off, or calibrate tripwires and intrusion zones.
+* **Analytics Calibration:** Switch boundary mode to `TRIPWIRE` or `INTRUSION ZONE` and click **"CALIBRATE BOUNDARY"** to drag coordinate points live on the camera canvas.
+
+---
+
+## 📁 Repository Structure
+
+```
+├── app/                        # Next.js App Router (pages & API proxy routes)
+│   ├── api/cameras/            # Backend API proxy handlers
+│   └── page.tsx                # Main application entrance
+├── backend/                    # Python Backend
+│   ├── configs/                # Configuration files
+│   │   ├── classes.yaml        # Class labels & confidence mappings
+│   │   ├── pipeline.yaml       # Model paths & spatial analytics geometry
+│   │   └── streams.yaml        # Camera stream definitions & video paths
+│   ├── requirements.txt        # Python package dependencies
+│   └── src/                    # Python source code
+│       ├── analytics/          # Tripwire and Intrusion Zone engines
+│       ├── inference/          # YOLOv8, Plate Detector, and Plate OCR
+│       ├── ingestion/          # Multi-threaded Video Readers
+│       ├── output/             # FastAPI REST & SSE/MJPEG streaming server
+│       ├── tracking/           # ByteTrack tracker implementation
+│       ├── run_live.py         # Real-time multi-model live pipeline
+│       └── run_mock.py         # Mock replay server
+├── components/                 # React UI Components
+│   └── gotham/                 # Tactical military design system components
+│       ├── dashboard/          # CameraWall, AlertBar, VideoCanvas
+│       └── cameras/            # CamerasConsole, StreamDetail, Calibration
+├── Dataset/Test/               # Sample tactical and surveillance video files
+├── models/                     # ONNX Models (YOLO11, Plate YOLO, OCR)
+└── outputs/precomputed/        # Precomputed telemetry for mock replay
+```
+
+---
+
+
+## 📄 License
+Internal Prototype - Confidential. All rights reserved.

@@ -44,6 +44,24 @@ type ConsoleState = {
   degraded: string[];
   /** Toggle AI for a specific camera */
   toggleAi: (id: string, enabled: boolean) => Promise<void>;
+  /** Add a real alert to the feed */
+  addAlert: (a: Alert) => void;
+  /** Update intrusion zone or counting line analytics coordinates */
+  updateZone: (id: string, data: { zone?: number[][]; line?: number[][]; type?: 'traffic_count' | 'intrusion_zone' | 'none' }) => Promise<boolean>;
+  /** Pinned camera feed IDs to display on Dashboard Camera Wall */
+  dashboardFeedIds: string[];
+  /** Toggle whether a camera feed is pinned to the Dashboard Wall */
+  toggleDashboardFeed: (id: string) => void;
+  /** List of camera IDs that have their feed powered down / standby */
+  disabledCameraIds: string[];
+  /** Toggle camera power status (Active Stream vs Standby) */
+  toggleCameraFeedStatus: (id: string, active: boolean) => void;
+  /** Active wall grid density on Dashboard */
+  wallLayout: 4 | 6 | 9 | 12;
+  /** Set wall grid density */
+  setWallLayout: (layout: 4 | 6 | 9 | 12) => void;
+  /** Switch analytics type between 'traffic_count', 'intrusion_zone', or 'none' */
+  setCameraAnalyticsType: (id: string, type: 'traffic_count' | 'intrusion_zone' | 'none') => Promise<boolean>;
 };
 
 const Ctx = createContext<ConsoleState | null>(null);
@@ -183,7 +201,19 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
 
   const { mutate } = useSWRConfig();
 
+  const [aiOverrides, setAiOverrides] = useState<Record<string, boolean>>({});
+  const [analyticsOverrides, setAnalyticsOverrides] = useState<Record<string, any>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("gotham_analytics_overrides");
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return {};
+  });
+
   const toggleAi = useCallback(async (id: string, enabled: boolean) => {
+    setAiOverrides((prev) => ({ ...prev, [id]: enabled }));
     try {
       const res = await fetch(`/api/cameras/${id}/ai`, {
         method: "POST",
@@ -192,13 +222,217 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       });
       if (res.ok) {
         toast(`AI ${enabled ? 'enabled' : 'disabled'} for ${id}`);
-        // Optimistically update or trigger re-fetch
         mutate('/api/cameras');
       } else {
+        setAiOverrides((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
         toast(`Failed to toggle AI for ${id}`, "err");
       }
     } catch (e) {
+      setAiOverrides((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
       toast(`Failed to toggle AI for ${id}`, "err");
+    }
+  }, [toast, mutate]);
+
+  const updateZone = useCallback(async (id: string, zoneData: { zone?: number[][]; line?: number[][]; type?: 'traffic_count' | 'intrusion_zone' | 'none' }) => {
+    const targetCam = CAMERAS.find(c => c.id === id);
+    const inferredType = zoneData.type || (zoneData.line ? 'traffic_count' : zoneData.zone ? 'intrusion_zone' : undefined);
+
+    setAnalyticsOverrides((prev) => {
+      const cur = prev[id] || targetCam?.analytics || {};
+      const newType = inferredType || cur.type || (zoneData.line ? 'traffic_count' : 'intrusion_zone');
+      return { ...prev, [id]: { ...cur, ...zoneData, type: newType } };
+    });
+
+    try {
+      const payload = {
+        ...zoneData,
+        type: inferredType || (zoneData.line ? 'traffic_count' : 'intrusion_zone'),
+      };
+      const res = await fetch(`/api/cameras/${id}/zone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        toast(`Boundary updated live for ${id}`, "ok");
+        mutate('/api/cameras');
+        return true;
+      } else {
+        toast(`Failed to update boundary for ${id}`, "err");
+        return false;
+      }
+    } catch {
+      toast(`Failed to update boundary for ${id}`, "err");
+      return false;
+    }
+  }, [toast, mutate]);
+
+  const [dashboardFeedIds, setDashboardFeedIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("gotham_dashboard_feed_ids");
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return ["CAM-01", "CAM-02", "CAM-03", "CAM-04", "CAM-05", "CAM-06", "CAM-07", "CAM-08", "CAM-09"];
+  });
+
+  const [disabledCameraIds, setDisabledCameraIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("gotham_disabled_cam_ids");
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+
+  const [wallLayout, setWallLayout] = useState<4 | 6 | 9 | 12>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("gotham_wall_layout");
+        if (saved) return Number(saved) as 4 | 6 | 9 | 12;
+      } catch {}
+    }
+    return 9;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("gotham_disabled_cam_ids", JSON.stringify(disabledCameraIds));
+      } catch {}
+    }
+  }, [disabledCameraIds]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("gotham_dashboard_feed_ids", JSON.stringify(dashboardFeedIds));
+      } catch {}
+    }
+  }, [dashboardFeedIds]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("gotham_wall_layout", String(wallLayout));
+      } catch {}
+    }
+  }, [wallLayout]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("gotham_analytics_overrides", JSON.stringify(analyticsOverrides));
+      } catch {}
+    }
+  }, [analyticsOverrides]);
+
+  const toggleDashboardFeed = useCallback((id: string) => {
+    setDashboardFeedIds((prev) => {
+      if (prev.includes(id)) {
+        if (prev.length <= 1) {
+          toast("At least 1 feed required on wall", "err");
+          return prev;
+        }
+        toast(`${id} unpinned from Dashboard Wall`);
+        return prev.filter((x) => x !== id);
+      } else {
+        if (prev.length >= 12) {
+          toast("Dashboard wall maximum is 12 feeds", "err");
+          return prev;
+        }
+        toast(`${id} pinned to Dashboard Wall`, "ok");
+        return [...prev, id];
+      }
+    });
+  }, [toast]);
+
+  const toggleCameraFeedStatus = useCallback((id: string, active: boolean) => {
+    setDisabledCameraIds((prev) => {
+      if (!active) {
+        toast(`${id} feed set to STANDBY`, "err");
+        return prev.includes(id) ? prev : [...prev, id];
+      } else {
+        toast(`${id} feed set to LIVE`, "ok");
+        return prev.filter((x) => x !== id);
+      }
+    });
+  }, [toast]);
+
+  const setCameraAnalyticsType = useCallback(async (id: string, type: 'traffic_count' | 'intrusion_zone' | 'none') => {
+    const targetCam = CAMERAS.find(c => c.id === id);
+    const existingOverride = analyticsOverrides[id];
+    const resParts = targetCam?.resolution ? targetCam.resolution.split("×") : ["1920", "1080"];
+    const w = parseInt(resParts[0], 10) || 1920;
+    const h = parseInt(resParts[1], 10) || 1080;
+
+    const existingLine = existingOverride?.line || targetCam?.analytics?.line;
+    const existingZone = existingOverride?.zone || targetCam?.analytics?.zone;
+
+    const defaultLine = existingLine && existingLine.length >= 2 ? existingLine : [
+      [Math.round(w * 0.20), Math.round(h * 0.50)],
+      [Math.round(w * 0.80), Math.round(h * 0.50)],
+    ];
+    const defaultZone = existingZone && existingZone.length >= 3 ? existingZone : [
+      [Math.round(w * 0.25), Math.round(h * 0.25)],
+      [Math.round(w * 0.75), Math.round(h * 0.25)],
+      [Math.round(w * 0.75), Math.round(h * 0.75)],
+      [Math.round(w * 0.25), Math.round(h * 0.75)],
+    ];
+
+    const optimisticAnalytics = type === 'none' ? null : {
+      type,
+      ...(type === 'traffic_count' 
+        ? { line: defaultLine }
+        : { zone: defaultZone, buffer_px: 15, required_consecutive_frames: 8 })
+    };
+    setAnalyticsOverrides((prev) => ({ ...prev, [id]: optimisticAnalytics }));
+
+    try {
+      const payload: any = { type };
+      if (type === 'traffic_count') {
+        payload.line = defaultLine;
+      } else if (type === 'intrusion_zone') {
+        payload.zone = defaultZone;
+        payload.buffer_px = 15;
+        payload.required_consecutive_frames = 8;
+      }
+      const res = await fetch(`/api/cameras/${id}/zone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        toast(`${id} analytics mode updated`, "ok");
+        mutate('/api/cameras');
+        return true;
+      } else {
+        setAnalyticsOverrides((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+        toast(`Failed to update mode for ${id}`, "err");
+        return false;
+      }
+    } catch {
+      setAnalyticsOverrides((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      toast(`Failed to update mode for ${id}`, "err");
+      return false;
     }
   }, [toast, mutate]);
 
@@ -208,24 +442,34 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       const liveData = apiCameras?.find((apiCam) => apiCam.id === c.id);
       
       const isDegraded = degraded.includes(c.id);
+      const isUserDisabled = disabledCameraIds.includes(c.id);
+
+      const aiEnabled = aiOverrides[c.id] !== undefined
+        ? aiOverrides[c.id]
+        : (liveData?.aiEnabled ?? c.aiEnabled ?? false);
+
+      const analytics = analyticsOverrides[c.id] !== undefined
+        ? analyticsOverrides[c.id]
+        : ((liveData as any)?.analytics ?? c.analytics);
       
       return { 
         ...c, 
         // Use the real name from the live data if available, otherwise fallback to the mock name
         name: liveData?.name ? liveData.name : c.name,
-        // If the API knows about this camera, use its online status, otherwise fallback to mock
-        online: isDegraded ? false : (liveData ? liveData.online : c.online), 
-        recording: isDegraded ? false : c.recording,
+        // If user disabled camera or network degraded, show offline/standby
+        online: (isDegraded || isUserDisabled) ? false : (liveData ? liveData.online : c.online), 
+        recording: (isDegraded || isUserDisabled) ? false : c.recording,
         // Inject the stream URLs dynamically into the Gotham camera model
         hlsUrl: liveData?.hlsUrl,
         rtspUrl: liveData?.rtspUrl,
         webrtcUrl: liveData?.webrtcUrl,
-        mjpegUrl: liveData?.mjpegUrl,
-        metadataUrl: liveData?.metadataUrl,
-        aiEnabled: liveData?.aiEnabled,
+        mjpegUrl: isUserDisabled ? undefined : liveData?.mjpegUrl,
+        metadataUrl: isUserDisabled ? undefined : liveData?.metadataUrl,
+        aiEnabled,
+        analytics,
       };
     });
-  }, [degraded, apiCameras]);
+  }, [degraded, apiCameras, disabledCameraIds, aiOverrides, analyticsOverrides]);
 
   const unacked = useMemo(() => alerts.filter((a) => a.status === "new").length, [alerts]);
 
@@ -244,6 +488,15 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       cameras,
       degraded,
       toggleAi,
+      addAlert,
+      updateZone,
+      dashboardFeedIds,
+      toggleDashboardFeed,
+      disabledCameraIds,
+      toggleCameraFeedStatus,
+      wallLayout,
+      setWallLayout,
+      setCameraAnalyticsType,
     }),
     [alerts, unacked, ack, ackMany, dispatch, triggerAlert, muted, toggleMute, liveOn, toggleLive, cameras, degraded],
   );

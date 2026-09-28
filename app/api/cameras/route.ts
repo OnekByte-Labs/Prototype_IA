@@ -10,14 +10,18 @@ export async function GET() {
     if (!res.ok) throw new Error(`Pipeline returned ${res.status}`);
     const cameras = await res.json();
 
-    // We alternate between localhost and 127.0.0.1 to bypass the browser's 6-connection-per-domain limit!
+    // Shard across distinct loopback addresses (127.0.0.1 - 127.0.0.20)
+    // to bypass the browser's 6-connection-per-host limit in HTTP/1.1!
     const rewritten = cameras.map((cam: any, index: number) => {
       let mjpeg = cam.mjpegUrl;
       let meta = cam.metadataUrl;
+      const hostIp = `127.0.0.${(index % 20) + 1}`;
       
-      if (index % 2 !== 0) {
-        if (mjpeg) mjpeg = mjpeg.replace('localhost', '127.0.0.1');
-        if (meta) meta = meta.replace('localhost', '127.0.0.1');
+      if (mjpeg) {
+        mjpeg = mjpeg.replace(/127\.0\.0\.1|localhost/, hostIp);
+      }
+      if (meta) {
+        meta = meta.replace(/127\.0\.0\.1|localhost/, hostIp);
       }
 
       return {

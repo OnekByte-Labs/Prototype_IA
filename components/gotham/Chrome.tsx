@@ -89,6 +89,7 @@ const TITLES: { match: string; crumb: string[] }[] = [
   { match: "/cameras", crumb: ["Watchfloor", "Tactical cameras"] },
   { match: "/map", crumb: ["Watchfloor", "Tactical map"] },
   { match: "/devices", crumb: ["Watchfloor", "Device health"] },
+  { match: "/cameras", crumb: ["Watchfloor", "Cameras"] },
   { match: "/admin", crumb: ["Watchfloor", "Administration"] },
 ];
 
