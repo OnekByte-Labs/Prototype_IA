@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { CameraConsole } from "@/components/cameras/CameraConsole";
+import { CamerasConsole } from "@/components/gotham/cameras/CamerasConsole";
 
 export const metadata: Metadata = {
-  title: "Tactical Cameras · ISCC Watchfloor",
-  description: "Live 32-camera surveillance matrix with optical video ingest, real-time AI analytics, and sector telemetry.",
+  title: "Cameras · ISCC Watchfloor",
 };
 
 export default function CamerasPage() {
-  return <CameraConsole />;
+  return <CamerasConsole />;
 }
