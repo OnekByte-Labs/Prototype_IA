@@ -577,9 +577,8 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
             <polyline
               points={polyPointsString}
               fill="none"
-              stroke="#00c8ff"
-              strokeWidth="2.5"
-              strokeDasharray="8 5"
+              stroke="#38bdf8"
+              strokeWidth="1.5"
             />
           ) : (
             <polygon
@@ -600,8 +599,7 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
                 x2={toSvgX(cursorCoords[0])}
                 y2={toSvgY(cursorCoords[1])}
                 stroke={isLine ? "#38bdf8" : "#22c55e"}
-                strokeWidth="2"
-                strokeDasharray="6 4"
+                strokeWidth="1.5"
               />
               {!isLine && points.length >= 2 && (
                 <line

@@ -45,7 +45,7 @@ function segmentsIntersect(
   if (Math.abs(denom) < 1e-6) return false;
 
   const s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / denom;
-  const t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / denom;
+  const t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / denom;
 
   return s >= 0 && s <= 1 && t >= 0 && t <= 1;
 }
@@ -80,23 +80,39 @@ function drawCameraOverlay(
   // 1. Process Tripwire Line Crossings (Active across ALL cameras with a tripwire line)
   if (cam.analytics?.type === 'traffic_count' && cam.analytics.line && cam.analytics.line.length >= 2) {
     const line = cam.analytics.line;
-    const p1x = line[0][0] * scaleX;
-    const p1y = line[0][1] * scaleY;
-    const p2x = line[line.length - 1][0] * scaleX;
-    const p2y = line[line.length - 1][1] * scaleY;
 
     if (frameData?.detections) {
       frameData.detections.forEach((box: any) => {
         if ((box.confidence || 0) < 0.35) return;
-        const bcx = (box.x + box.w / 2) * scaleX;
-        const bcy = (box.y + box.h * 0.75) * scaleY;
+        // Bounding box coordinates in frameData are ALREADY in native canvas pixel coordinates
+        const bcx = box.x + box.w / 2;
+        const bcy = box.y + box.h * 0.75;
         const prev = trackingState.prevPositions.get(box.id);
 
         if (prev) {
-          const crossedSegment = segmentsIntersect(prev.x, prev.y, bcx, bcy, p1x, p1y, p2x, p2y);
-          const nearTripwire = distToSegment(bcx, bcy, p1x, p1y, p2x, p2y) < Math.max(25, 30 * scaleX);
+          let crossed = false;
+          let near = false;
 
-          if ((crossedSegment || nearTripwire) && !trackingState.crossedIds.has(box.id)) {
+          // Check every line segment in the polyline
+          for (let s = 0; s < line.length - 1; s++) {
+            const p1x = line[s][0] * scaleX;
+            const p1y = line[s][1] * scaleY;
+            const p2x = line[s + 1][0] * scaleX;
+            const p2y = line[s + 1][1] * scaleY;
+
+            if (segmentsIntersect(prev.x, prev.y, bcx, bcy, p1x, p1y, p2x, p2y)) {
+              crossed = true;
+              break;
+            }
+
+            const maxNearDist = Math.max(12, Math.min(box.w, box.h) * 0.35);
+            if (distToSegment(bcx, bcy, p1x, p1y, p2x, p2y) < maxNearDist) {
+              near = true;
+              break;
+            }
+          }
+
+          if ((crossed || near) && !trackingState.crossedIds.has(box.id)) {
             trackingState.crossedIds.add(box.id);
             trackingState.count += 1;
             trackingState.recentCrossed.set(box.id, currentFrameId);
@@ -118,9 +134,9 @@ function drawCameraOverlay(
     if (frameData?.detections) {
       for (const box of frameData.detections) {
         if ((box.confidence || 0) < 0.35) continue;
-        const bcx = (box.x + box.w / 2) * scaleX;
-        const bcy_ground = (box.y + box.h * 0.85) * scaleY;
-        const bcy_mid = (box.y + box.h / 2) * scaleY;
+        const bcx = box.x + box.w / 2;
+        const bcy_ground = box.y + box.h * 0.85;
+        const bcy_mid = box.y + box.h / 2;
 
         if (pointInPolygon(bcx, bcy_ground, scaledZone) || pointInPolygon(bcx, bcy_mid, scaledZone)) {
           hasIntrusion = true;
@@ -141,7 +157,7 @@ function drawCameraOverlay(
     boxes.forEach((box: any) => {
       const objClass = box.class?.toLowerCase() || 'obj';
       const confidence = box.confidence || 0;
-      
+
       const minConfidence = objClass === 'animal' ? 0.30 : 0.40;
       if (confidence < minConfidence) return;
 
@@ -173,27 +189,27 @@ function drawCameraOverlay(
       const strokeColor = isIntruder
         ? 'rgba(239, 68, 68, 0.95)'
         : isRecentlyCounted
-        ? 'rgba(34, 197, 94, 0.95)'
-        : isVehicle
-        ? 'rgba(56, 189, 248, 0.9)'
-        : 'rgba(251, 191, 36, 0.9)'; 
+          ? 'rgba(34, 197, 94, 0.95)'
+          : isVehicle
+            ? 'rgba(56, 189, 248, 0.9)'
+            : 'rgba(251, 191, 36, 0.9)';
       const bgColor = isIntruder
         ? 'rgba(153, 27, 27, 0.9)'
         : isRecentlyCounted
-        ? 'rgba(6, 78, 59, 0.9)'
-        : isVehicle
-        ? 'rgba(12, 74, 110, 0.85)'
-        : 'rgba(120, 53, 15, 0.85)';
-      
+          ? 'rgba(6, 78, 59, 0.9)'
+          : isVehicle
+            ? 'rgba(12, 74, 110, 0.85)'
+            : 'rgba(120, 53, 15, 0.85)';
+
       // 1. Thin main bounding box
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = Math.max(1, canvas.width / 1000);
       ctx.strokeRect(x, y, w, h);
-      
+
       // 2. Thick tactical corner accents
       const cornerLen = Math.max(5, Math.min(w, h) * 0.15);
       ctx.lineWidth = Math.max(2, canvas.width / 600);
-      
+
       // Top-left
       ctx.beginPath(); ctx.moveTo(x, y + cornerLen); ctx.lineTo(x, y); ctx.lineTo(x + cornerLen, y); ctx.stroke();
       // Top-right
@@ -202,71 +218,46 @@ function drawCameraOverlay(
       ctx.beginPath(); ctx.moveTo(x, y + h - cornerLen); ctx.lineTo(x, y + h); ctx.lineTo(x + cornerLen, y + h); ctx.stroke();
       // Bottom-right
       ctx.beginPath(); ctx.moveTo(x + w, y + h - cornerLen); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - cornerLen, y + h); ctx.stroke();
-      
+
       // 3. Label text
       const confPercent = Math.round(confidence * 100);
       const className = (box.class || 'OBJ').toUpperCase();
       const mainLabel = isIntruder
         ? `⚠ INTRUDER · ${confPercent}%`
-        : isRecentlyCounted 
-        ? `${className} · ${confPercent}%  ✓` 
-        : `${className} · ${confPercent}%`;
-      
+        : isRecentlyCounted
+          ? `${className} · ${confPercent}%  ✓`
+          : `${className} · ${confPercent}%`;
+
       const fontSize = Math.max(10, canvas.width / 130);
       ctx.font = `600 ${fontSize}px "Inter", sans-serif`;
       const textWidth = ctx.measureText(mainLabel).width;
       const textHeight = fontSize;
-      
+
       // 4. Sleek dark label background
       ctx.fillStyle = bgColor;
       ctx.fillRect(x, y - textHeight - 8, textWidth + 10, textHeight + 8);
-      
+
       // 5. Crisp white text
       ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
       ctx.fillText(mainLabel, x + 5, y - 5);
-      
+
       let displayPlate = box.plate;
       if (displayPlate) {
-         const plateStr = String(displayPlate).replace(/\s/g, '');
-         if (plateStr.length < 6) {
-            displayPlate = undefined;
-         }
+        const plateStr = String(displayPlate).replace(/\s/g, '');
+        if (plateStr.length < 6) {
+          displayPlate = undefined;
+        }
       }
 
       if (displayPlate) {
-          ctx.font = `700 ${fontSize + 2}px monospace`;
-          const pWidth = ctx.measureText(displayPlate).width;
-          
-          ctx.fillStyle = "rgba(251, 191, 36, 0.95)";
-          ctx.fillRect(x, y + h, pWidth + 16, textHeight + 12);
-          
-          ctx.fillStyle = "#000000";
-          ctx.fillText(displayPlate, x + 8, y + h + textHeight + 5);
-      }
+        ctx.font = `700 ${fontSize + 2}px monospace`;
+        const pWidth = ctx.measureText(displayPlate).width;
 
-      if (cam.id === 'CAM-09') {
-        const cx = Math.round(x + w / 2);
-        const cy = Math.round(y + h / 2);
-        const coordTag = `PT: [${cx}, ${cy}]`;
+        ctx.fillStyle = "rgba(251, 191, 36, 0.95)";
+        ctx.fillRect(x, y + h, pWidth + 16, textHeight + 12);
 
-        ctx.beginPath();
-        ctx.arc(cx, cy, Math.max(3.5, canvas.width / 450), 0, Math.PI * 2);
-        ctx.fillStyle = "#ef4444";
-        ctx.fill();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        const subFontSize = Math.max(9, canvas.width / 150);
-        ctx.font = `bold ${subFontSize}px monospace`;
-        const cWidth = ctx.measureText(coordTag).width;
-        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-        ctx.fillRect(x, y + h + 3, cWidth + 10, subFontSize + 6);
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y + h + 3, cWidth + 10, subFontSize + 6);
-        ctx.fillStyle = "#38bdf8";
-        ctx.fillText(coordTag, x + 5, y + h + subFontSize + 5);
+        ctx.fillStyle = "#000000";
+        ctx.fillText(displayPlate, x + 8, y + h + textHeight + 5);
       }
     });
   }
@@ -275,107 +266,106 @@ function drawCameraOverlay(
   if (cam.analytics) {
     if (cam.analytics.type === 'traffic_count' && cam.analytics.line && cam.analytics.line.length >= 2) {
       const pts = cam.analytics.line;
-      const scale = Math.max(canvas.width / 960, 1);
+      const scale = Math.max(canvas.width / 960, 0.65);
 
-      // Draw counting line with authentic cyan dashed styling and resolution-aware thickness
-      ctx.beginPath();
-      ctx.moveTo(pts[0][0] * scaleX, pts[0][1] * scaleY);
+      ctx.save();
+
+      // Path of the tripwire line in canvas coordinates
+      const path = new Path2D();
+      path.moveTo(pts[0][0] * scaleX, pts[0][1] * scaleY);
       for (let i = 1; i < pts.length; i++) {
-        ctx.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
+        path.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
       }
-      ctx.strokeStyle = "rgba(0, 200, 255, 0.9)";
-      ctx.lineWidth = Math.max(3, Math.round(canvas.width / 450));
-      ctx.setLineDash([Math.round(10 * scale), Math.round(6 * scale)]);
-      ctx.stroke();
-      ctx.setLineDash([]);
 
-      // Original midpoint label: ▼ COUNTING LINE (No icon box, clean tactical monospace)
-      const midIdx = Math.floor(pts.length / 2);
-      const lx = pts[midIdx][0] * scaleX;
-      const ly = pts[midIdx][1] * scaleY - 12 * scale;
-      ctx.font = `bold ${Math.round(11 * scale)}px monospace`;
-      ctx.fillStyle = "rgba(0, 200, 255, 0.9)";
-      ctx.fillText("▼ COUNTING LINE", lx - 45 * scale, ly);
+      // Simple, elegant thin line (solid, no dash dash) - easy on the eye
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
+      ctx.lineWidth = Math.max(1.5, Math.round(canvas.width / 650));
+      ctx.stroke(path);
+      ctx.restore();
 
-      // Draw green ripple pulses when vehicles cross the line
+      // Dynamic Object Crossing Feedback (Clean Green Blink Pulse - No Text)
       trackingState.recentCrossed.forEach((crossingFrameId, boxId) => {
         const age = currentFrameId - crossingFrameId;
-        if (age >= 0 && age < 45) {
+        if (age >= 0 && age < 40) {
           const prev = trackingState.prevPositions.get(boxId);
           if (prev) {
-            const alpha = Math.max(0, 1 - age / 45);
-            const markerRadius = Math.max(5, canvas.width / 320);
-            const pulseRadius = markerRadius + (age / 45) * markerRadius * 2.5;
+            const alpha = Math.max(0, 1 - age / 40);
+            const baseR = Math.max(7, canvas.width / 260);
+            const expandR = baseR + (age / 40) * baseR * 2.5;
 
+            ctx.save();
+            // Outer pulse ring
             ctx.beginPath();
-            ctx.arc(prev.x, prev.y, pulseRadius, 0, Math.PI * 2);
+            ctx.arc(prev.x, prev.y, expandR, 0, Math.PI * 2);
             ctx.strokeStyle = `rgba(34, 197, 94, ${alpha * 0.85})`;
-            ctx.lineWidth = Math.max(1.5, canvas.width / 800);
+            ctx.lineWidth = Math.max(1.5, 2 * scale);
             ctx.stroke();
 
+            // Inner pulse ring
             ctx.beginPath();
-            ctx.arc(prev.x, prev.y, markerRadius, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(34, 197, 94, ${alpha})`;
+            ctx.arc(prev.x, prev.y, expandR * 0.6, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(74, 222, 128, ${alpha * 0.5})`;
+            ctx.lineWidth = Math.max(1, 1.2 * scale);
+            ctx.stroke();
+
+            // Center green flash blip
+            ctx.beginPath();
+            ctx.arc(prev.x, prev.y, baseR * 0.45, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(34, 197, 94, ${alpha * 0.95})`;
             ctx.fill();
+
+            ctx.restore();
           }
         }
       });
 
-      // Running traffic count calculation (independent across ALL cameras)
+      // Total Traffic Count Calculation
       const countEvent = frameData?.events?.find((e: any) => e.type === 'traffic_count');
       const totalCount = countEvent?.total_count !== undefined
         ? Math.max(countEvent.total_count, trackingState.count)
         : trackingState.count;
 
-      // GitHub-inspired Tactical Flow Telemetry Card
-      const bx = Math.round(12 * scale);
-      const by = Math.round(12 * scale);
-      const bw = Math.round(164 * scale);
-      const bh = Math.round(54 * scale);
+      // Minimal Clean Count Pill (Upper-Left) - Easy on the eye
+      const countStr = String(totalCount).padStart(3, "0");
+      const pillX = Math.round(12 * scale);
+      const pillY = Math.round(12 * scale);
+      const pillH = Math.round(24 * scale);
 
-      // Card Background (#0d1117 with 95% opacity)
-      ctx.fillStyle = "rgba(13, 17, 23, 0.95)";
+      ctx.save();
+      ctx.font = `600 ${Math.round(11 * scale)}px "JetBrains Mono", monospace`;
+      const numW = ctx.measureText(countStr).width;
+      ctx.font = `500 ${Math.round(8 * scale)}px "JetBrains Mono", monospace`;
+      const labelW = ctx.measureText("COUNT").width;
+      const pillW = Math.round(24 * scale + numW + 6 * scale + labelW + 10 * scale);
+
+      // Soft dark glassmorphic pill background
+      ctx.fillStyle = "rgba(10, 15, 25, 0.75)";
       ctx.beginPath();
-      ctx.roundRect(bx, by, bw, bh, 3 * scale);
+      ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
       ctx.fill();
 
-      // Card Border (#30363d)
-      ctx.strokeStyle = "rgba(48, 54, 61, 0.9)";
+      // Subtle light border
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(bx, by, bw, bh, 3 * scale);
       ctx.stroke();
 
-      // Top Row: Emerald live pulse dot + GitHub-style tracked tag
+      // Green active sensing dot
       ctx.fillStyle = "#22c55e";
       ctx.beginPath();
-      ctx.arc(bx + 11 * scale, by + 12 * scale, 2.5 * scale, 0, Math.PI * 2);
+      ctx.arc(pillX + 10 * scale, pillY + pillH / 2, 2.5 * scale, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.font = `600 ${Math.round(8 * scale)}px "JetBrains Mono", monospace`;
-      ctx.fillStyle = "rgba(139, 148, 158, 0.95)";
-      ctx.fillText("FLOW TELEMETRY // COUNTER", bx + 18 * scale, by + 15 * scale);
+      // Clean number
+      ctx.font = `600 ${Math.round(11 * scale)}px "JetBrains Mono", monospace`;
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillText(countStr, pillX + 18 * scale, pillY + pillH / 2 + 3.5 * scale);
 
-      // Hairline divider
-      ctx.strokeStyle = "rgba(48, 54, 61, 0.75)";
-      ctx.beginPath();
-      ctx.moveTo(bx + 8 * scale, by + 21 * scale);
-      ctx.lineTo(bx + bw - 8 * scale, by + 21 * scale);
-      ctx.stroke();
+      // Modest "COUNT" label
+      ctx.font = `500 ${Math.round(8 * scale)}px "JetBrains Mono", monospace`;
+      ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
+      ctx.fillText("COUNT", pillX + 18 * scale + numW + 6 * scale, pillY + pillH / 2 + 3 * scale);
 
-      // Count Value + Labels
-      ctx.font = `700 ${Math.round(18 * scale)}px "JetBrains Mono", monospace`;
-      ctx.fillStyle = "#f0f6fc";
-      const countStr = String(totalCount).padStart(3, "0");
-      ctx.fillText(countStr, bx + 11 * scale, by + 44 * scale);
-
-      ctx.font = `600 ${Math.round(8 * scale)}px "JetBrains Mono", monospace`;
-      ctx.fillStyle = "rgba(56, 189, 248, 0.95)";
-      ctx.fillText("VEHICLES", bx + 58 * scale, by + 37 * scale);
-
-      ctx.font = `500 ${Math.round(7 * scale)}px "JetBrains Mono", monospace`;
-      ctx.fillStyle = "rgba(139, 148, 158, 0.8)";
-      ctx.fillText("BI-DIRECTIONAL", bx + 58 * scale, by + 47 * scale);
+      ctx.restore();
 
     } else if (cam.analytics.type === 'intrusion_zone' && cam.analytics.zone && cam.analytics.zone.length >= 3) {
       const pts = cam.analytics.zone;
@@ -386,20 +376,20 @@ function drawCameraOverlay(
         ctx.lineTo(pts[i][0] * scaleX, pts[i][1] * scaleY);
       }
       ctx.closePath();
-      
+
       if (hasIntrusion) {
         ctx.fillStyle = "rgba(255, 0, 0, 0.35)";
         ctx.fill();
         ctx.strokeStyle = "rgba(255, 0, 0, 0.95)";
         ctx.lineWidth = 3;
         ctx.stroke();
-        
+
         const labelX = pts[0][0] * scaleX + Math.round(20 * scaleX);
         const labelY = (pts[0][1] * scaleY + pts[pts.length - 1][1] * scaleY) / 2;
         ctx.font = `bold ${Math.round(18 * zScale)}px monospace`;
         ctx.fillStyle = "rgba(255, 60, 60, 0.9)";
         ctx.fillText("INTRUSION ZONE", labelX, labelY);
-        
+
         const flash = Math.floor(Date.now() / 500) % 2 === 0;
         if (flash) {
           const bannerW = Math.round(260 * zScale);
@@ -443,7 +433,7 @@ function drawCameraOverlay(
         ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
         ctx.lineWidth = 2;
         ctx.stroke();
-        
+
         const labelX = pts[0][0] * scaleX + Math.round(20 * scaleX);
         const labelY = (pts[0][1] * scaleY + pts[pts.length - 1][1] * scaleY) / 2;
         ctx.font = `bold ${Math.round(18 * zScale)}px monospace`;
@@ -516,7 +506,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
         video.currentTime = savedTime;
       }
     };
-    
+
     const onTimeUpdate = () => {
       globalVideoTime.set(cam.id, video.currentTime);
     };
@@ -532,15 +522,18 @@ function DecoupledStream({ cam }: { cam: Camera }) {
 
   useEffect(() => {
     const hasAnalytics = cam.analytics && cam.analytics.type && cam.analytics.type !== "none";
-    if ((!cam.aiEnabled && !hasAnalytics) || !cam.metadataUrl) return;
-    
+    if (!cam.aiEnabled && !hasAnalytics) return;
+
     if (globalPrecomputedCache.has(cam.id)) {
       fullDataRef.current = globalPrecomputedCache.get(cam.id)!;
       return;
     }
 
-    const precomputedUrl = cam.metadataUrl.replace('/metadata/', '/precomputed/');
-    
+    const sid = cam.id.toLowerCase().replace("-", "_");
+    const precomputedUrl = cam.metadataUrl
+      ? cam.metadataUrl.replace('/metadata/', '/precomputed/').replace('/live', '')
+      : `http://127.0.0.1:5556/precomputed/${sid}`;
+
     let active = true;
     fetch(precomputedUrl)
       .then(res => {
@@ -552,7 +545,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
         if (active) fullDataRef.current = data;
       })
       .catch(e => console.error("Mock data fetch error for", cam.id, e));
-      
+
     return () => { active = false; };
   }, [cam.id, cam.aiEnabled, cam.metadataUrl, cam.analytics?.type]);
 
@@ -576,24 +569,30 @@ function DecoupledStream({ cam }: { cam: Camera }) {
     const renderLoop = () => {
       const video = videoRef.current;
       const fullData = fullDataRef.current;
-      
-      if (video && canvas && !video.paused) {
-        const currentTime = video.currentTime;
 
-        // Reset positions when video loops back to 0
+      if (video && canvas) {
+        const currentTime = video.currentTime || 0;
+
+        // Reset positions & crossed IDs when video loops back to 0
         if (currentTime < trackingStateRef.current.lastTime - 2) {
           trackingStateRef.current.prevPositions.clear();
+          trackingStateRef.current.crossedIds.clear();
         }
         trackingStateRef.current.lastTime = currentTime;
 
         // Throttle canvas draw if time hasn't advanced by at least 25ms
-        if (Math.abs(currentTime - lastRenderedTime) >= 0.025) {
+        if (Math.abs(currentTime - lastRenderedTime) >= 0.025 || lastRenderedTime === -1) {
           lastRenderedTime = currentTime;
           const ctx = canvas.getContext("2d");
           if (ctx) {
-            if (canvas.width !== video.videoWidth && video.videoWidth > 0) {
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
+            const resParts = cam.resolution ? cam.resolution.split("×") : ["1920", "1080"];
+            const origW = parseInt(resParts[0], 10) || 1920;
+            const origH = parseInt(resParts[1], 10) || 1080;
+            const targetW = video.videoWidth > 0 ? video.videoWidth : origW;
+            const targetH = video.videoHeight > 0 ? video.videoHeight : origH;
+            if (canvas.width !== targetW && targetW > 0) {
+              canvas.width = targetW;
+              canvas.height = targetH;
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -617,7 +616,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
               const closestData = diff1 <= diff2 ? fullData[idx1] : fullData[idx2];
 
               drawCameraOverlay(ctx, canvas, cam, closestData, addAlert, alertedIdsRef, trackingStateRef.current);
-            } else if (hasAnalytics) {
+            } else if (hasAnalytics || cam.aiEnabled) {
               // Even before precomputed detections load, draw calibrated tripwire / zone
               drawCameraOverlay(ctx, canvas, cam, null, addAlert, alertedIdsRef, trackingStateRef.current);
             }
@@ -626,7 +625,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
       }
       animationId = requestAnimationFrame(renderLoop);
     };
-    
+
     animationId = requestAnimationFrame(renderLoop);
     return () => cancelAnimationFrame(animationId);
   }, [cam.aiEnabled, cam.analytics, cam.id, cam.resolution, cam.zone, addAlert]);
@@ -638,7 +637,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
 
     const resumePlayback = () => {
       if (video && video.paused && !video.ended) {
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       }
     };
 
@@ -724,14 +723,14 @@ function LiveMJPEGStream({ cam }: { cam: Camera }) {
       latestData.current = null;
       return;
     }
-    
+
     let evtSource: EventSource | null = null;
     try {
       evtSource = new EventSource(cam.metadataUrl);
       evtSource.onmessage = (event) => {
         try {
           latestData.current = JSON.parse(event.data);
-        } catch (e) {}
+        } catch (e) { }
       };
       evtSource.onerror = () => {
         latestData.current = null;
@@ -783,7 +782,7 @@ function LiveMJPEGStream({ cam }: { cam: Camera }) {
       }
       animationId = requestAnimationFrame(renderLoop);
     };
-    
+
     animationId = requestAnimationFrame(renderLoop);
     return () => cancelAnimationFrame(animationId);
   }, [cam.aiEnabled, cam.analytics, cam.id, cam.resolution, cam.zone, addAlert]);
@@ -830,7 +829,7 @@ const Tile = memo(function Tile({
   onClick: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  
+
   const isLiveMode = !!cam.mjpegUrl;
   const isMockMode = !isLiveMode && !!cam.metadataUrl;
 
@@ -849,12 +848,12 @@ const Tile = memo(function Tile({
       hls.loadSource(cam.hlsUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = cam.hlsUrl;
       video.addEventListener("loadedmetadata", () => {
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       });
     }
 
@@ -877,58 +876,41 @@ const Tile = memo(function Tile({
         onClick();
       }}
       title={`${cam.id} · ${cam.name}`}
-      className={`relative bg-g-bg border rounded-[2px] flex flex-col justify-between p-1.5 text-left overflow-hidden transition-none w-full h-full cursor-pointer select-none ${
-        focused ? "border-g-blue" : "border-g-border hover:border-g-border-strong hover:bg-g-hover"
-      }`}
+      className={`relative bg-g-bg border rounded-[2px] flex flex-col justify-between p-1.5 text-left overflow-hidden transition-none w-full h-full cursor-pointer select-none ${focused ? "border-g-blue" : "border-g-border hover:border-g-border-strong hover:bg-g-hover"
+        }`}
     >
-      {/* Top Header: Channel ID + Status Dots + Display-Only AI indicator */}
+      {/* Top Header: Channel ID (with Status Dot) on left + AI indicator on right */}
       <div className="flex items-center justify-between gap-1 z-20">
-        <span className="text-micro uppercase text-g-text-2 truncate">
-          {cam.id} · {cam.name}
-        </span>
-        {cam.online ? (
-          cam.recording ? (
-            <span className="flex items-center gap-1 shrink-0">
-              <StatusDot tone={cam.aiEnabled ? "red" : "idle"} className={cam.aiEnabled ? "animate-pulse" : ""} />
-              {(isLiveMode || isMockMode) ? (
-                <span
-                  title={cam.aiEnabled ? "AI Armed" : "AI Inactive"}
-                  className={`text-micro px-1 py-0.5 rounded-[2px] transition-colors ${
-                    cam.aiEnabled 
-                      ? "bg-g-red/10 text-g-red font-bold" 
-                      : "bg-g-bg border border-g-border text-g-muted"
-                  }`}
-                >
-                  AI
-                </span>
-              ) : (
-                <span className="text-micro text-g-muted">REC</span>
-              )}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <StatusDot tone={cam.online ? (cam.recording ? "ok" : "warn") : "idle"} />
+          <span className="text-micro uppercase text-g-text-2 truncate">
+            {cam.id} · {cam.name}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {cam.online && !cam.recording && (
+            <span className="text-micro text-g-amber">NO REC</span>
+          )}
+          {cam.aiEnabled && (
+            <span
+              title="AI Detection Active"
+              className="text-[8.5px] font-mono font-bold px-1.5 py-0.5 bg-red-950/60 border border-red-900/40 text-red-400 tracking-wider"
+            >
+              AI
             </span>
-          ) : (
-            <span className="text-micro text-g-amber shrink-0">NO REC</span>
-          )
-        ) : (
-          <StatusDot tone="idle" className="shrink-0" />
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Main Viewport: Decoupled / Live / Fallback video OR authentic No signal */}
+      {/* Main Viewport: Decoupled / Live video with analytics overlay */}
       <div className="flex-1 flex items-center justify-center relative overflow-hidden">
         {cam.online ? (
           <>
-            {isMockMode ? (
-              <DecoupledStream cam={cam} />
-            ) : isLiveMode ? (
+            {isLiveMode ? (
               <LiveMJPEGStream cam={cam} />
             ) : (
-              <video
-                ref={videoRef}
-                autoPlay
-                muted
-                playsInline
-                className="absolute inset-0 w-full h-full object-contain z-0"
-              />
+              <DecoupledStream cam={cam} />
             )}
             {focused && <Icon name="videocam" size={40} className="text-white/20 absolute z-10 pointer-events-none" />}
           </>
@@ -1017,11 +999,10 @@ export function CameraWall({ cameras }: { cameras: Camera[] }) {
                 key={n}
                 type="button"
                 onClick={() => setWallLayout(n)}
-                className={`h-5 px-1.5 text-[9px] font-mono font-bold rounded-[1px] transition-colors ${
-                  wallLayout === n
+                className={`h-5 px-1.5 text-[9px] font-mono font-bold rounded-[1px] transition-colors ${wallLayout === n
                     ? "bg-g-blue text-white"
                     : "text-g-muted hover:text-g-text hover:bg-g-hover"
-                }`}
+                  }`}
                 title={`Grid density: ${n} feeds (${n === 12 ? '3 rows × 4 cols' : n === 6 ? '2 rows × 3 cols' : n === 4 ? '2×2' : '3×3'})`}
               >
                 {n}

@@ -44,7 +44,7 @@ type ConsoleState = {
   /** Add a real alert to the feed */
   addAlert: (a: Alert) => void;
   /** Update intrusion zone or counting line analytics coordinates */
-  updateZone: (id: string, data: { zone?: number[][]; line?: number[][] }) => Promise<boolean>;
+  updateZone: (id: string, data: { zone?: number[][]; line?: number[][]; type?: 'traffic_count' | 'intrusion_zone' | 'none' }) => Promise<boolean>;
   /** Pinned camera feed IDs to display on Dashboard Camera Wall */
   dashboardFeedIds: string[];
   /** Toggle whether a camera feed is pinned to the Dashboard Wall */
@@ -253,27 +253,36 @@ interface ApiCamera {
     }
   }, [toast, mutate]);
 
-  const updateZone = useCallback(async (id: string, zoneData: { zone?: number[][]; line?: number[][] }) => {
+  const updateZone = useCallback(async (id: string, zoneData: { zone?: number[][]; line?: number[][]; type?: 'traffic_count' | 'intrusion_zone' | 'none' }) => {
+    const targetCam = CAMERAS.find(c => c.id === id);
+    const inferredType = zoneData.type || (zoneData.line ? 'traffic_count' : zoneData.zone ? 'intrusion_zone' : undefined);
+
     setAnalyticsOverrides((prev) => {
-      const cur = prev[id] || {};
-      return { ...prev, [id]: { ...cur, ...zoneData } };
+      const cur = prev[id] || targetCam?.analytics || {};
+      const newType = inferredType || cur.type || (zoneData.line ? 'traffic_count' : 'intrusion_zone');
+      return { ...prev, [id]: { ...cur, ...zoneData, type: newType } };
     });
+
     try {
+      const payload = {
+        ...zoneData,
+        type: inferredType || (zoneData.line ? 'traffic_count' : 'intrusion_zone'),
+      };
       const res = await fetch(`/api/cameras/${id}/zone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(zoneData),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
-        toast(`Perimeter updated live for ${id}`, "ok");
+        toast(`Boundary updated live for ${id}`, "ok");
         mutate('/api/cameras');
         return true;
       } else {
-        toast(`Failed to update perimeter for ${id}`, "err");
+        toast(`Failed to update boundary for ${id}`, "err");
         return false;
       }
-    } catch (e) {
-      toast(`Failed to update perimeter for ${id}`, "err");
+    } catch {
+      toast(`Failed to update boundary for ${id}`, "err");
       return false;
     }
   }, [toast, mutate]);
