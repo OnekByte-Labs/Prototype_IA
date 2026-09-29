@@ -420,16 +420,21 @@ export function VehiclesConsole() {
           <div className="w-[420px] shrink-0 bg-g-panel border-l border-g-border flex flex-col z-20 shadow-2xl animate-g-in">
             {/* Drawer Header */}
             <div className="h-12 px-4 flex items-center justify-between border-b border-g-border bg-g-surface">
-              <div className="flex items-center gap-2">
-                <Icon name="badge" size={16} className="text-g-blue" />
-                <span className="text-ui font-bold text-g-text uppercase tracking-wide">
-                  Vehicle Tactical Dossier
-                </span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Icon name="directions_car" size={18} className="text-g-blue shrink-0" />
+                <div className="truncate">
+                  <span className="text-ui font-bold text-g-text tracking-wide">
+                    {selectedVehicle.makeModel}
+                  </span>
+                  <span className="ml-2 font-mono text-[11px] text-g-cyan">
+                    [{selectedVehicle.plate}]
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedVehicle(null)}
-                className="w-7 h-7 flex items-center justify-center text-g-text-2 hover:text-g-text hover:bg-g-hover rounded"
+                className="w-7 h-7 shrink-0 flex items-center justify-center text-g-text-2 hover:text-g-text hover:bg-g-hover rounded"
               >
                 <Icon name="close" size={16} />
               </button>
@@ -437,19 +442,42 @@ export function VehiclesConsole() {
 
             {/* Dossier Body */}
             <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
-              {/* Plate Banner */}
-              <div className="p-4 bg-g-bg border border-g-border-strong rounded flex items-center justify-between">
-                <div>
-                  <MicroLabel>License Plate (FastPlateOCR)</MicroLabel>
-                  <div className="mt-1.5 inline-flex items-center gap-2 px-3 py-1.5 bg-amber-400 text-black font-mono font-bold text-base rounded border border-amber-500 shadow tracking-wider">
-                    <span className="w-2 h-2 rounded-full bg-black/60" />
-                    <span>{selectedVehicle.plate}</span>
+              {/* Vehicle Designation & Plate Banner */}
+              <div className="p-4 bg-g-bg border border-g-border-strong rounded space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <MicroLabel>Tracked Vehicle Designation</MicroLabel>
+                    <div className="text-base font-bold text-g-text leading-snug mt-0.5 truncate">
+                      {selectedVehicle.makeModel}
+                    </div>
+                    <div className="text-micro text-g-muted flex items-center gap-1.5 mt-1">
+                      <span className="font-mono text-g-cyan uppercase font-semibold">{selectedVehicle.category}</span>
+                      <span>•</span>
+                      <span>{selectedVehicle.color}</span>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 text-right">
+                    <MicroLabel>FastPlateOCR</MicroLabel>
+                    <div className="text-lg font-data font-bold text-g-cyan leading-none mt-1">
+                      {selectedVehicle.ocrConfidence.toFixed(1)}%
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <MicroLabel>Confidence</MicroLabel>
-                  <div className="text-lg font-data font-bold text-g-cyan">
-                    {selectedVehicle.ocrConfidence}%
+
+                <div className="pt-3 border-t border-g-border flex items-center justify-between">
+                  <div>
+                    <MicroLabel>License Plate</MicroLabel>
+                    <div className="mt-1 inline-flex items-center gap-2 px-3 py-1.5 bg-amber-400 text-black font-mono font-bold text-sm rounded border border-amber-500 shadow tracking-wider">
+                      <span className="w-1.5 h-1.5 rounded-full bg-black/60" />
+                      <span>{selectedVehicle.plate}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <MicroLabel>Correlation</MicroLabel>
+                    <span className="text-micro font-mono text-g-muted mt-1 block">
+                      {selectedVehicle.sightings.length} camera sightings
+                    </span>
                   </div>
                 </div>
               </div>

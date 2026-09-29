@@ -165,8 +165,8 @@ export function ReportsConsole() {
       </div>
 
       {/* ----------------------------------------------------------- Filter Bar */}
-      <div className="h-11 shrink-0 px-3 flex items-center gap-3 bg-g-panel border-b border-g-border">
-        <div className="relative">
+      <div className="h-11 shrink-0 px-3 flex items-center gap-3 bg-g-panel border-b border-g-border overflow-x-auto min-w-0">
+        <div className="relative shrink-0">
           <Icon
             name="search"
             size={14}
@@ -176,12 +176,12 @@ export function ReportsConsole() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search report ID, camera, summary, officer... (e.g. REP-01, Armoury)"
-            className="h-8 w-80 pl-8 pr-2.5 bg-g-bg border border-g-border-strong rounded-[2px] text-ui text-g-text placeholder:text-g-muted focus:border-g-blue focus:outline-none"
+            className="h-8 w-72 pl-8 pr-2.5 bg-g-bg border border-g-border-strong rounded-[2px] text-ui text-g-text placeholder:text-g-muted focus:border-g-blue focus:outline-none"
           />
         </div>
 
         {/* Category Filters */}
-        <div className="flex items-center gap-1 border-l border-g-border pl-3">
+        <div className="flex items-center gap-1 border-l border-g-border pl-3 shrink-0">
           {(
             [
               { key: "all", label: "All Incidents" },
@@ -209,7 +209,7 @@ export function ReportsConsole() {
         </div>
 
         {/* Severity Filter */}
-        <div className="flex items-center gap-2 border-l border-g-border pl-3">
+        <div className="flex items-center gap-2 border-l border-g-border pl-3 shrink-0">
           <MicroLabel>Severity</MicroLabel>
           <select
             value={severityFilter}
@@ -224,7 +224,7 @@ export function ReportsConsole() {
         </div>
 
         {/* Timeframe Selector */}
-        <div className="flex items-center gap-1 border-l border-g-border pl-3">
+        <div className="flex items-center gap-1 border-l border-g-border pl-3 shrink-0">
           {(["24h", "7d", "30d"] as const).map((t) => (
             <button
               key={t}
@@ -241,7 +241,7 @@ export function ReportsConsole() {
         </div>
 
         {/* Action Buttons */}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 shrink-0">
           <span className="text-data font-data text-g-muted">
             {filteredReports.length} of {totalIncidents} records
           </span>
@@ -275,7 +275,7 @@ export function ReportsConsole() {
                 <th className="px-3 text-micro uppercase tracking-wider text-g-muted w-[160px]">
                   Camera & Zone
                 </th>
-                <th className="px-3 text-micro uppercase tracking-wider text-g-muted">
+                <th className="px-3 text-micro uppercase tracking-wider text-g-muted min-w-[280px]">
                   Incident Summary & Action
                 </th>
                 <th className="px-3 text-micro uppercase tracking-wider text-g-muted w-[80px]">
@@ -356,7 +356,7 @@ export function ReportsConsole() {
                             </span>
                           )}
                         </div>
-                        <div className="text-micro text-g-muted truncate max-w-[480px]">
+                        <div className="text-micro text-g-muted truncate">
                           {r.actionTaken}
                         </div>
                       </td>
@@ -417,16 +417,21 @@ export function ReportsConsole() {
           <div className="w-[440px] shrink-0 bg-g-panel border-l border-g-border flex flex-col z-20 shadow-2xl animate-g-in">
             {/* Drawer Header */}
             <div className="h-12 px-4 flex items-center justify-between border-b border-g-border bg-g-surface">
-              <div className="flex items-center gap-2">
-                <Icon name="description" size={16} className="text-g-blue" />
-                <span className="text-ui font-bold text-g-text uppercase tracking-wide">
-                  Incident Intelligence Dossier
-                </span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Icon name="description" size={16} className="text-g-blue shrink-0" />
+                <div className="truncate">
+                  <span className="text-ui font-bold text-g-text uppercase tracking-wide">
+                    Incident Dossier
+                  </span>
+                  <span className="ml-2 font-mono text-[11px] text-g-cyan">
+                    [{selectedReport.id}]
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedReport(null)}
-                className="w-7 h-7 flex items-center justify-center text-g-text-2 hover:text-g-text hover:bg-g-hover rounded"
+                className="w-7 h-7 shrink-0 flex items-center justify-center text-g-text-2 hover:text-g-text hover:bg-g-hover rounded"
               >
                 <Icon name="close" size={16} />
               </button>
