@@ -493,6 +493,22 @@ const MODEL_INCIDENTS: {
     modelName: "ByteTrack Tripwire",
   },
   {
+    camId: "CAM-05",
+    cls: "person",
+    severity: "high",
+    confidence: 96.8,
+    details: "Armoury Sector 4 perimeter cordon boundary breach: unauthorized individual in secure zone",
+    modelName: "YOLOv11x Intrusion + ByteTrack",
+  },
+  {
+    camId: "CAM-09",
+    cls: "person",
+    severity: "high",
+    confidence: 97.4,
+    details: "Warehouse 1 perimeter security fence intrusion breach detected",
+    modelName: "YOLOv11x Intrusion Model",
+  },
+  {
     camId: "CAM-06",
     cls: "person",
     severity: "high",
@@ -591,8 +607,7 @@ const MODEL_INCIDENTS: {
 ];
 
 function makeAlert(rng: Rng, t: number, n: number, live?: boolean): Alert {
-  const templateIdx = intRange(rng, 0, MODEL_INCIDENTS.length);
-  const inc = MODEL_INCIDENTS[templateIdx];
+  const inc = pick(rng, MODEL_INCIDENTS);
   const cam = CAMERAS.find((c) => c.id === inc.camId) || CAMERAS[0];
   const [lo, hi] = CONF[inc.cls];
 
