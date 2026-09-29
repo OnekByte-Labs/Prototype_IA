@@ -41,7 +41,19 @@ export function IconRail() {
             <span
               className={`absolute left-0 top-1 bottom-1 w-0.5 ${active ? "bg-g-blue" : "bg-transparent"}`}
             />
-            <Icon name={icon} size={20} className={active ? "text-g-blue" : ""} />
+            {label === "ANPR" ? (
+              <span
+                className={`text-[9.5px] font-mono font-bold tracking-tight px-1 py-0.5 rounded-[2px] border select-none transition-none ${
+                  active
+                    ? "text-g-blue border-g-blue/50 bg-g-blue/15"
+                    : "text-g-text-2 border-g-border-strong group-hover:text-g-text group-hover:border-g-blue/30"
+                }`}
+              >
+                ANPR
+              </span>
+            ) : (
+              <Icon name={icon} size={20} className={active ? "text-g-blue" : ""} />
+            )}
             {label === "Alerts" && unacked > 0 && (
               <span className="absolute top-2 right-2.5 min-w-3 h-3 px-0.5 bg-g-red text-g-bg text-[9px] leading-3 font-data text-center rounded-[2px]">
                 {unacked > 99 ? "99" : unacked}

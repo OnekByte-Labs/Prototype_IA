@@ -12,9 +12,11 @@ export function Icon({ name, size = 16, className = "", filled = false }: IconPr
   return (
     <span
       aria-hidden="true"
-      className={`material-symbols-outlined ${className}`}
+      className={`material-symbols-outlined select-none overflow-hidden inline-flex items-center justify-center ${className}`}
       style={{
         fontSize: size,
+        width: size,
+        height: size,
         lineHeight: 1,
         fontVariationSettings: `'FILL' ${filled ? 1 : 0}, 'wght' 400, 'GRAD' 0, 'opsz' 20`,
       }}
