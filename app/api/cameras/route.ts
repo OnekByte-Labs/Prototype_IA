@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { CAMERAS } from '@/lib/gotham/model';
 
 export const dynamic = 'force-dynamic';
 
@@ -6,13 +7,15 @@ export async function GET() {
   const pipelineHost = process.env.PIPELINE_HOST || 'http://127.0.0.1:5556';
 
   try {
-    const res = await fetch(`${pipelineHost}/cameras`, { cache: 'no-store' });
+    const res = await fetch(`${pipelineHost}/cameras`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(2000),
+    });
     if (!res.ok) throw new Error(`Pipeline returned ${res.status}`);
     const cameras = await res.json();
 
-    // Shard across distinct loopback addresses (127.0.0.1 - 127.0.0.20)
-    // to bypass the browser's 6-connection-per-host limit in HTTP/1.1!
     const rewritten = cameras.map((cam: any, index: number) => {
+      const fallback = CAMERAS.find((c) => c.id === cam.id);
       let mjpeg = cam.mjpegUrl;
       let meta = cam.metadataUrl;
       const hostIp = `127.0.0.${(index % 20) + 1}`;
@@ -25,7 +28,16 @@ export async function GET() {
       }
 
       return {
+        ...fallback,
         ...cam,
+        label: cam.label || fallback?.label || `${cam.id} · ${cam.name}`,
+        sector: cam.sector || fallback?.sector,
+        mgrs: cam.mgrs || fallback?.mgrs,
+        elevationM: cam.elevationM ?? fallback?.elevationM,
+        dataset: cam.dataset || fallback?.dataset,
+        aiWorkload: cam.aiWorkload || fallback?.aiWorkload,
+        videoUrl: cam.videoUrl || fallback?.videoUrl || `/api/videos/${cam.id}`,
+        precomputedUrl: cam.precomputedUrl || fallback?.precomputedUrl || `/api/precomputed/${cam.id}`,
         mjpegUrl: mjpeg,
         metadataUrl: meta,
       };
@@ -33,7 +45,8 @@ export async function GET() {
 
     return NextResponse.json(rewritten);
   } catch (error) {
-    console.error('[cameras] Pipeline unavailable:', error);
-    return NextResponse.json([], { status: 503 });
+    console.warn('[cameras] Pipeline unavailable, returning full fallback telemetry profiles:', error);
+    return NextResponse.json(CAMERAS);
   }
 }
+

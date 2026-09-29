@@ -18,6 +18,8 @@ import {
   secondsOfDay,
   type Alert,
   type Camera,
+  type Zone,
+  ZONES,
 } from "@/lib/gotham/model";
 import { intRange, mulberry32 } from "@/lib/gotham/rng";
 import { useToast } from "./Toast";
@@ -132,18 +134,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
 
   /* ---- health simulation removed ---- */
 
-interface ApiCamera {
-  id: string;
-  name: string;
-  label: string;
-  online: boolean;
-  hlsUrl: string;
-  webrtcUrl?: string;
-  rtspUrl?: string;
-  mjpegUrl?: string;
-  metadataUrl?: string;
-  aiEnabled?: boolean;
-}
+type ApiCamera = Camera;
 
   // Fetch live camera statuses from our API proxy
   const { data: apiCameras } = useSWR<ApiCamera[]>('/api/cameras', fetcher, {
@@ -466,17 +457,29 @@ interface ApiCamera {
       
       return { 
         ...c, 
-        // Use the real name from the live data if available, otherwise fallback to the mock name
-        name: liveData?.name ? liveData.name : c.name,
-        // If user disabled camera or network degraded, show offline/standby
+        name: liveData?.name || c.name,
+        zone: ((ZONES as readonly string[]).includes(liveData?.zone || "") ? liveData?.zone : c.zone) as Zone,
+        sector: liveData?.sector || c.sector,
+        ip: liveData?.ip || c.ip,
+        model: liveData?.model || c.model,
+        firmware: liveData?.firmware || c.firmware,
+        resolution: liveData?.resolution || c.resolution,
+        fps: liveData?.fps || c.fps,
+        uptime: liveData?.uptime ?? c.uptime,
+        sensitivity: liveData?.sensitivity ?? c.sensitivity,
+        mgrs: liveData?.mgrs || c.mgrs,
+        elevationM: liveData?.elevationM ?? c.elevationM,
+        dataset: liveData?.dataset || c.dataset,
+        aiWorkload: liveData?.aiWorkload || c.aiWorkload,
         online: (isDegraded || isUserDisabled) ? false : (liveData ? liveData.online : c.online), 
-        recording: (isDegraded || isUserDisabled) ? false : c.recording,
-        // Inject the stream URLs dynamically into the Gotham camera model
+        recording: (isDegraded || isUserDisabled) ? false : (liveData?.recording ?? c.recording),
         hlsUrl: liveData?.hlsUrl,
         rtspUrl: liveData?.rtspUrl,
         webrtcUrl: liveData?.webrtcUrl,
+        videoUrl: liveData?.videoUrl || c.videoUrl || `/api/videos/${c.id}`,
         mjpegUrl: isUserDisabled ? undefined : liveData?.mjpegUrl,
-        metadataUrl: isUserDisabled ? undefined : liveData?.metadataUrl,
+        metadataUrl: isUserDisabled ? undefined : (liveData?.metadataUrl || c.metadataUrl),
+        precomputedUrl: liveData?.precomputedUrl || c.precomputedUrl || `/api/precomputed/${c.id}`,
         aiEnabled,
         analytics,
       };

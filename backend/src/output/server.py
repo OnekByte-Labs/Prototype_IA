@@ -127,11 +127,30 @@ def create_app(
         result = []
         for cfg in stream_configs:
             sid = cfg["id"]
+            cam_id = sid.upper().replace("CAM_", "CAM-")
             cam_data = {
-                "id": sid.upper().replace("CAM_", "CAM-"),
-                "label": cfg.get("label", sid),
-                "online": True,
+                "id": cam_id,
+                "name": cfg.get("name", cfg.get("label", sid).split(" · ")[-1]),
+                "label": cfg.get("label", f"{cam_id} · {cfg.get('name', 'Camera')}"),
+                "zone": cfg.get("zone", "HQ COMPLEX"),
+                "sector": cfg.get("sector", "SECTOR-1 HQ"),
+                "online": cfg.get("online", True),
+                "ip": cfg.get("ip", "10.142.12.101"),
+                "model": cfg.get("model", "CP PLUS CP-UNC-TA51ZL6"),
+                "firmware": cfg.get("firmware", "11.8.42"),
+                "resolution": cfg.get("resolution", "1920×1080"),
+                "fps": cfg.get("fps", 30),
+                "sensitivity": cfg.get("sensitivity", 75),
+                "recording": cfg.get("recording", True),
+                "uptime": cfg.get("uptime", 99.9),
+                "mgrs": cfg.get("mgrs", "43R WQ 1820 8120"),
+                "elevationM": cfg.get("elevationM", 1680),
+                "dataset": cfg.get("dataset", "VIRAT"),
+                "aiWorkload": cfg.get("aiWorkload", "tracking"),
                 "aiEnabled": ai_config.is_enabled(sid),
+                "videoUrl": f"/api/videos/{sid}",
+                "metadataUrl": f"{base_url}/metadata/{sid}",
+                "precomputedUrl": f"{base_url}/precomputed/{sid}",
             }
             # Inject analytics config if present
             if "analytics" in pipeline_cfg and sid in pipeline_cfg["analytics"]:
@@ -139,10 +158,6 @@ def create_app(
             
             if mode == "live":
                 cam_data["mjpegUrl"] = f"{base_url}/stream/{sid}"
-                cam_data["metadataUrl"] = f"{base_url}/metadata/{sid}"
-            else:
-                cam_data["metadataUrl"] = f"{base_url}/metadata/{sid}"
-                cam_data["videoUrl"] = f"/api/videos/{sid}"
             result.append(cam_data)
         return result
 

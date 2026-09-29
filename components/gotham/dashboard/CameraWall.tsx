@@ -4,13 +4,42 @@ import { useEffect, useState, useRef, useMemo, memo } from "react";
 import Link from "next/link";
 import Hls from "hls.js";
 import { Icon } from "@/components/ui/Icon";
-import { secondsOfDay, type Camera } from "@/lib/gotham/model";
+import { secondsOfDay, type Camera, type Alert, type AlertClass } from "@/lib/gotham/model";
 import { useConsole } from "../ConsoleProvider";
 import { useClock } from "../hooks";
 import { MicroLabel, StatusDot } from "../primitives";
 
+export interface FrameDetection {
+  id: number | string;
+  class?: string;
+  confidence?: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  plate?: string;
+}
+
+export interface FrameEvent {
+  type: string;
+  stream_id?: string;
+  frame_id: number;
+  object_id?: number | string;
+  total_count?: number;
+  location?: [number, number];
+  [key: string]: unknown;
+}
+
+export interface PrecomputedFrame {
+  frame_id: number;
+  video_time_sec?: number;
+  timestamp?: string;
+  detections?: FrameDetection[];
+  events?: FrameEvent[];
+}
+
 const globalVideoTime = new Map<string, number>();
-const globalPrecomputedCache = new Map<string, any[]>();
+const globalPrecomputedCache = new Map<string, PrecomputedFrame[]>();
 
 interface StreamTrackingState {
   crossedIds: Set<number | string>;
@@ -62,8 +91,8 @@ function drawCameraOverlay(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
   cam: Camera,
-  frameData: any,
-  addAlert: (alert: any) => void,
+  frameData: PrecomputedFrame | null,
+  addAlert: (alert: Alert) => void,
   alertedIdsRef: React.MutableRefObject<Set<string>>,
   trackingState: StreamTrackingState
 ) {
@@ -97,7 +126,7 @@ function drawCameraOverlay(
     const line = cam.analytics.line;
 
     if (frameData?.detections) {
-      frameData.detections.forEach((box: any) => {
+      frameData.detections.forEach((box: FrameDetection) => {
         if ((box.confidence || 0) < 0.35) return;
         // Bounding box coordinates in frameData are ALREADY in native canvas pixel coordinates
         const bcx = box.x + box.w / 2;
@@ -141,7 +170,7 @@ function drawCameraOverlay(
 
   // 2. Process Intrusion Zone Breaches (Active across ALL cameras with a perimeter zone)
   let hasIntrusion = false;
-  let intrudingBox: any = null;
+  let intrudingBox: FrameDetection | null = null;
 
   if (cam.analytics?.type === 'intrusion_zone' && cam.analytics.zone && cam.analytics.zone.length >= 3) {
     const scaledZone = cam.analytics.zone.map((p: number[]) => [p[0] * scaleX, p[1] * scaleY]);
@@ -161,7 +190,7 @@ function drawCameraOverlay(
       }
     }
 
-    if (!hasIntrusion && frameData?.events?.some((e: any) => e.type === 'intrusion')) {
+    if (!hasIntrusion && frameData?.events?.some((e: FrameEvent) => e.type === 'intrusion')) {
       hasIntrusion = true;
     }
   }
@@ -169,7 +198,7 @@ function drawCameraOverlay(
   // 3. Draw Bounding Boxes (if AI is enabled)
   const boxes = (cam.aiEnabled && frameData) ? frameData.detections : null;
   if (boxes) {
-    boxes.forEach((box: any) => {
+    boxes.forEach((box: FrameDetection) => {
       const objClass = box.class?.toLowerCase() || 'obj';
       const confidence = box.confidence || 0;
 
@@ -187,8 +216,8 @@ function drawCameraOverlay(
       const isRecentlyCounted = Boolean(
         (trackingState.recentCrossed.has(box.id) &&
           Math.abs(currentFrameId - (trackingState.recentCrossed.get(box.id) ?? 0)) < 45) ||
-        frameData.events?.some(
-          (e: any) =>
+        frameData?.events?.some(
+          (e: FrameEvent) =>
             e.type === 'traffic_count' &&
             e.object_id === box.id &&
             (currentFrameId - e.frame_id) < 45 &&
@@ -335,7 +364,7 @@ function drawCameraOverlay(
       });
 
       // Total Traffic Count Calculation
-      const countEvent = frameData?.events?.find((e: any) => e.type === 'traffic_count');
+      const countEvent = frameData?.events?.find((e: FrameEvent) => e.type === 'traffic_count');
       const totalCount = countEvent?.total_count !== undefined
         ? Math.max(countEvent.total_count, trackingState.count)
         : trackingState.count;
@@ -435,7 +464,7 @@ function drawCameraOverlay(
             t: secondsOfDay(new Date()),
             cameraId: cam.id,
             zone: cam.zone,
-            cls: intrudingBox?.class || "person",
+            cls: (intrudingBox?.class === "vehicle" || intrudingBox?.class === "animal" ? intrudingBox.class : "person") as AlertClass,
             severity: "high",
             confidence: intrudingBox?.confidence || 0.92,
             status: "new",
@@ -460,7 +489,7 @@ function drawCameraOverlay(
 
   // Deduplicated alert sync from precomputed frameData.events if any exist
   if (frameData?.events) {
-    frameData.events.forEach((ev: any) => {
+    frameData.events.forEach((ev: FrameEvent) => {
       if (ev.type === 'intrusion') {
         const alertId = `${cam.id}-evt-intrude-${ev.object_id}`;
         if (!alertedIdsRef.current.has(alertId)) {
@@ -486,10 +515,10 @@ function drawCameraOverlay(
   }
 }
 
-function DecoupledStream({ cam }: { cam: Camera }) {
+export function DecoupledStream({ cam }: { cam: Camera }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fullDataRef = useRef<any[] | null>(globalPrecomputedCache.get(cam.id) || null);
+  const fullDataRef = useRef<PrecomputedFrame[] | null>(globalPrecomputedCache.get(cam.id) || null);
   const alertedIdsRef = useRef<Set<string>>(new Set());
   const trackingStateRef = useRef<StreamTrackingState>({
     crossedIds: new Set(),
@@ -545,9 +574,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
     }
 
     const sid = cam.id.toLowerCase().replace("-", "_");
-    const precomputedUrl = cam.metadataUrl
-      ? cam.metadataUrl.replace('/metadata/', '/precomputed/').replace('/live', '')
-      : `http://127.0.0.1:5556/precomputed/${sid}`;
+    const precomputedUrl = cam.precomputedUrl || `/api/precomputed/${sid}`;
 
     let active = true;
     fetch(precomputedUrl)
@@ -704,7 +731,7 @@ function DecoupledStream({ cam }: { cam: Camera }) {
 function LiveMJPEGStream({ cam }: { cam: Camera }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const latestData = useRef<any>(null);
+  const latestData = useRef<PrecomputedFrame | null>(null);
   const alertedIdsRef = useRef<Set<string>>(new Set());
   const trackingStateRef = useRef<StreamTrackingState>({
     crossedIds: new Set(),
@@ -714,11 +741,13 @@ function LiveMJPEGStream({ cam }: { cam: Camera }) {
     lastTime: 0,
   });
   const { addAlert } = useConsole();
+  const [prevUrl, setPrevUrl] = useState(cam.mjpegUrl);
   const [streamSrc, setStreamSrc] = useState<string>(() => cam.mjpegUrl || "");
 
-  useEffect(() => {
+  if (cam.mjpegUrl !== prevUrl) {
+    setPrevUrl(cam.mjpegUrl);
     setStreamSrc(cam.mjpegUrl || "");
-  }, [cam.mjpegUrl]);
+  }
 
   // Self-healing watchdog: reconnect MJPEG stream when returning to tab or on network recovery
   useEffect(() => {
@@ -840,15 +869,17 @@ function TileClock({ online }: { online: boolean }) {
 const Tile = memo(function Tile({
   cam,
   focused,
+  streamMode = "precomputed",
   onClick,
 }: {
   cam: Camera;
   focused?: boolean;
+  streamMode?: "precomputed" | "live";
   onClick: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const isLiveMode = !!cam.mjpegUrl;
+  const isLiveMode = streamMode === "live" && !!cam.mjpegUrl;
   const isMockMode = !isLiveMode && !!cam.metadataUrl;
 
   useEffect(() => {
@@ -952,6 +983,15 @@ const Tile = memo(function Tile({
 /** Camera wall. Click a tile to focus it full-panel; Esc returns to the grid. */
 export function CameraWall({ cameras }: { cameras: Camera[] }) {
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [streamMode, setStreamMode] = useState<"precomputed" | "live">(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("gotham_stream_mode");
+        if (saved === "live" || saved === "precomputed") return saved;
+      } catch {}
+    }
+    return "precomputed";
+  });
   const { dashboardFeedIds, disabledCameraIds, wallLayout, setWallLayout } = useConsole();
 
   useEffect(() => {
@@ -1027,6 +1067,41 @@ export function CameraWall({ cameras }: { cameras: Camera[] }) {
               </button>
             ))}
           </div>
+
+          {/* Stream Engine Selector: Zero-Lag Precomputed 60FPS vs Raw MJPEG */}
+          <div className="flex items-center border border-g-border rounded-[2px] p-0.5 bg-g-bg ml-1">
+            <button
+              type="button"
+              onClick={() => {
+                setStreamMode("precomputed");
+                try { localStorage.setItem("gotham_stream_mode", "precomputed"); } catch {}
+              }}
+              className={`h-5 px-1.5 text-[8.5px] font-mono font-bold rounded-[1px] transition-colors flex items-center gap-1 ${
+                streamMode === "precomputed"
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "text-g-muted hover:text-g-text hover:bg-g-hover"
+              }`}
+              title="Hardware-accelerated 60 FPS playback with zero lag using precomputed YOLOv11 & ByteTrack detections"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+              <span>60 FPS DEMO (SMOOTH)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStreamMode("live");
+                try { localStorage.setItem("gotham_stream_mode", "live"); } catch {}
+              }}
+              className={`h-5 px-1.5 text-[8.5px] font-mono font-bold rounded-[1px] transition-colors flex items-center gap-1 ${
+                streamMode === "live"
+                  ? "bg-g-blue text-white shadow-sm"
+                  : "text-g-muted hover:text-g-text hover:bg-g-hover"
+              }`}
+              title="Raw live MJPEG stream from python pipeline (subject to CPU latency)"
+            >
+              <span>RAW MJPEG</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -1070,6 +1145,7 @@ export function CameraWall({ cameras }: { cameras: Camera[] }) {
                 <Tile
                   cam={c}
                   focused={isThisFocused}
+                  streamMode={streamMode}
                   onClick={() => setFocusId(isThisFocused ? null : c.id)}
                 />
               </div>

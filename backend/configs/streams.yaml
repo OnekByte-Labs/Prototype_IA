@@ -1,40 +1,243 @@
-# Stream configuration — maps each test video to a stream ID.
-# Video paths are relative to the project root (E:\MIlitary_Prototype_IA).
+# Stream configuration — comprehensive tactical camera profiles
+# Video paths are relative to project root
 
 streams:
   - id: cam_01
-    video_path: "Dataset/Test/4K Road traffic video for object detection and tracking.mp4"
+    name: "MAIN GATE"
     label: "CAM-01 · MAIN GATE"
+    zone: "HQ COMPLEX"
+    sector: "SECTOR-1 HQ"
+    online: true
+    ip: "10.142.12.101"
+    model: "AXIS Q6135-LE / CP PLUS 4K"
+    firmware: "11.8.42"
+    resolution: "3840×2160"
+    fps: 60
+    sensitivity: 72
+    recording: true
+    uptime: 99.98
+    mgrs: "43R WQ 1820 8120"
+    elevationM: 1680
+    dataset: "VIRAT"
+    aiWorkload: "traffic_count"
+    video_path: "Dataset/Test/4K Road traffic video for object detection and tracking.mp4"
 
   - id: cam_02
-    video_path: "Dataset/Test/Animal_car.mp4"
+    name: "PERIMETER EAST"
     label: "CAM-02 · PERIMETER EAST"
+    zone: "PERIMETER EAST"
+    sector: "SECTOR-2 PERIMETER"
+    online: true
+    ip: "10.142.12.103"
+    model: "AXIS P3245-LV / CP PLUS HD"
+    firmware: "10.2.1"
+    resolution: "1920×1080"
+    fps: 30
+    sensitivity: 64
+    recording: true
+    uptime: 99.91
+    mgrs: "43R WQ 1845 8116"
+    elevationM: 1686
+    dataset: "MOT20"
+    aiWorkload: "traffic_count"
+    video_path: "Dataset/Test/Animal_car.mp4"
 
   - id: cam_03
-    video_path: "Dataset/Test/Person.mp4"
+    name: "CHECKPOINT ALPHA"
     label: "CAM-03 · CHECKPOINT ALPHA"
+    zone: "HQ COMPLEX"
+    sector: "SECTOR-1 HQ"
+    online: true
+    ip: "10.142.14.107"
+    model: "BOSCH AUTODOME 7000i"
+    firmware: "7.82.01"
+    resolution: "3840×2160"
+    fps: 30
+    sensitivity: 80
+    recording: true
+    uptime: 99.94
+    mgrs: "43R WQ 1890 8140"
+    elevationM: 1690
+    dataset: "MOT20"
+    aiWorkload: "tracking"
+    video_path: "Dataset/Test/Person.mp4"
 
   - id: cam_04
-    video_path: "Dataset/Test/Person_crossing_line.mp4"
+    name: "PERIMETER SOUTH"
     label: "CAM-04 · PERIMETER SOUTH"
+    zone: "DEPOT"
+    sector: "SECTOR-3 DEPOT"
+    online: true
+    ip: "10.142.20.109"
+    model: "CP PLUS CP-UNC-TA51ZL6"
+    firmware: "4.2.1"
+    resolution: "1920×1080"
+    fps: 30
+    sensitivity: 88
+    recording: true
+    uptime: 98.12
+    mgrs: "43R WQ 1650 7980"
+    elevationM: 1675
+    dataset: "VIRAT"
+    aiWorkload: "intrusion"
+    video_path: "Dataset/Test/Person_crossing_line.mp4"
 
   - id: cam_05
-    video_path: "Dataset/Test/Robbery.mp4"
+    name: "ARMOURY SECTOR 4"
     label: "CAM-05 · ARMOURY SECTOR 4"
+    zone: "DEPOT"
+    sector: "SECTOR-3 DEPOT"
+    online: true
+    ip: "10.142.20.112"
+    model: "PELCO SPECTRA PRO"
+    firmware: "3.14.9"
+    resolution: "1920×1080"
+    fps: 60
+    sensitivity: 91
+    recording: true
+    uptime: 99.99
+    mgrs: "43R WQ 1630 7950"
+    elevationM: 1672
+    dataset: "VIRAT"
+    aiWorkload: "intrusion_zone"
+    video_path: "Dataset/Test/Robbery.mp4"
 
   - id: cam_06
-    video_path: "Dataset/Test/Traffic Control CCTV.mp4"
+    name: "VEHICLE DEPOT"
     label: "CAM-06 · VEHICLE DEPOT"
+    zone: "PERIMETER WEST"
+    sector: "SECTOR-4 WEST"
+    online: true
+    ip: "10.142.16.115"
+    model: "BOSCH MIC IP 7100i"
+    firmware: "7.80.00"
+    resolution: "1920×1080"
+    fps: 30
+    sensitivity: 70
+    recording: true
+    uptime: 99.4
+    mgrs: "43R WQ 1540 8210"
+    elevationM: 1665
+    dataset: "UFPR_ALPR"
+    aiWorkload: "anpr"
+    video_path: "Dataset/Test/Traffic Control CCTV.mp4"
 
   - id: cam_07
-    video_path: "Dataset/Test/pedestrian_2.mp4"
+    name: "HQ ENTRANCE"
     label: "CAM-07 · HQ ENTRANCE"
+    zone: "HQ COMPLEX"
+    sector: "SECTOR-1 HQ"
+    online: true
+    ip: "10.142.12.116"
+    model: "AXIS P3245-LV"
+    firmware: "10.2.1"
+    resolution: "1920×1080"
+    fps: 30
+    sensitivity: 58
+    recording: true
+    uptime: 99.91
+    mgrs: "43R WQ 1860 8130"
+    elevationM: 1688
+    dataset: "MOT20"
+    aiWorkload: "tracking"
+    video_path: "Dataset/Test/pedestrian_2.mp4"
 
   - id: cam_08
-    video_path: "Dataset/Test/person-bicycle-car-detection.mp4"
+    name: "MOTOR POOL"
     label: "CAM-08 · MOTOR POOL"
+    zone: "MOTOR POOL"
+    sector: "SECTOR-5 MOTOR POOL"
+    online: true
+    ip: "10.142.30.122"
+    model: "HANWHA XNV-8080R"
+    firmware: "2.01.0"
+    resolution: "1920×1080"
+    fps: 30
+    sensitivity: 61
+    recording: true
+    uptime: 99.85
+    mgrs: "43R WQ 1720 8340"
+    elevationM: 1670
+    dataset: "VIRAT"
+    aiWorkload: "tracking"
+    video_path: "Dataset/Test/person-bicycle-car-detection.mp4"
 
   - id: cam_09
-    video_path: "Dataset/Test/feed-worker-zone-intrusion.mp4"
+    name: "WAREHOUSE 1"
     label: "CAM-09 · WAREHOUSE 1"
+    zone: "PERIMETER WEST"
+    sector: "SECTOR-4 WEST"
+    online: true
+    ip: "10.142.16.128"
+    model: "BOSCH MIC IP 7100i"
+    firmware: "7.80.00"
+    resolution: "1920×1080"
+    fps: 60
+    sensitivity: 70
+    recording: true
+    uptime: 99.2
+    mgrs: "43R WQ 1590 8270"
+    elevationM: 1668
+    dataset: "VIRAT"
+    aiWorkload: "intrusion_zone"
+    video_path: "Dataset/Test/feed-worker-zone-intrusion.mp4"
 
+  - id: cam_10
+    name: "AIRSTRIP ACCESS"
+    label: "CAM-10 · AIRSTRIP ACCESS"
+    zone: "HQ COMPLEX"
+    sector: "SECTOR-1 HQ"
+    online: true
+    ip: "10.142.12.125"
+    model: "AXIS Q6135-LE"
+    firmware: "11.8.42"
+    resolution: "1920×1080"
+    fps: 30
+    sensitivity: 75
+    recording: true
+    uptime: 99.1
+    mgrs: "43R WQ 1920 8190"
+    elevationM: 1692
+    dataset: "MOT20"
+    aiWorkload: "tracking"
+    video_path: "Dataset/Test/pedestrian_2.mp4"
+
+  - id: cam_11
+    name: "WATCHTOWER 3"
+    label: "CAM-11 · WATCHTOWER 3"
+    zone: "PERIMETER EAST"
+    sector: "SECTOR-2 PERIMETER"
+    online: true
+    ip: "10.142.14.130"
+    model: "CP PLUS CP-UNC-TA51ZL6"
+    firmware: "4.2.1"
+    resolution: "1920×1080"
+    fps: 30
+    sensitivity: 82
+    recording: true
+    uptime: 98.7
+    mgrs: "43R WQ 2140 8380"
+    elevationM: 1740
+    dataset: "BORDER_THREAT"
+    aiWorkload: "intrusion"
+    video_path: "Dataset/Test/Animal_car.mp4"
+
+  - id: cam_12
+    name: "AMMUNITION BUNKERS"
+    label: "CAM-12 · AMMUNITION BUNKERS"
+    zone: "DEPOT"
+    sector: "SECTOR-3 DEPOT"
+    online: true
+    ip: "10.142.20.135"
+    model: "BOSCH MIC IP 7100i"
+    firmware: "7.80.00"
+    resolution: "1920×1080"
+    fps: 30
+    sensitivity: 90
+    recording: true
+    uptime: 99.5
+    mgrs: "43R WQ 1610 7920"
+    elevationM: 1670
+    dataset: "VIRAT"
+    aiWorkload: "intrusion"
+    video_path: "Dataset/Test/Person_crossing_line.mp4"

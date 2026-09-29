@@ -5,14 +5,15 @@ import type { Camera, Zone } from "@/lib/gotham/model";
 import { ZONES } from "@/lib/gotham/model";
 import { useConsole } from "../ConsoleProvider";
 import { useClock } from "../hooks";
-import { MicroLabel, StatusDot } from "../primitives";
+import { MicroLabel } from "../primitives";
 import { Icon } from "@/components/ui/Icon";
 import { ZoneCalibrator } from "../dashboard/ZoneCalibrator";
+import { DecoupledStream } from "../dashboard/CameraWall";
 
 /**
  * Lightweight CCTV channel thumbnail card for the directory grid.
  */
-function CameraCardThumbnail({ cam, isSelected }: { cam: Camera; isSelected: boolean }) {
+function CameraCardThumbnail({ cam }: { cam: Camera; isSelected?: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -39,23 +40,16 @@ function CameraCardThumbnail({ cam, isSelected }: { cam: Camera; isSelected: boo
 
   return (
     <div className="absolute inset-0 bg-[#070b12] overflow-hidden select-none border border-outline-variant/30">
-      {cam.mjpegUrl ? (
-        <img
-          src={cam.mjpegUrl}
-          alt={cam.name}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      ) : (
-        <video
-          ref={videoRef}
-          src={`/api/videos/${cam.id}`}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        />
-      )}
+      <video
+        ref={videoRef}
+        src={`/api/videos/${cam.id}`}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
       <div className="absolute top-1.5 left-1.5 flex items-center gap-1 font-mono text-[8px] z-10 pointer-events-none">
         <span className="text-secondary font-bold flex items-center gap-1 bg-black/75 px-1.5 py-0.5 border border-secondary/30">
@@ -69,85 +63,9 @@ function CameraCardThumbnail({ cam, isSelected }: { cam: Camera; isSelected: boo
 
 /**
  * Dedicated Live Video Stream for the SELECTED camera in the inspector viewport.
- * Features a simple thin solid tripwire line (no dashes, no chevrons, no heavy bloom).
+ * Uses zero-lag hardware-accelerated DecoupledStream with precomputed AI detection overlays.
  */
 function SelectedCameraStream({ cam }: { cam: Camera }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [liveCount, setLiveCount] = useState(() => (cam.id.charCodeAt(5) || 1) * 7 + 14);
-
-  useEffect(() => {
-    setLiveCount((cam.id.charCodeAt(5) || 1) * 7 + 14);
-    if (!cam.metadataUrl && cam.analytics?.type === "traffic_count") {
-      const interval = setInterval(() => {
-        setLiveCount(prev => prev + 1);
-      }, 4500);
-      return () => clearInterval(interval);
-    }
-  }, [cam.id, cam.analytics?.type, cam.metadataUrl]);
-
-  useEffect(() => {
-    if (!cam.metadataUrl) return;
-    let es: EventSource | null = null;
-    try {
-      es = new EventSource(cam.metadataUrl);
-      es.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data?.events && Array.isArray(data.events)) {
-            for (const ev of data.events) {
-              if (ev.type === "traffic_count" && typeof ev.total_count === "number") {
-                setLiveCount(ev.total_count);
-              }
-            }
-          }
-        } catch {}
-      };
-    } catch {}
-    return () => {
-      if (es) es.close();
-    };
-  }, [cam.metadataUrl]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const resumePlayback = () => {
-      if (video && video.paused && !video.ended) {
-        video.play().catch(() => {});
-      }
-    };
-
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        resumePlayback();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibility);
-    video.addEventListener("waiting", resumePlayback);
-    video.addEventListener("stalled", resumePlayback);
-    video.addEventListener("pause", resumePlayback);
-    video.addEventListener("canplay", resumePlayback);
-    video.addEventListener("loadeddata", resumePlayback);
-    video.addEventListener("ended", () => {
-      video.currentTime = 0;
-      resumePlayback();
-    });
-
-    const watchdog = setInterval(resumePlayback, 1000);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibility);
-      video.removeEventListener("waiting", resumePlayback);
-      video.removeEventListener("stalled", resumePlayback);
-      video.removeEventListener("pause", resumePlayback);
-      video.removeEventListener("canplay", resumePlayback);
-      video.removeEventListener("loadeddata", resumePlayback);
-      clearInterval(watchdog);
-    };
-  }, [cam.id]);
-
   if (!cam.online) {
     return (
       <div className="absolute inset-0 bg-[#080d14] flex flex-col items-center justify-center select-none">
@@ -162,76 +80,9 @@ function SelectedCameraStream({ cam }: { cam: Camera }) {
     );
   }
 
-  const resParts = cam.resolution ? cam.resolution.split("×") : ["1920", "1080"];
-  const origW = parseInt(resParts[0], 10) || 1920;
-  const origH = parseInt(resParts[1], 10) || 1080;
-
   return (
     <div className="relative w-full h-full bg-black overflow-hidden flex items-center justify-center">
-      {cam.mjpegUrl ? (
-        <img
-          src={cam.mjpegUrl}
-          alt={cam.name}
-          className="w-full h-full object-contain"
-        />
-      ) : (
-        <video
-          ref={videoRef}
-          key={cam.id}
-          src={`/api/videos/${cam.id}`}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="w-full h-full object-contain"
-        />
-      )}
-
-      {/* Analytics Overlays: Simple Thin Solid Line (No Dashes) */}
-      {cam.analytics?.type === "traffic_count" && cam.analytics.line && (
-        <>
-          <svg
-            viewBox="0 0 1000 562.5"
-            preserveAspectRatio="xMidYMid meet"
-            className="absolute inset-0 w-full h-full pointer-events-none z-10"
-          >
-            {/* Simple thin solid line - no dash dash, calm and easy on the eye */}
-            <polyline
-              points={cam.analytics.line.map((p: number[]) => `${(p[0] / origW) * 1000},${(p[1] / origH) * 562.5}`).join(" ")}
-              fill="none"
-              stroke="rgba(56, 189, 248, 0.85)"
-              strokeWidth="1.5"
-            />
-          </svg>
-
-          {/* Minimal Count Pill */}
-          <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-full bg-surface-container-lowest/80 border border-outline-variant shadow-md flex items-center gap-2 pointer-events-none font-mono backdrop-blur-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
-            <span className="text-xs font-semibold text-on-surface tracking-wider">
-              {String(liveCount).padStart(3, "0")}
-            </span>
-            <span className="text-[9px] text-outline uppercase tracking-wider font-semibold">
-              COUNT
-            </span>
-          </div>
-        </>
-      )}
-
-      {/* Analytics Overlays: Perimeter Cordon Zone */}
-      {cam.analytics?.type === "intrusion_zone" && cam.analytics.zone && (
-        <svg
-          viewBox="0 0 1000 562.5"
-          preserveAspectRatio="xMidYMid meet"
-          className="absolute inset-0 w-full h-full pointer-events-none z-10"
-        >
-          <polygon
-            points={cam.analytics.zone.map((p: number[]) => `${(p[0] / origW) * 1000},${(p[1] / origH) * 562.5}`).join(" ")}
-            fill="rgba(34, 197, 94, 0.12)"
-            stroke="rgba(34, 197, 94, 0.85)"
-            strokeWidth="1.5"
-          />
-        </svg>
-      )}
+      <DecoupledStream cam={cam} />
 
       {/* CCTV OSD Overlay */}
       <div className="absolute bottom-2 left-2 flex items-center gap-2 font-mono text-[9px] text-on-surface/90 pointer-events-none bg-surface-container-lowest/80 px-2 py-0.5 border border-outline-variant z-20">
@@ -254,7 +105,6 @@ export function CamerasConsole() {
   const clock = useClock();
   const {
     cameras,
-    dashboardFeedIds,
     disabledCameraIds,
     toggleCameraFeedStatus,
     toggleAi,
@@ -419,7 +269,8 @@ export function CamerasConsole() {
                         {cam.name}
                       </span>
                     </div>
-                    <div className="shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[8px] font-mono text-outline/80 hidden sm:inline">{cam.ip}</span>
                       {cam.aiEnabled && (
                         <span className="text-[8.5px] font-mono font-bold px-1.5 py-0.5 bg-red-950/60 border border-red-900/40 text-red-400 tracking-wider">
                           AI
@@ -449,8 +300,8 @@ export function CamerasConsole() {
 
                   {/* Card Footer */}
                   <div className="flex items-center justify-between text-[8px] font-mono text-outline mt-1 pt-0.5 border-t border-outline-variant/30 z-10">
-                    <span>{cam.resolution}</span>
-                    <span className="text-secondary font-semibold">{isOnline ? `${cam.fps} FPS` : "STANDBY"}</span>
+                    <span className="text-primary truncate max-w-[120px] font-semibold">{cam.sector || cam.zone}</span>
+                    <span className="text-secondary font-semibold">{isOnline ? `${cam.resolution} · ${cam.fps} FPS` : "STANDBY"}</span>
                   </div>
                 </div>
               );
@@ -637,6 +488,14 @@ export function CamerasConsole() {
                     <span className="text-on-surface font-semibold truncate ml-1">{selectedCam.model}</span>
                   </div>
                   <div className="p-1 bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+                    <span className="text-outline">SECTOR:</span>
+                    <span className="text-sky-300 font-semibold truncate ml-1">{selectedCam.sector || "SECTOR-1 HQ"}</span>
+                  </div>
+                  <div className="p-1 bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+                    <span className="text-outline">ZONE:</span>
+                    <span className="text-on-surface font-semibold">{selectedCam.zone}</span>
+                  </div>
+                  <div className="p-1 bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
                     <span className="text-outline">RESOLUTION:</span>
                     <span className="text-on-surface font-semibold">{selectedCam.resolution}</span>
                   </div>
@@ -645,12 +504,28 @@ export function CamerasConsole() {
                     <span className="text-secondary font-semibold">{selectedCam.fps} FPS</span>
                   </div>
                   <div className="p-1 bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+                    <span className="text-outline">MGRS GRID:</span>
+                    <span className="text-amber-300 font-semibold">{selectedCam.mgrs || "43R WQ 1820 8120"}</span>
+                  </div>
+                  <div className="p-1 bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+                    <span className="text-outline">ELEVATION:</span>
+                    <span className="text-on-surface font-semibold">{selectedCam.elevationM ? `${selectedCam.elevationM}m MSL` : "1680m MSL"}</span>
+                  </div>
+                  <div className="p-1 bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+                    <span className="text-outline">UPTIME:</span>
+                    <span className="text-secondary font-semibold">{selectedCam.uptime ? `${selectedCam.uptime}%` : "99.9%"}</span>
+                  </div>
+                  <div className="p-1 bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+                    <span className="text-outline">AI PIPELINE:</span>
+                    <span className="text-red-400 font-semibold truncate ml-1">{selectedCam.dataset || "VIRAT"} · {(selectedCam.aiWorkload || "TRACKING").toUpperCase()}</span>
+                  </div>
+                  <div className="p-1 bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
                     <span className="text-outline">FIRMWARE:</span>
                     <span className="text-on-surface font-semibold">{selectedCam.firmware}</span>
                   </div>
                   <div className="p-1 bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
-                    <span className="text-outline">TRANSPORT:</span>
-                    <span className="text-primary font-semibold truncate ml-1">{selectedCam.mjpegUrl ? "MJPEG LIVE" : "HLS/MP4 DIRECT"}</span>
+                    <span className="text-outline">STREAM ENGINE:</span>
+                    <span className="text-primary font-semibold truncate ml-1">{selectedCam.mjpegUrl ? "MJPEG LIVE" : "PRECOMPUTED 60FPS"}</span>
                   </div>
                 </div>
               </div>

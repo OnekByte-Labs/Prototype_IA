@@ -17,7 +17,11 @@ try:
     import lapx
     _HAVE_LAPX = True
 except ImportError:
-    _HAVE_LAPX = False
+    try:
+        import lap as lapx
+        _HAVE_LAPX = True
+    except ImportError:
+        _HAVE_LAPX = False
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +147,11 @@ def _linear_assignment(cost_matrix: np.ndarray, threshold: float):
     if _HAVE_LAPX:
         # lapx expects a cost matrix (lower is better), so use 1 - IOU
         cost = 1.0 - cost_matrix
-        row_ind, col_ind = lapx.lapjv(cost, extend_cost=True, cost_limit=1.0 - threshold)
+        lap_res = lapx.lapjv(cost, extend_cost=True, cost_limit=1.0 - threshold)
+        if len(lap_res) == 3:
+            _, row_ind, col_ind = lap_res
+        else:
+            row_ind, col_ind = lap_res
         matches = []
         unmatched_a = []
         for r, c in enumerate(row_ind):
