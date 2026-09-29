@@ -4,16 +4,6 @@ models:
   ocr: {model_path: models/cct-xs-v2-global-model.onnx, config_path: models/plate_config.yaml}
 server: {host: 0.0.0.0, port: 5556}
 analytics:
-  cam_09:
-    type: intrusion_zone
-    zone:
-    - [0.0, 80.0]
-    - [780.0, 80.0]
-    - [670.0, 650.0]
-    - [230.0, 971.0]
-    - [0.0, 817.0]
-    buffer_px: 15
-    required_consecutive_frames: 8
   cam_02:
     type: traffic_count
     line:
@@ -32,3 +22,13 @@ analytics:
     - [327.0, 1129.0]
     - [2339.0, 1023.0]
     - [3820.0, 1400.0]
+  cam_09:
+    type: intrusion_zone
+    zone:
+    - [0.0, 80.0]
+    - [780.0, 80.0]
+    - [670.0, 650.0]
+    - [230.0, 971.0]
+    - [0.0, 817.0]
+    buffer_px: 15
+    required_consecutive_frames: 8

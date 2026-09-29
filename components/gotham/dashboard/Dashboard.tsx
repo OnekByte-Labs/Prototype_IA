@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { Icon } from "@/components/ui/Icon";
 import { NVRS, cameraById, hms, type Alert } from "@/lib/gotham/model";
 import { useConsole } from "../ConsoleProvider";
 import { Button, ClassTag, KpiCard, Panel, SeverityChip, StatusDot } from "../primitives";
@@ -9,7 +11,15 @@ import { CameraWall } from "./CameraWall";
 
 /* ----------------------------------------------------------------- alert feed */
 
-function FeedRow({ a, onAck }: { a: Alert; onAck: (id: string) => void }) {
+function FeedRow({
+  a,
+  onAck,
+  onSelectCamera,
+}: {
+  a: Alert;
+  onAck: (id: string) => void;
+  onSelectCamera: (camId: string) => void;
+}) {
   const cam = cameraById(a.cameraId);
   const unacked = a.status === "new";
 
@@ -17,25 +27,58 @@ function FeedRow({ a, onAck }: { a: Alert; onAck: (id: string) => void }) {
     <div
       data-testid="feed-row"
       data-status={a.status}
-      className={`group h-11 px-3 flex items-center gap-2.5 border-l-2 hover:bg-g-hover transition-none ${
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('button, [role="button"], a, input')) return;
+        onSelectCamera(a.cameraId);
+      }}
+      className={`group h-11 px-3 flex items-center gap-2.5 border-l-2 hover:bg-g-hover transition-none cursor-pointer ${
         unacked ? "border-l-g-red" : "border-l-transparent"
       } ${a.live ? "animate-g-in" : ""}`}
+      title={`Click to focus ${a.cameraId} (${cam?.name ?? ""}) on Camera Wall`}
     >
       <span className="text-data font-data text-g-text-2 w-[58px] shrink-0">{hms(a.t)}</span>
       <ClassTag cls={a.cls} />
       <div className="min-w-0 flex-1">
-        <div className={`text-ui truncate ${unacked ? "text-g-text" : "text-g-text-2"}`}>
-          {a.cameraId} · {cam?.name ?? ""}
+        <div className={`text-ui truncate flex items-center gap-1.5 ${unacked ? "text-g-text" : "text-g-text-2"}`}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectCamera(a.cameraId);
+            }}
+            className="truncate hover:text-g-blue hover:underline flex items-center gap-1 font-medium text-left"
+            title={`Focus ${a.cameraId} on Camera Wall`}
+          >
+            <Icon name="videocam" size={13} className="text-g-muted group-hover:text-g-blue shrink-0" />
+            <span className="truncate">{a.cameraId} · {cam?.name ?? ""}</span>
+          </button>
+          {a.plate && (
+            <span className="px-1 py-0.2 bg-amber-400 text-black font-mono font-bold text-[9px] rounded border border-amber-500 shrink-0">
+              {a.plate}
+            </span>
+          )}
         </div>
-        <div className="text-micro uppercase text-g-muted truncate">
-          {a.zone} · {a.confidence.toFixed(1)}%
+        <div className="text-micro uppercase text-g-muted truncate flex items-center gap-1.5">
+          <span>{a.zone}</span>
+          <span>·</span>
+          <span>{a.modelName || `${a.confidence.toFixed(1)}%`}</span>
+          {a.details && (
+            <>
+              <span>·</span>
+              <span className="normal-case truncate">{a.details}</span>
+            </>
+          )}
         </div>
       </div>
       <SeverityChip severity={a.severity} />
       {unacked ? (
         <Button
           size="sm"
-          onClick={() => onAck(a.id)}
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+            e.stopPropagation();
+            onAck(a.id);
+          }}
           className="opacity-0 group-hover:opacity-100 focus:opacity-100"
           title={`Acknowledge ${a.id}`}
         >
@@ -127,7 +170,15 @@ function DeviceHealth({ degraded }: { degraded: string[] }) {
 /* ------------------------------------------------------------------ dashboard */
 
 export function Dashboard() {
-  const { alerts, unacked, ack, cameras, degraded, liveOn, toggleLive } = useConsole();
+  const { alerts, unacked, ack, cameras, degraded, liveOn, toggleLive, focusCamera } = useConsole();
+  const searchParams = useSearchParams();
+  const urlCam = searchParams?.get("cam");
+
+  useEffect(() => {
+    if (urlCam) {
+      focusCamera(urlCam);
+    }
+  }, [urlCam, focusCamera]);
 
   const offlineCams = cameras.filter((c) => !c.online);
   const online = cameras.length - offlineCams.length;
@@ -209,7 +260,7 @@ export function Dashboard() {
           >
             <div className="h-full overflow-y-auto divide-y divide-g-border">
               {feed.map((a) => (
-                <FeedRow key={a.id} a={a} onAck={ack} />
+                <FeedRow key={a.id} a={a} onAck={ack} onSelectCamera={focusCamera} />
               ))}
             </div>
           </Panel>

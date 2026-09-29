@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Dashboard } from "@/components/gotham/dashboard/Dashboard";
 
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardPage() {
-  return <Dashboard />;
+  return (
+    <Suspense fallback={null}>
+      <Dashboard />
+    </Suspense>
+  );
 }

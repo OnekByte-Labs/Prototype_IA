@@ -14,7 +14,21 @@ export async function GET() {
     if (!res.ok) throw new Error(`Pipeline returned ${res.status}`);
     const cameras = await res.json();
 
-    const rewritten = cameras.map((cam: any, index: number) => {
+    type PipelineCam = Record<string, unknown> & {
+      id: string;
+      name?: string;
+      mjpegUrl?: string;
+      metadataUrl?: string;
+      label?: string;
+      sector?: string;
+      mgrs?: string;
+      elevationM?: number;
+      dataset?: string;
+      aiWorkload?: string;
+      videoUrl?: string;
+      precomputedUrl?: string;
+    };
+    const rewritten = cameras.map((cam: PipelineCam, index: number) => {
       const fallback = CAMERAS.find((c) => c.id === cam.id);
       let mjpeg = cam.mjpegUrl;
       let meta = cam.metadataUrl;

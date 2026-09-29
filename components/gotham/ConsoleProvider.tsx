@@ -13,15 +13,14 @@ import {
 import {
   CAMERAS,
   OPERATOR,
-  nextAlert,
   seedAlerts,
   secondsOfDay,
   type Alert,
+  type AnalyticsConfig,
   type Camera,
   type Zone,
   ZONES,
 } from "@/lib/gotham/model";
-import { intRange, mulberry32 } from "@/lib/gotham/rng";
 import { useToast } from "./Toast";
 import useSWR, { useSWRConfig } from "swr";
 
@@ -61,6 +60,10 @@ type ConsoleState = {
   setWallLayout: (layout: 4 | 6 | 9 | 12) => void;
   /** Switch analytics type between 'traffic_count', 'intrusion_zone', or 'none' */
   setCameraAnalyticsType: (id: string, type: 'traffic_count' | 'intrusion_zone' | 'none') => Promise<boolean>;
+  /** Currently focused camera ID on Camera Wall, or null for default grid */
+  focusedCameraId: string | null;
+  /** Focus a specific camera full-panel on the Camera Wall, or null to return to grid */
+  focusCamera: (id: string | null) => void;
 };
 
 const Ctx = createContext<ConsoleState | null>(null);
@@ -112,9 +115,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   const [alerts, setAlerts] = useState<Alert[]>(() => seedAlerts());
   const [muted, setMuted] = useState(false);
   const [liveOn, setLiveOn] = useState(true);
-  const [degraded, setDegraded] = useState<string[]>([]);
-
-  const rng = useRef(mulberry32(0x9e4f));
+  const [degraded] = useState<string[]>([]);
   // The generator effect must not restart when the operator toggles mute, so the
   // current value is mirrored into a ref from an effect and read at fire time.
   const mutedRef = useRef(muted);
@@ -205,7 +206,7 @@ type ApiCamera = Camera;
   const { mutate } = useSWRConfig();
 
   const [aiOverrides, setAiOverrides] = useState<Record<string, boolean>>({});
-  const [analyticsOverrides, setAnalyticsOverrides] = useState<Record<string, any>>(() => {
+  const [analyticsOverrides, setAnalyticsOverrides] = useState<Record<string, AnalyticsConfig | null>>(() => {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("gotham_analytics_overrides");
@@ -234,7 +235,7 @@ type ApiCamera = Camera;
         });
         toast(`Failed to toggle AI for ${id}`, "err");
       }
-    } catch (e) {
+    } catch {
       setAiOverrides((prev) => {
         const next = { ...prev };
         delete next[id];
@@ -307,6 +308,12 @@ type ApiCamera = Camera;
     }
     return 9;
   });
+
+  const [focusedCameraId, setFocusedCameraId] = useState<string | null>(null);
+
+  const focusCamera = useCallback((id: string | null) => {
+    setFocusedCameraId(id);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -402,7 +409,7 @@ type ApiCamera = Camera;
     setAnalyticsOverrides((prev) => ({ ...prev, [id]: optimisticAnalytics }));
 
     try {
-      const payload: any = { type };
+      const payload: Record<string, unknown> = { type };
       if (type === 'traffic_count') {
         payload.line = defaultLine;
       } else if (type === 'intrusion_zone') {
@@ -437,7 +444,7 @@ type ApiCamera = Camera;
       toast(`Failed to update mode for ${id}`, "err");
       return false;
     }
-  }, [toast, mutate]);
+  }, [toast, mutate, analyticsOverrides]);
 
   const cameras = useMemo(() => {
     return CAMERAS.map((c) => {
@@ -451,9 +458,10 @@ type ApiCamera = Camera;
         ? aiOverrides[c.id]
         : (liveData?.aiEnabled ?? c.aiEnabled ?? true);
 
-      const analytics = analyticsOverrides[c.id] !== undefined
-        ? analyticsOverrides[c.id]
-        : ((liveData as any)?.analytics ?? c.analytics);
+      const analyticsOverride = analyticsOverrides[c.id];
+      const analytics = analyticsOverride !== undefined
+        ? (analyticsOverride ?? undefined)
+        : (liveData?.analytics ?? c.analytics);
       
       return { 
         ...c, 
@@ -511,6 +519,8 @@ type ApiCamera = Camera;
       wallLayout,
       setWallLayout,
       setCameraAnalyticsType,
+      focusedCameraId,
+      focusCamera,
     }),
     [
       alerts,
@@ -534,6 +544,8 @@ type ApiCamera = Camera;
       wallLayout,
       setWallLayout,
       setCameraAnalyticsType,
+      focusedCameraId,
+      focusCamera,
     ],
   );
 

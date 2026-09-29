@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import {
@@ -218,7 +219,7 @@ const COLS: Col[] = [
 ];
 
 export function AlertConsole() {
-  const { alerts, ack, ackMany, dispatch } = useConsole();
+  const { alerts, ack, ackMany, dispatch, focusCamera } = useConsole();
   const toast = useToast();
 
   const [filters, setFilters] = useState<Filters>(EMPTY);
@@ -246,7 +247,7 @@ export function AlertConsole() {
       if (filters.severity !== "all" && r.severity !== filters.severity) return false;
       if (filters.status !== "all" && r.status !== filters.status) return false;
       if (q) {
-        const hay = `${r.id} ${r.cameraId} ${r.camName} ${r.zone}`.toLowerCase();
+        const hay = `${r.id} ${r.cameraId} ${r.camName} ${r.zone} ${r.details ?? ""} ${r.modelName ?? ""} ${r.plate ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -446,9 +447,49 @@ export function AlertConsole() {
                     </td>
                     <td className="px-2 text-data font-data text-g-text-2">{hms(r.t)}</td>
                     <td className="px-2 text-data font-data text-g-text">{r.id}</td>
-                    <td className="px-2 text-data font-data text-g-text-2">{r.cameraId}</td>
-                    <td className={`px-2 text-ui truncate ${unack ? "text-g-text" : "text-g-text-2"}`}>
-                      {r.camName}
+                    <td className="px-2 text-data font-data">
+                      <Link
+                        href={`/dashboard?cam=${r.cameraId}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          focusCamera(r.cameraId);
+                        }}
+                        className="text-g-text-2 hover:text-g-blue hover:underline flex items-center gap-1 group/cam font-mono"
+                        title={`View live feed for ${r.cameraId} on Dashboard`}
+                      >
+                        <Icon name="videocam" size={13} className="text-g-muted group-hover/cam:text-g-blue shrink-0" />
+                        <span>{r.cameraId}</span>
+                      </Link>
+                    </td>
+                    <td className={`px-2 text-ui py-1 ${unack ? "text-g-text" : "text-g-text-2"}`}>
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Link
+                          href={`/dashboard?cam=${r.cameraId}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            focusCamera(r.cameraId);
+                          }}
+                          className="truncate hover:text-g-blue hover:underline"
+                          title={`Focus ${r.cameraId} (${r.camName}) on Dashboard`}
+                        >
+                          {r.camName}
+                        </Link>
+                        {r.plate && (
+                          <span className="px-1 py-0.2 bg-amber-400 text-black font-mono font-bold text-[10px] rounded border border-amber-500 shrink-0">
+                            {r.plate}
+                          </span>
+                        )}
+                        {r.modelName && (
+                          <span className="px-1 py-0.2 bg-g-surface text-g-cyan font-mono text-[9px] rounded border border-g-border shrink-0">
+                            {r.modelName}
+                          </span>
+                        )}
+                      </div>
+                      {r.details && (
+                        <div className="text-micro text-g-muted truncate max-w-[340px]">
+                          {r.details}
+                        </div>
+                      )}
                     </td>
                     <td className="px-2 text-ui text-g-text-2 truncate">{r.zone}</td>
                     <td className="px-2">
@@ -465,6 +506,18 @@ export function AlertConsole() {
                     </td>
                     <td className="px-2">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                        <Link
+                          href={`/dashboard?cam=${r.cameraId}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            focusCamera(r.cameraId);
+                          }}
+                          className="h-6 px-1.5 flex items-center gap-1 text-[10px] uppercase font-mono text-g-blue hover:bg-g-blue/15 border border-g-blue/30 rounded-[2px]"
+                          title={`View live stream for ${r.cameraId} on Dashboard`}
+                        >
+                          <Icon name="videocam" size={13} />
+                          <span>Cam</span>
+                        </Link>
                         {unack && (
                           <Button size="sm" title={`Acknowledge ${r.id}`} onClick={() => ack(r.id)}>
                             Ack
