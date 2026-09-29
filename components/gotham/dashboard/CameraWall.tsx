@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo, memo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
 import Hls from "hls.js";
 import { Icon } from "@/components/ui/Icon";
@@ -1013,8 +1013,24 @@ const Tile = memo(function Tile({
 });
 
 /** Camera wall. Click a tile to focus it full-panel; Esc returns to the grid. */
-export function CameraWall({ cameras }: { cameras: Camera[] }) {
-  const [focusId, setFocusId] = useState<string | null>(null);
+export function CameraWall({
+  cameras,
+  focusId: propFocusId,
+  onFocusChange,
+}: {
+  cameras: Camera[];
+  focusId?: string | null;
+  onFocusChange?: (id: string | null) => void;
+}) {
+  const { dashboardFeedIds, disabledCameraIds, wallLayout, setWallLayout, focusedCameraId, focusCamera } = useConsole();
+
+  // Either prop or global console state
+  const activeFocusId = propFocusId !== undefined ? propFocusId : focusedCameraId;
+  const setFocusId = useCallback((id: string | null) => {
+    if (onFocusChange) onFocusChange(id);
+    focusCamera(id);
+  }, [onFocusChange, focusCamera]);
+
   const [streamMode, setStreamMode] = useState<"precomputed" | "live">(() => {
     if (typeof window !== "undefined") {
       try {
@@ -1024,14 +1040,13 @@ export function CameraWall({ cameras }: { cameras: Camera[] }) {
     }
     return "precomputed";
   });
-  const { dashboardFeedIds, disabledCameraIds, wallLayout, setWallLayout } = useConsole();
 
   useEffect(() => {
-    if (!focusId) return;
+    if (!activeFocusId) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setFocusId(null);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [focusId]);
+  }, [activeFocusId, setFocusId]);
 
   // Displayed cameras: active (online & transmitting) cameras are ALWAYS prioritized on top!
   // If an operator closes a camera / sets it to standby, it immediately drops lower, keeping active cameras on top.
@@ -1059,7 +1074,7 @@ export function CameraWall({ cameras }: { cameras: Camera[] }) {
     return combined.slice(0, wallLayout);
   }, [cameras, dashboardFeedIds, disabledCameraIds, wallLayout]);
 
-  const focused = cameras.find((c: Camera) => c.id === focusId);
+  const focused = cameras.find((c: Camera) => c.id === activeFocusId);
   const offline = displayedCameras.filter((c: Camera) => !c.online).length;
 
   const gridClass = useMemo(() => {
@@ -1148,42 +1163,53 @@ export function CameraWall({ cameras }: { cameras: Camera[] }) {
             {displayedCameras.length - offline}/{displayedCameras.length} live
           </span>
           {focused && (
-            <button
-              type="button"
-              data-testid="wall-exit-focus"
-              onClick={() => setFocusId(null)}
-              className="text-micro uppercase text-g-blue hover:underline flex items-center gap-1"
-            >
-              <Icon name="fullscreen_exit" size={12} />
-              Exit focus · Esc
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-[2px] bg-g-blue/20 text-g-blue border border-g-blue/40 font-bold flex items-center gap-1.5 animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-g-blue" />
+                FOCUSED: {focused.id} · {focused.name}
+              </span>
+              <button
+                type="button"
+                data-testid="wall-exit-focus"
+                onClick={() => setFocusId(null)}
+                className="text-micro uppercase text-g-blue hover:underline flex items-center gap-1 bg-g-surface px-2 py-0.5 border border-g-border rounded-[2px]"
+                title="Return to multi-camera grid (Esc)"
+              >
+                <Icon name="fullscreen_exit" size={12} />
+                Exit focus · Esc
+              </button>
+            </div>
           )}
         </div>
       </header>
 
       <div className="flex-1 min-h-0 p-2 relative">
-        <div className={`h-full grid ${gridClass} gap-2`}>
-          {displayedCameras.map((c: Camera) => {
-            const isThisFocused = c.id === focusId;
-            return (
+        {focused ? (
+          <div className="w-full h-full min-h-0 relative">
+            <Tile
+              cam={focused}
+              focused={true}
+              streamMode={streamMode}
+              onClick={() => setFocusId(null)}
+            />
+          </div>
+        ) : (
+          <div className={`h-full grid ${gridClass} gap-2`}>
+            {displayedCameras.map((c: Camera) => (
               <div
                 key={c.id}
-                className={
-                  isThisFocused
-                    ? "absolute inset-2 z-30 bg-g-panel"
-                    : "relative w-full h-full min-h-0 overflow-hidden"
-                }
+                className="relative w-full h-full min-h-0 overflow-hidden"
               >
                 <Tile
                   cam={c}
-                  focused={isThisFocused}
+                  focused={false}
                   streamMode={streamMode}
-                  onClick={() => setFocusId(isThisFocused ? null : c.id)}
+                  onClick={() => setFocusId(c.id)}
                 />
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

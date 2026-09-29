@@ -183,7 +183,7 @@ export function KpiCard({ label, value, note, tone = "default", onClick, active 
 
 type BtnProps = {
   children: ReactNode;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   variant?: "default" | "primary" | "danger" | "ghost";
   size?: "sm" | "md";
   title?: string;

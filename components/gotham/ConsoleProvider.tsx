@@ -60,6 +60,10 @@ type ConsoleState = {
   setWallLayout: (layout: 4 | 6 | 9 | 12) => void;
   /** Switch analytics type between 'traffic_count', 'intrusion_zone', or 'none' */
   setCameraAnalyticsType: (id: string, type: 'traffic_count' | 'intrusion_zone' | 'none') => Promise<boolean>;
+  /** Currently focused camera ID on Camera Wall, or null for default grid */
+  focusedCameraId: string | null;
+  /** Focus a specific camera full-panel on the Camera Wall, or null to return to grid */
+  focusCamera: (id: string | null) => void;
 };
 
 const Ctx = createContext<ConsoleState | null>(null);
@@ -305,6 +309,12 @@ type ApiCamera = Camera;
     return 9;
   });
 
+  const [focusedCameraId, setFocusedCameraId] = useState<string | null>(null);
+
+  const focusCamera = useCallback((id: string | null) => {
+    setFocusedCameraId(id);
+  }, []);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -509,6 +519,8 @@ type ApiCamera = Camera;
       wallLayout,
       setWallLayout,
       setCameraAnalyticsType,
+      focusedCameraId,
+      focusCamera,
     }),
     [
       alerts,
@@ -532,6 +544,8 @@ type ApiCamera = Camera;
       wallLayout,
       setWallLayout,
       setCameraAnalyticsType,
+      focusedCameraId,
+      focusCamera,
     ],
   );
 

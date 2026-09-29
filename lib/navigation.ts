@@ -12,7 +12,7 @@ export const navItems: NavEntry[] = [
   { label: "Map", icon: "map", href: "/map" },
   { label: "Devices", icon: "hub", href: "/devices" },
   { label: "Cameras", icon: "videocam", href: "/cameras" },
-  { label: "Vehicles", icon: "directions_car", href: "/vehicles" },
+  { label: "ANPR", icon: "directions_car", href: "/vehicles" },
   { label: "Reports", icon: "description", href: "/reports" },
   { label: "Admin", icon: "vpn_key", href: "/admin" },
 ];

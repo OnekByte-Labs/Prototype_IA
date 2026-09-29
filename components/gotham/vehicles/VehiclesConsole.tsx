@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
 import {
   MOCK_VEHICLES,
@@ -8,6 +9,7 @@ import {
   type VehicleStatus,
 } from "@/lib/vehicles-data";
 import { CAMERAS } from "@/lib/gotham/model";
+import { useConsole } from "../ConsoleProvider";
 import { Button, MicroLabel, StatusDot } from "../primitives";
 import { useToast } from "../Toast";
 
@@ -15,6 +17,7 @@ type StatusFilter = VehicleStatus | "all";
 
 export function VehiclesConsole() {
   const toast = useToast();
+  const { focusCamera } = useConsole();
   const [vehicles, setVehicles] = useState<TrackedVehicle[]>(MOCK_VEHICLES);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -127,7 +130,7 @@ export function VehiclesConsole() {
       <div className="shrink-0 p-3 grid grid-cols-4 gap-2 bg-g-panel border-b border-g-border">
         <div className="p-3 bg-g-surface border border-g-border flex flex-col justify-between">
           <div className="flex items-center justify-between text-micro uppercase text-g-muted">
-            <span>Tracked Vehicles</span>
+            <span>ANPR & Tracked Vehicles</span>
             <Icon name="directions_car" size={16} className="text-g-blue" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
@@ -566,9 +569,15 @@ export function VehiclesConsole() {
                       </span>
                       <div className="bg-g-bg border border-g-border p-2.5 rounded space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-ui font-bold text-g-text font-mono">
-                            {s.cameraId} · {s.cameraName}
-                          </span>
+                          <Link
+                            href={`/dashboard?cam=${s.cameraId}`}
+                            onClick={() => focusCamera(s.cameraId)}
+                            className="text-ui font-bold text-g-blue hover:underline font-mono flex items-center gap-1 group/cam"
+                            title={`Focus camera ${s.cameraId} on Dashboard Wall`}
+                          >
+                            <Icon name="videocam" size={13} className="text-g-blue shrink-0" />
+                            <span>{s.cameraId} · {s.cameraName}</span>
+                          </Link>
                           <span className="text-micro font-mono text-g-cyan">
                             {s.timestamp}
                           </span>
