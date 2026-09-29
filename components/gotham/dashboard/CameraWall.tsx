@@ -160,6 +160,30 @@ function drawCameraOverlay(
             trackingState.crossedIds.add(box.id);
             trackingState.count += 1;
             trackingState.recentCrossed.set(box.id, currentFrameId);
+
+            const tripwireAlertId = `${cam.id}-tripwire-${box.id}`;
+            if (!alertedIdsRef.current.has(tripwireAlertId)) {
+              alertedIdsRef.current.add(tripwireAlertId);
+              if (alertedIdsRef.current.size > 200) {
+                alertedIdsRef.current.clear();
+                alertedIdsRef.current.add(tripwireAlertId);
+              }
+              const isVeh = box.class === "vehicle" || Boolean(box.plate);
+              addAlert({
+                id: tripwireAlertId,
+                t: secondsOfDay(new Date()),
+                cameraId: cam.id,
+                zone: cam.zone,
+                cls: isVeh ? "vehicle" : (box.class === "animal" ? "animal" : "person"),
+                severity: isVeh ? "med" : "high",
+                confidence: box.confidence ? Math.round(box.confidence * 1000) / 10 : 93.4,
+                status: "new",
+                live: true,
+                plate: box.plate,
+                details: `${cam.name} line crossing tripwire violation (${box.plate ? `Plate ${box.plate}` : (box.class || "target")})`,
+                modelName: box.plate ? "FastPlateOCR + ByteTrack" : "ByteTrack Line Tripwire",
+              });
+            }
           }
         }
 
@@ -302,6 +326,33 @@ function drawCameraOverlay(
 
         ctx.fillStyle = "#000000";
         ctx.fillText(displayPlate, x + 8, y + h + textHeight + 5);
+
+        // FastPlateOCR Real-time alert feed integration
+        const plateAlertId = `${cam.id}-plate-${displayPlate}`;
+        if (!alertedIdsRef.current.has(plateAlertId)) {
+          alertedIdsRef.current.add(plateAlertId);
+          if (alertedIdsRef.current.size > 200) {
+            alertedIdsRef.current.clear();
+            alertedIdsRef.current.add(plateAlertId);
+          }
+          const isFlagged = displayPlate === "DU62HY";
+          addAlert({
+            id: plateAlertId,
+            t: secondsOfDay(new Date()),
+            cameraId: cam.id,
+            zone: cam.zone,
+            cls: "vehicle",
+            severity: isFlagged ? "high" : "med",
+            confidence: box.confidence ? Math.round(box.confidence * 1000) / 10 : 96.2,
+            status: "new",
+            live: true,
+            plate: displayPlate,
+            details: isFlagged
+              ? `Blacklisted vehicle [DU62HY] detected at ${cam.name}`
+              : `License plate [${displayPlate}] logged by FastPlateOCR at ${cam.name}`,
+            modelName: "FastPlateOCR + ByteTrack",
+          });
+        }
       }
     });
   }
@@ -466,9 +517,12 @@ function drawCameraOverlay(
             zone: cam.zone,
             cls: (intrudingBox?.class === "vehicle" || intrudingBox?.class === "animal" ? intrudingBox.class : "person") as AlertClass,
             severity: "high",
-            confidence: intrudingBox?.confidence || 0.92,
+            confidence: intrudingBox?.confidence ? Math.round(intrudingBox.confidence * 1000) / 10 : 94.2,
             status: "new",
             live: true,
+            plate: intrudingBox?.plate,
+            details: `${cam.name} cordon boundary breach detected`,
+            modelName: "YOLOv11x Intrusion + ByteTrack",
           });
         }
       } else {
@@ -505,9 +559,11 @@ function drawCameraOverlay(
             zone: cam.zone,
             cls: "person",
             severity: "high",
-            confidence: 0.92,
+            confidence: 96.5,
             status: "new",
             live: true,
+            details: `${cam.name} perimeter intrusion breach`,
+            modelName: "YOLOv11x Intrusion Model",
           });
         }
       }

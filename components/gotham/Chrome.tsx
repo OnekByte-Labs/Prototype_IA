@@ -19,8 +19,8 @@ const RAIL: RailItem[] = [
   { label: "Map", icon: "map", href: "/map" },
   { label: "Devices", icon: "router", href: "/devices" },
   { label: "Cameras", icon: "videocam", href: "/cameras" },
-  { label: "Reports", icon: "description" },
-  { label: "Wall", icon: "grid_on" },
+  { label: "Vehicles", icon: "directions_car", href: "/vehicles" },
+  { label: "Reports", icon: "description", href: "/reports" },
   { label: "Admin", icon: "admin_panel_settings", href: "/admin" },
 ];
 
@@ -87,6 +87,8 @@ const TITLES: { match: string; crumb: string[] }[] = [
   { match: "/map", crumb: ["Watchfloor", "Tactical map"] },
   { match: "/devices", crumb: ["Watchfloor", "Device health"] },
   { match: "/cameras", crumb: ["Watchfloor", "Cameras"] },
+  { match: "/vehicles", crumb: ["Watchfloor", "Vehicle intelligence & ANPR"] },
+  { match: "/reports", crumb: ["Watchfloor", "Incident & audit reports"] },
   { match: "/admin", crumb: ["Watchfloor", "Administration"] },
 ];
 

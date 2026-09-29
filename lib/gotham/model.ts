@@ -404,6 +404,9 @@ export type Alert = {
   ackAt?: number;
   /** Set on alerts pushed by the live generator so the row can animate in. */
   live?: boolean;
+  plate?: string;
+  details?: string;
+  modelName?: string;
 };
 
 export const OPERATOR = "CAPT. A. VERMA";
@@ -421,21 +424,11 @@ export const hm = (t: number) => hms(t).slice(0, 5);
 export const secondsOfDay = (d: Date) =>
   d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
 
-/** 55% animal, 30% person, 15% vehicle — what a rural cantonment perimeter actually sees. */
-function drawClass(rng: Rng, cameraId: string): AlertClass {
-  if (cameraId === "CAM-05") return "person"; // Only people in Armoury Sector 4
-  
-  const r = rng();
-  if (r < 0.55) return "animal";
-  if (r < 0.85) return "person";
-  return "vehicle";
-}
-
 /** Severity is a function of what was seen and where — never random on its own. */
 export function severityFor(cls: AlertClass, zone: Zone, cameraId: string): Severity {
   if (cls === "animal") return "low";
   if (cls === "person") {
-    if (cameraId === "CAM-12" || zone === "DEPOT" || cameraId === "CAM-05") return "high";
+    if (cameraId === "CAM-12" || zone === "DEPOT" || cameraId === "CAM-05" || cameraId === "CAM-09") return "high";
     if (zone === "PERIMETER EAST" || zone === "PERIMETER WEST") return "med";
     return "med";
   }
@@ -449,35 +442,178 @@ const CONF: Record<AlertClass, [number, number]> = {
   animal: [72, 94],
 };
 
-/**
- * Incident numbering. The backlog counts DOWN from SEED_START (newest first) and
- * live alerts count UP from SEED_START, so the two streams can never mint the
- * same id — a collision would give two rows the same React key and silently
- * corrupt filtering, sorting and selection.
- */
 const SEED_START = 400;
 let liveSeq = SEED_START;
 
 export function alertId(n: number) {
   // ALT-<MMDD of the exercise date>-<sequence>
-  return `ALT-0919-${String(n).padStart(4, "0")}`;
+  return `ALT-0929-${String(n).padStart(4, "0")}`;
 }
 
+// Curated model incident events matching the real camera precomputed dataset
+const MODEL_INCIDENTS: {
+  camId: string;
+  cls: AlertClass;
+  severity: Severity;
+  confidence: number;
+  plate?: string;
+  details: string;
+  modelName: string;
+}[] = [
+  {
+    camId: "CAM-05",
+    cls: "person",
+    severity: "high",
+    confidence: 98.4,
+    details: "Armoury Sector 4 perimeter cordon breach detected",
+    modelName: "YOLOv11x + ByteTrack",
+  },
+  {
+    camId: "CAM-09",
+    cls: "person",
+    severity: "high",
+    confidence: 97.2,
+    details: "Warehouse 1 restricted polygon cordon breach",
+    modelName: "YOLOv11x Intrusion",
+  },
+  {
+    camId: "CAM-04",
+    cls: "person",
+    severity: "high",
+    confidence: 96.8,
+    details: "Depot south perimeter line crossing violation",
+    modelName: "ByteTrack Tripwire",
+  },
+  {
+    camId: "CAM-01",
+    cls: "vehicle",
+    severity: "med",
+    confidence: 94.1,
+    plate: "WZ092JV",
+    details: "Heavy transport vehicle crossed inbound tripwire",
+    modelName: "FastPlateOCR + YOLOv11",
+  },
+  {
+    camId: "CAM-06",
+    cls: "vehicle",
+    severity: "med",
+    confidence: 92.5,
+    plate: "71N01L",
+    details: "Commercial carrier in vehicle depot transit corridor",
+    modelName: "FastPlateOCR + ByteTrack",
+  },
+  {
+    camId: "CAM-11",
+    cls: "person",
+    severity: "high",
+    confidence: 95.3,
+    details: "Watchtower 3 perimeter fence boundary movement",
+    modelName: "YOLOv11 Optical Sensor",
+  },
+  {
+    camId: "CAM-12",
+    cls: "person",
+    severity: "high",
+    confidence: 99.1,
+    details: "Ammunition bunker security perimeter line crossed",
+    modelName: "ByteTrack Tripwire",
+  },
+  {
+    camId: "CAM-02",
+    cls: "person",
+    severity: "med",
+    confidence: 93.6,
+    details: "Perimeter East fence line motion detected",
+    modelName: "YOLOv11x Object Tracker",
+  },
+  {
+    camId: "CAM-07",
+    cls: "person",
+    severity: "low",
+    confidence: 91.2,
+    details: "HQ entrance pedestrian cluster tracking",
+    modelName: "MOT20 Edge Tracker",
+  },
+  {
+    camId: "CAM-08",
+    cls: "vehicle",
+    severity: "low",
+    confidence: 95.8,
+    plate: "WM1477",
+    details: "Internal motor pool shuttle in designated zone",
+    modelName: "FastPlateOCR + YOLOv11",
+  },
+  {
+    camId: "CAM-03",
+    cls: "person",
+    severity: "med",
+    confidence: 89.8,
+    details: "Checkpoint Alpha unidentified pedestrian in vehicle lane",
+    modelName: "MOT20 Edge Tracker",
+  },
+  {
+    camId: "CAM-10",
+    cls: "person",
+    severity: "med",
+    confidence: 90.4,
+    details: "Airstrip access gate boundary activity",
+    modelName: "YOLOv11x Object Tracker",
+  },
+  {
+    camId: "CAM-01",
+    cls: "vehicle",
+    severity: "med",
+    confidence: 96.2,
+    plate: "FGBA173",
+    details: "Authorized patrol SUV entering via Main Gate lane 1",
+    modelName: "FastPlateOCR + YOLOv11",
+  },
+  {
+    camId: "CAM-06",
+    cls: "vehicle",
+    severity: "high",
+    confidence: 91.7,
+    plate: "DU62HY",
+    details: "Unregistered vehicle detected lingering near ammo bay",
+    modelName: "FastPlateOCR + ByteTrack",
+  },
+  {
+    camId: "CAM-02",
+    cls: "animal",
+    severity: "low",
+    confidence: 89.6,
+    details: "Wild boar movement near eastern buffer ditch",
+    modelName: "YOLOv11x Animal Classifier",
+  },
+  {
+    camId: "CAM-11",
+    cls: "animal",
+    severity: "low",
+    confidence: 86.4,
+    details: "Stray animal detected outside perimeter fence",
+    modelName: "YOLOv11x Animal Classifier",
+  },
+];
+
 function makeAlert(rng: Rng, t: number, n: number, live?: boolean): Alert {
-  // Only CAM-05 has implemented behavior analytics for now
-  const cam = CAMERAS.find((c) => c.id === "CAM-05")!;
-  const cls = drawClass(rng, cam.id);
-  const [lo, hi] = CONF[cls];
+  const templateIdx = intRange(rng, 0, MODEL_INCIDENTS.length);
+  const inc = MODEL_INCIDENTS[templateIdx];
+  const cam = CAMERAS.find((c) => c.id === inc.camId) || CAMERAS[0];
+  const [lo, hi] = CONF[inc.cls];
+
   return {
     id: alertId(n),
     t,
     cameraId: cam.id,
     zone: cam.zone,
-    cls,
-    severity: severityFor(cls, cam.zone, cam.id),
+    cls: inc.cls,
+    severity: inc.severity,
     confidence: Math.round(range(rng, lo, hi) * 10) / 10,
     status: "new",
     live,
+    plate: inc.plate,
+    details: inc.details,
+    modelName: inc.modelName,
   };
 }
 
@@ -491,8 +627,30 @@ export function seedAlerts(count = 48, seed = 0x15cc): Alert[] {
   let t = 14 * 3600 + 32 * 60 + 8;
   let n = SEED_START;
   liveSeq = SEED_START;
+
   for (let i = 0; i < count; i++) {
-    const a = makeAlert(rng, t, n--);
+    // Top 3 alerts match active high-priority incidents
+    let a: Alert;
+    if (i < MODEL_INCIDENTS.length) {
+      const inc = MODEL_INCIDENTS[i];
+      const cam = CAMERAS.find((c) => c.id === inc.camId) || CAMERAS[0];
+      a = {
+        id: alertId(n--),
+        t,
+        cameraId: cam.id,
+        zone: cam.zone,
+        cls: inc.cls,
+        severity: inc.severity,
+        confidence: inc.confidence,
+        status: i < 3 ? "new" : "ack",
+        plate: inc.plate,
+        details: inc.details,
+        modelName: inc.modelName,
+      };
+    } else {
+      a = makeAlert(rng, t, n--);
+    }
+
     // Older alerts are mostly resolved; the newest few are still open.
     if (i > 2) {
       const r = rng();
@@ -500,14 +658,15 @@ export function seedAlerts(count = 48, seed = 0x15cc): Alert[] {
         a.status = "ack";
         a.ackBy = pick(rng, ["A. VERMA", "R. SINGH", "M. KUMAR", "P. NAIR"]);
         a.ackAt = a.t + intRange(rng, 20, 240);
-      } else if (r < 0.8) {
+      } else if (r < 0.88) {
         a.status = "dispatched";
         a.ackBy = "A. VERMA";
         a.ackAt = a.t + intRange(rng, 15, 90);
       }
     }
+
     out.push(a);
-    t -= intRange(rng, 90, 1500);
+    t -= intRange(rng, 120, 1800);
   }
   return out;
 }

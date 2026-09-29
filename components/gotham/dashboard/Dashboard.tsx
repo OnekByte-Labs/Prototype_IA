@@ -24,11 +24,24 @@ function FeedRow({ a, onAck }: { a: Alert; onAck: (id: string) => void }) {
       <span className="text-data font-data text-g-text-2 w-[58px] shrink-0">{hms(a.t)}</span>
       <ClassTag cls={a.cls} />
       <div className="min-w-0 flex-1">
-        <div className={`text-ui truncate ${unacked ? "text-g-text" : "text-g-text-2"}`}>
-          {a.cameraId} · {cam?.name ?? ""}
+        <div className={`text-ui truncate flex items-center gap-1.5 ${unacked ? "text-g-text" : "text-g-text-2"}`}>
+          <span className="truncate">{a.cameraId} · {cam?.name ?? ""}</span>
+          {a.plate && (
+            <span className="px-1 py-0.2 bg-amber-400 text-black font-mono font-bold text-[9px] rounded border border-amber-500 shrink-0">
+              {a.plate}
+            </span>
+          )}
         </div>
-        <div className="text-micro uppercase text-g-muted truncate">
-          {a.zone} · {a.confidence.toFixed(1)}%
+        <div className="text-micro uppercase text-g-muted truncate flex items-center gap-1.5">
+          <span>{a.zone}</span>
+          <span>·</span>
+          <span>{a.modelName || `${a.confidence.toFixed(1)}%`}</span>
+          {a.details && (
+            <>
+              <span>·</span>
+              <span className="normal-case truncate">{a.details}</span>
+            </>
+          )}
         </div>
       </div>
       <SeverityChip severity={a.severity} />

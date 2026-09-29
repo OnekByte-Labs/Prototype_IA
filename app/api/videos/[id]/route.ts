@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { Readable } from "stream";
 
 // Map internal camera IDs to their actual video filenames in the dataset
 const CAM_FILES: Record<string, string> = {
@@ -100,7 +99,7 @@ export async function GET(
     const file = fs.createReadStream(videoPath, { start, end });
     const webStream = nodeStreamToWebStream(file);
     
-    return new NextResponse(webStream as any, {
+    return new NextResponse(webStream as unknown as BodyInit, {
       status: 206,
       headers: {
         "Content-Range": `bytes ${start}-${end}/${fileSize}`,
@@ -117,7 +116,7 @@ export async function GET(
     const file = fs.createReadStream(videoPath, { start: 0, end });
     const webStream = nodeStreamToWebStream(file);
     
-    return new NextResponse(webStream as any, {
+    return new NextResponse(webStream as unknown as BodyInit, {
       status: 200,
       headers: {
         "Accept-Ranges": "bytes",
