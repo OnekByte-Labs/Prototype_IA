@@ -209,9 +209,15 @@ function drawCameraOverlay(
         const bcy_mid = box.y + box.h / 2;
 
         if (pointInPolygon(bcx, bcy_ground, scaledZone) || pointInPolygon(bcx, bcy_mid, scaledZone)) {
-          hasIntrusion = true;
-          intrudingBox = box;
-          break;
+          const isVeh = ["car", "truck", "bus", "motorcycle", "vehicle"].includes(box.class?.toLowerCase() || "");
+          if (!isVeh) {
+            hasIntrusion = true;
+            intrudingBox = box;
+            break; // Prioritize unauthorized pedestrian breach!
+          } else if (!hasIntrusion) {
+            hasIntrusion = true;
+            intrudingBox = box;
+          }
         }
       }
     }
@@ -478,8 +484,9 @@ function drawCameraOverlay(
         }
 
         // Deduplicated alert sync - only for persons / unauthorized intruders, not routine vehicles
-        if (intrudingBox?.class !== "vehicle") {
-          const alertId = `${cam.id}-evt-intrude-${intrudingBox?.id || 'alert'}`;
+        const isVeh = ["car", "truck", "bus", "motorcycle", "vehicle"].includes(intrudingBox?.class?.toLowerCase() || "") || Boolean(intrudingBox?.plate);
+        if (!isVeh && intrudingBox) {
+          const alertId = `${cam.id}-evt-intrude-${intrudingBox.id || currentFrameId}`;
           if (!alertedIdsRef.current.has(alertId)) {
             alertedIdsRef.current.add(alertId);
             if (alertedIdsRef.current.size > 200) {
@@ -491,12 +498,12 @@ function drawCameraOverlay(
               t: secondsOfDay(new Date()),
               cameraId: cam.id,
               zone: cam.zone,
-              cls: (intrudingBox?.class === "animal" ? "animal" : "person") as AlertClass,
+              cls: (intrudingBox.class === "animal" ? "animal" : "person") as AlertClass,
               severity: "high",
-              confidence: intrudingBox?.confidence ? Math.round(intrudingBox.confidence * 1000) / 10 : 94.2,
+              confidence: intrudingBox.confidence ? Math.round(intrudingBox.confidence * 1000) / 10 : 94.2,
               status: "new",
               live: true,
-              details: `${cam.name} cordon boundary breach detected`,
+              details: `${cam.name} cordon boundary breach: unauthorized ${intrudingBox.class || 'individual'} in restricted sector`,
               modelName: "YOLOv11x Intrusion + ByteTrack",
             });
           }
