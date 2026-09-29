@@ -49,3 +49,10 @@ backend/venv/
 backend/outputs/events.jsonl
 .pytest_cache/
 skills/
+.agents/
+docs/
+venv/
+venv
+.venv/
+.venv
+
