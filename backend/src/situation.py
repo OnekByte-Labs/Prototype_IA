@@ -910,7 +910,8 @@ class SituationService:
         sites = self.sites()
         want = nvr_id.strip().upper().replace(" ", "-") if nvr_id else None
         if want and re.fullmatch(r"NVR-?\d+", want):
-            want = f"NVR-{int(re.sub(r'\D', '', want)):02d}"
+            nvr_num = re.sub(r"\D", "", want)
+            want = f"NVR-{int(nvr_num):02d}"
         ingest, recorders = [], []
         for nid, n in sorted(live["ingest_nvrs"].items()):
             if want and nid != want:
