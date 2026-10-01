@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { AdminDirectory } from "@/components/admin/AdminDirectory";
-import { ConfigPanel } from "@/components/admin/ConfigPanel";
-import { UsersPanel } from "@/components/admin/UsersPanel";
+import { Suspense } from "react";
+import { AdminConsole } from "@/components/admin/AdminConsole";
 
 export const metadata: Metadata = {
-  title: "ISCC MATRIX // SYS-ADMIN & SECURITY ACCESS",
+  title: "Administration · ARGUS",
 };
 
-/** Three-column administrative workspace: directory rail, user table, configuration panels. */
 export default function AdminPage() {
   return (
-    <main className="flex-1 flex overflow-hidden bg-background">
-      <AdminDirectory />
-      <UsersPanel />
-      <ConfigPanel />
-    </main>
+    <Suspense>
+      <AdminConsole />
+    </Suspense>
   );
 }

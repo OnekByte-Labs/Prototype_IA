@@ -1,0 +1,174 @@
+/* ============================================================================
+   TACTICAL GIS MAP (components/map/gis) — terrain stack + tactical symbology.
+
+   The map is the content, so it stays flat and dominant. Everything laid on it
+   uses the same glass tokens as the rest of the app: dark unit frames with a
+   status-coloured edge, dark labels with light text.
+   Status colours: ONLINE green · ALERT red · DEGRADED amber · OFFLINE grey (selection = system blue).
+   ========================================================================== */
+.gis-map,
+.gis-map.leaflet-container {
+  background: var(--ds-sunken);
+  font-family: var(--ds-font-sans);
+  outline: none;
+}
+
+/* Imagery stays natural; only a light desaturation so overlays read clearly. */
+.gis-map .gis-imagery { filter: saturate(0.88) contrast(1.02); }
+/* Hillshade from the DEM: shadow/highlight overlay (relief mode: opaque tint) */
+.gis-map .leaflet-gis-hillshade-pane { opacity: 0.75; }
+.gis-map.gis-relief-mode .leaflet-gis-hillshade-pane { opacity: 1; }
+.gis-map .gis-roads { opacity: 0.7; }
+
+.gis-map .leaflet-control-attribution {
+  background: rgba(19, 20, 24, 0.85);
+  color: var(--ds-ink-2);
+  font-size: 11px;
+  border-radius: var(--ds-radius-sm) 0 0 0;
+}
+.gis-map .leaflet-control-attribution a { color: var(--ds-ink-2); }
+
+.gis-map .leaflet-control-scale-line {
+  background: rgba(19, 20, 24, 0.9);
+  color: var(--ds-ink);
+  border-color: var(--ds-ink-2);
+  font-size: 11px;
+  font-family: var(--ds-font-data);
+}
+
+/* Zoom: native-feeling raised keys */
+.gis-map .leaflet-bar {
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-md);
+  box-shadow: var(--ds-shadow-key);
+  overflow: hidden;
+}
+.gis-map .leaflet-bar a {
+  background: var(--ds-raised);
+  color: var(--ds-ink);
+  border-bottom: 1px solid var(--ds-line);
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  font-weight: 500;
+}
+.gis-map .leaflet-bar a:last-child { border-bottom: none; }
+.gis-map .leaflet-bar a:hover { background: var(--ds-hover); color: var(--ds-ink); }
+.gis-map .leaflet-bar a:active { box-shadow: var(--ds-shadow-inset-sm); background: var(--ds-canvas); }
+
+.gis-probe-cursor, .gis-probe-cursor .leaflet-interactive { cursor: crosshair !important; }
+
+/* ── markers ── */
+.gis-icon { background: none; border: none; }
+.gis-icon > div {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  --st: #30d158;
+  color: var(--ds-ink);
+}
+.gis-s-ONLINE { --st: #30d158; }
+.gis-s-ALERT { --st: #ff453a; }
+.gis-s-DEGRADED { --st: #ff9f0a; }
+.gis-s-OFFLINE { --st: #6e6e73; }
+.gis-dim { opacity: 0.55; }
+.gis-sym { display: block; overflow: visible; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
+.gis-frame { fill: #17181d; stroke: var(--st); stroke-width: 2; }
+.gis-stbar, .gis-stdot { fill: var(--st); }
+.gis-staff { stroke: var(--st); stroke-width: 2; }
+.gis-ech { fill: #f5f5f7; font: 700 10px var(--ds-font-data); text-anchor: middle; paint-order: stroke; stroke: #0c0d0f; stroke-width: 3px; }
+.gis-in { fill: #f5f5f7; font: 700 12px var(--ds-font-data); text-anchor: middle; }
+.gis-lens { fill: var(--st); }
+.gis-rack { stroke: var(--st); stroke-width: 1.6; }
+
+.gis-lbl {
+  position: absolute;
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  padding: 2px 7px;
+  background: rgba(19, 20, 24, 0.92);
+  border-left: 3px solid var(--st);
+  border-radius: 0 var(--ds-radius-sm) var(--ds-radius-sm) 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+  line-height: 15px;
+  pointer-events: none;
+}
+.gis-lbl b { font-weight: 600; color: var(--ds-ink); }
+.gis-lbl span { color: var(--ds-ink-2); font-size: 11px; }
+.gis-post .gis-lbl, .gis-cam .gis-lbl, .gis-nvr .gis-lbl { flex-direction: row; gap: 6px; align-items: baseline; }
+.gis-lbl-left .gis-lbl { left: auto; right: calc(100% + 6px); border-left: none; border-right: 3px solid var(--st); border-radius: var(--ds-radius-sm) 0 0 var(--ds-radius-sm); }
+.gis-company .gis-lbl { padding: 3px 8px; }
+.gis-company .gis-lbl b { font-size: 12px; }
+.gis-count-badge {
+  position: absolute;
+  top: 4px;
+  right: -7px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #ff453a;
+  color: #fff;
+  font: 600 11px/17px var(--ds-font-data);
+  text-align: center;
+  box-shadow: 0 0 0 2px #17181d;
+}
+
+.gis-cam .gis-cam-rot { transform-origin: 50% 50%; }
+.gis-cam.gis-no-feed .gis-frame { stroke-dasharray: 2 2; }
+.gis-stdot-abs {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--st);
+  box-shadow: 0 0 0 1.5px #17181d;
+}
+/* Selection = the interaction accent; no glow, a crisp warm outline. */
+.gis-sel .gis-frame { stroke: #0a84ff; stroke-width: 3; }
+.gis-sel .gis-sym { filter: drop-shadow(0 0 0 #0a84ff) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6)); }
+.gis-cam.gis-probe-hit .gis-frame { stroke: #ff9f0a; stroke-width: 3; }
+.gis-cam.gis-related .gis-frame { stroke: #a1a1a6; stroke-dasharray: 3 2; }
+.gis-s-ALERT .gis-sym, .gis-cam.gis-alert-focus .gis-sym { animation: gis-pulse 1.6s ease-in-out infinite; }
+@keyframes gis-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+.gis-alert-badge {
+  transform: translate(-50%, -165%) !important;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.gis-alert-badge path { fill: #ff453a; stroke: #f5f5f7; stroke-width: 1.4; }
+.gis-alert-badge text { fill: #fff; font: 700 11px var(--ds-font-data); text-anchor: middle; }
+.gis-alert-badge span { font: 600 11px var(--ds-font-data); color: #fff; background: #ff453a; padding: 0 4px; border-radius: 3px; }
+
+.gis-vertex {
+  width: 11px;
+  height: 11px;
+  background: #f5f5f7;
+  border: 2px solid #0a84ff;
+  border-radius: 2px;
+  cursor: move !important;
+}
+.gis-aim {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0a84ff;
+  border: 2px solid #f5f5f7;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  cursor: grab !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gis-s-ALERT .gis-sym, .gis-cam.gis-alert-focus .gis-sym { animation: none; }
+}

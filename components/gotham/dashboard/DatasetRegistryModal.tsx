@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Icon } from "@/components/ui/Icon";
+import { Badge, Button, Icon, KeyValue, Modal, Tabs } from "@/components/ds";
 import {
   DATASET_CATALOG,
   type DatasetSource,
 } from "@/lib/datasets/dataset-definitions";
-import { MicroLabel } from "../primitives";
 
 interface DatasetRegistryModalProps {
   isOpen: boolean;
@@ -18,7 +17,7 @@ const AGENT_SKILLS = [
     name: "issue-workflow-sop",
     title: "Master Issue Workflow SOP",
     category: "Workflow & Automation",
-    status: "ACTIVE",
+    status: "Active",
     description:
       "Fully autonomous Zero-Touch SWE workflow from branch creation to strict build, in-depth testing, and Pull Request shipping.",
   },
@@ -26,7 +25,7 @@ const AGENT_SKILLS = [
     name: "design-taste-frontend",
     title: "Anti-Slop Frontend Skill",
     category: "UI Engineering",
-    status: "ACTIVE",
+    status: "Active",
     description:
       "Contextual aesthetic inference, color calibration, typography discipline, layout diversification, and strict pre-flight checks.",
   },
@@ -34,7 +33,7 @@ const AGENT_SKILLS = [
     name: "in-depth-testing-standards",
     title: "QA Automation & In-Depth Testing",
     category: "Quality Assurance",
-    status: "ACTIVE",
+    status: "Active",
     description:
       "Comprehensive test coverage for Happy Path, Validation & Edge Cases, and Security across frontend and backend modules.",
   },
@@ -42,7 +41,7 @@ const AGENT_SKILLS = [
     name: "backend-engineering-standards",
     title: "Backend & API Architecture",
     category: "Backend & Services",
-    status: "ACTIVE",
+    status: "Active",
     description:
       "Zero-trust input validation (Zod), standardized JSON envelopes, N+1 query elimination, pagination, and unified error handling.",
   },
@@ -50,7 +49,7 @@ const AGENT_SKILLS = [
     name: "ui-ux-pro-max",
     title: "UI/UX Pro Max Intelligence",
     category: "Experience Design",
-    status: "ACTIVE",
+    status: "Active",
     description:
       "Human-computer interaction guidelines, information density optimization, and tactical operator ergonomics.",
   },
@@ -58,7 +57,7 @@ const AGENT_SKILLS = [
     name: "design-system",
     title: "Military Design Tokens & Consistency",
     category: "Design System",
-    status: "ACTIVE",
+    status: "Active",
     description:
       "Standardized palette (charcoal, tactical blues, radar greens, breach ambers/reds), square micro-dots, and hairline panels.",
   },
@@ -67,253 +66,150 @@ const AGENT_SKILLS = [
 export function DatasetRegistryModal({ isOpen, onClose }: DatasetRegistryModalProps) {
   const [tab, setTab] = useState<"datasets" | "skills" | "pipeline">("datasets");
 
-  if (!isOpen) return null;
+  const datasetKeys = Object.keys(DATASET_CATALOG) as DatasetSource[];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
-      <div className="bg-g-panel border border-g-border rounded-[4px] w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden font-mono text-ui">
-        {/* Modal Header */}
-        <header className="h-10 px-4 flex items-center justify-between border-b border-g-border bg-[#080d10] shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-g-blue animate-pulse" />
-            <MicroLabel>PROTOTYPE REGISTRY // DATASETS & AGENT SKILLS</MicroLabel>
-          </div>
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      size="xl"
+      title="Datasets & agent skills"
+      description="Prototype registry"
+      footer={
+        <>
+          <span className="mr-auto text-caption text-ink-3">Target sector: Kupwara, Northern Kashmir · Classification: Restricted</span>
+          <Button onClick={onClose}>Dismiss</Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <Tabs
+          label="Registry sections"
+          value={tab}
+          onChange={setTab}
+          items={[
+            { id: "datasets", label: "Public datasets", count: datasetKeys.length },
+            { id: "skills", label: "Active agent skills", count: AGENT_SKILLS.length },
+            { id: "pipeline", label: "Architecture pipeline" },
+          ]}
+        />
 
-          {/* Tab Navigation */}
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setTab("datasets")}
-              className={`px-3 py-1 rounded-[2px] text-micro uppercase transition-none ${
-                tab === "datasets"
-                  ? "bg-g-blue text-white font-bold"
-                  : "text-g-text-2 hover:text-g-text hover:bg-g-hover"
-              }`}
-            >
-              Public Datasets (6)
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("skills")}
-              className={`px-3 py-1 rounded-[2px] text-micro uppercase transition-none ${
-                tab === "skills"
-                  ? "bg-g-blue text-white font-bold"
-                  : "text-g-text-2 hover:text-g-text hover:bg-g-hover"
-              }`}
-            >
-              Active Agent Skills (6)
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("pipeline")}
-              className={`px-3 py-1 rounded-[2px] text-micro uppercase transition-none ${
-                tab === "pipeline"
-                  ? "bg-g-blue text-white font-bold"
-                  : "text-g-text-2 hover:text-g-text hover:bg-g-hover"
-              }`}
-            >
-              Architecture Pipeline
-            </button>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-g-muted hover:text-g-text p-1 rounded"
-          >
-            <Icon name="close" size={16} />
-          </button>
-        </header>
-
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#06080a]">
-          {tab === "datasets" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {(Object.keys(DATASET_CATALOG) as DatasetSource[]).map((key) => {
-                const ds = DATASET_CATALOG[key];
-                return (
-                  <div
-                    key={key}
-                    className="bg-g-bg border border-g-border rounded p-3 flex flex-col justify-between gap-2"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="font-bold text-g-text text-sm">{ds.name}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">
-                          {ds.tier.replace("_", " ")}
-                        </span>
-                      </div>
-                      <div className="text-micro text-g-muted mb-2">{ds.provider}</div>
-                      <p className="text-micro text-g-text-2 leading-relaxed mb-3">
-                        {ds.demonstrationRole}
-                      </p>
+        {tab === "datasets" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {datasetKeys.map((key) => {
+              const ds = DATASET_CATALOG[key];
+              return (
+                <div key={key} className="bg-surface border border-line rounded-lg p-4 flex flex-col gap-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-section text-ink">{ds.name}</h3>
+                      <Badge>{ds.tier.charAt(0) + ds.tier.slice(1).replace("_", " ").toLowerCase()}</Badge>
                     </div>
-
-                    <div className="border-t border-g-border/50 pt-2 space-y-1 text-[10px]">
-                      <div className="flex justify-between">
-                        <span className="text-g-muted">MODALITY:</span>
-                        <span className="text-g-text">{ds.modality}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-g-muted">MODEL ENGINE:</span>
-                        <span className="text-cyan-400 font-semibold">{ds.inferenceModel}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-g-muted">LATENCY:</span>
-                        <span className="text-emerald-400">{ds.modelLatencyMs} ms</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-g-muted">RTSP STREAM:</span>
-                        <span className="text-g-blue truncate max-w-[200px]">{ds.sampleRtspUri}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-g-muted">ASSIGNED CAMS:</span>
-                        <span className="text-g-text-2">{ds.targetCameras.join(", ")}</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 flex justify-between items-center text-[10px]">
-                      <span className="text-g-muted">License: {ds.license}</span>
-                      <a
-                        href={ds.downloadUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-g-blue hover:underline flex items-center gap-1"
-                      >
-                        <span>Access Link</span>
-                        <Icon name="open_in_new" size={10} />
-                      </a>
-                    </div>
+                    <div className="text-caption text-ink-3 mb-1.5">{ds.provider}</div>
+                    <p className="text-ui text-ink-2">{ds.demonstrationRole}</p>
                   </div>
-                );
-              })}
-            </div>
-          )}
 
-          {tab === "skills" && (
-            <div className="space-y-3">
-              <div className="p-3 bg-g-bg border border-g-border rounded text-micro text-g-text-2 leading-relaxed">
-                <span className="text-g-text font-bold uppercase tracking-wider block mb-1">
-                  Active .agents Customization System
-                </span>
-                The following specialized agent skills are active in this workspace, enforcing strict
-                architectural standards, autonomous issue workflows, and frontend design calibration.
+                  <dl className="border-t border-line pt-2.5 flex flex-col gap-1.5">
+                    <KeyValue label="Modality">{ds.modality}</KeyValue>
+                    <KeyValue label="Model engine">{ds.inferenceModel}</KeyValue>
+                    <KeyValue label="Latency" mono>{ds.modelLatencyMs} ms</KeyValue>
+                    <KeyValue label="RTSP stream" mono>{ds.sampleRtspUri}</KeyValue>
+                    <KeyValue label="Assigned cameras">{ds.targetCameras.join(", ")}</KeyValue>
+                  </dl>
+
+                  <div className="flex justify-between items-center text-caption">
+                    <span className="text-ink-3">License: {ds.license}</span>
+                    <a
+                      href={ds.downloadUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-accent-ink hover:underline inline-flex items-center gap-1"
+                    >
+                      Access link
+                      <Icon name="open_in_new" size={13} />
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {tab === "skills" && (
+          <div className="flex flex-col gap-3">
+            <div className="p-4 bg-canvas rounded-lg shadow-inset-sm text-ui text-ink-2">
+              <span className="text-ink font-semibold block mb-0.5">Active .agents customization system</span>
+              The following specialized agent skills are active in this workspace, enforcing strict
+              architectural standards, autonomous issue workflows, and frontend design calibration.
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {AGENT_SKILLS.map((sk) => (
+                <div key={sk.name} className="bg-surface border border-line rounded-lg p-4 flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-section text-ink">{sk.title}</h3>
+                    <Badge tone="ok">{sk.status}</Badge>
+                  </div>
+                  <div className="text-caption text-ink-3 font-data">.agents/{sk.name}</div>
+                  <p className="text-ui text-ink-2">{sk.description}</p>
+                  <div className="border-t border-line pt-2 mt-auto flex justify-between text-caption text-ink-3">
+                    <span>Category: {sk.category}</span>
+                    <span className="font-data">v1.0 ready</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === "pipeline" && (
+          <div className="flex flex-col gap-4">
+            <div className="bg-surface border border-line rounded-lg p-4">
+              <h3 className="text-section text-ink mb-3">Transition pipeline flow (prototype to military deployment)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-center">
+                {[
+                  ["Stage 1", "MediaMTX", "RTSP loop server (:8554)"],
+                  ["Stage 2", "DeepStream", "YOLOv11x + ByteTrack"],
+                  ["Stage 3", "MQTT daemon", "JSON event engine"],
+                  ["Stage 4", "Backend API", "Express.js + PostgreSQL"],
+                  ["Stage 5", "Tactical UI", "Next.js WebRTC / sockets"],
+                ].map(([stage, name, sub]) => (
+                  <div key={stage} className="p-3 bg-canvas rounded-md shadow-inset-sm flex flex-col items-center gap-0.5">
+                    <span className="text-caption text-ink-3">{stage}</span>
+                    <strong className="text-ui text-ink">{name}</strong>
+                    <span className="text-caption text-ink-2">{sub}</span>
+                  </div>
+                ))}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {AGENT_SKILLS.map((sk) => (
-                  <div
-                    key={sk.name}
-                    className="bg-g-bg border border-g-border rounded p-3 flex flex-col justify-between gap-2"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="font-bold text-g-text text-sm">{sk.title}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 border border-emerald-500/50 text-emerald-300">
-                          {sk.status}
-                        </span>
-                      </div>
-                      <div className="text-micro text-cyan-400 font-mono mb-2">
-                        .agents/{sk.name}
-                      </div>
-                      <p className="text-micro text-g-text-2 leading-relaxed">{sk.description}</p>
-                    </div>
+              <div className="mt-3 p-3 bg-accent-wash rounded-md text-ui text-ink-2">
+                <strong className="text-ink block mb-0.5">Zero-rewrite military migration</strong>
+                The RTSP server acts as an abstraction layer. In production at the Kupwara border,
+                we simply update the RTSP URLs in the database from <code className="font-data text-data">rtsp://localhost:8554/...</code>{" "}
+                to the live IP addresses of the battalion CP Plus NVRs. The core inference and tactical
+                UI pipeline remains 100% unchanged.
+              </div>
+            </div>
 
-                    <div className="border-t border-g-border/50 pt-2 flex justify-between items-center text-[10px] text-g-muted">
-                      <span>Category: {sk.category}</span>
-                      <span className="text-g-text-2 font-mono">v1.0 Ready</span>
-                    </div>
+            <div className="bg-surface border border-line rounded-lg p-4">
+              <h3 className="text-section text-ink mb-3">Hardware sizing (battalion on-premise)</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {[
+                  ["AI workloads", "30–35 channels"],
+                  ["Total cameras", "100–120 CCTV / NVRs"],
+                  ["Dev compute", "1× RTX 3090/4090 (64 GB)"],
+                  ["Air-gap status", "100% local / on-premise"],
+                ].map(([k, v]) => (
+                  <div key={k} className="p-3 bg-canvas rounded-md shadow-inset-sm">
+                    <span className="text-caption text-ink-2 block">{k}</span>
+                    <span className="text-ui text-ink font-medium">{v}</span>
                   </div>
                 ))}
               </div>
             </div>
-          )}
-
-          {tab === "pipeline" && (
-            <div className="space-y-4">
-              <div className="bg-g-bg border border-g-border rounded p-4">
-                <h4 className="font-bold text-g-text text-sm mb-2 uppercase tracking-wider">
-                  Transition Pipeline Flow (Prototype to Military Deployment)
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-micro text-center py-2">
-                  <div className="p-2 bg-black/40 border border-g-border rounded flex flex-col items-center justify-center">
-                    <span className="text-[10px] text-g-muted">STAGE 1</span>
-                    <strong className="text-cyan-400">MediaMTX</strong>
-                    <span className="text-[10px] text-g-text-2">RTSP Loop Server (:8554)</span>
-                  </div>
-                  <div className="p-2 bg-black/40 border border-g-border rounded flex flex-col items-center justify-center">
-                    <span className="text-[10px] text-g-muted">STAGE 2</span>
-                    <strong className="text-emerald-400">DeepStream</strong>
-                    <span className="text-[10px] text-g-text-2">YOLOv11x + ByteTrack</span>
-                  </div>
-                  <div className="p-2 bg-black/40 border border-g-border rounded flex flex-col items-center justify-center">
-                    <span className="text-[10px] text-g-muted">STAGE 3</span>
-                    <strong className="text-purple-400">MQTT Daemon</strong>
-                    <span className="text-[10px] text-g-text-2">JSON Event Engine</span>
-                  </div>
-                  <div className="p-2 bg-black/40 border border-g-border rounded flex flex-col items-center justify-center">
-                    <span className="text-[10px] text-g-muted">STAGE 4</span>
-                    <strong className="text-amber-400">Backend API</strong>
-                    <span className="text-[10px] text-g-text-2">Express.js + PostgreSQL</span>
-                  </div>
-                  <div className="p-2 bg-black/40 border border-g-border rounded flex flex-col items-center justify-center">
-                    <span className="text-[10px] text-g-muted">STAGE 5</span>
-                    <strong className="text-blue-400">Tactical UI</strong>
-                    <span className="text-[10px] text-g-text-2">Next.js WebRTC / Sockets</span>
-                  </div>
-                </div>
-
-                <div className="mt-3 p-3 bg-blue-950/20 border border-blue-500/30 rounded text-micro text-g-text-2 leading-relaxed">
-                  <strong className="text-blue-300 block mb-1">Zero-Rewrite Military Migration:</strong>
-                  The RTSP Server acts as an abstraction layer. In production at the Kupwara border,
-                  we simply update the RTSP URLs in the database from <code>rtsp://localhost:8554/...</code>
-                  to the live IP addresses of the battalion CP Plus NVRs. The core inference and tactical
-                  UI pipeline remains 100% unchanged.
-                </div>
-              </div>
-
-              {/* Hardware Sizing */}
-              <div className="bg-g-bg border border-g-border rounded p-4 text-micro space-y-2">
-                <h4 className="font-bold text-g-text uppercase tracking-wider text-xs">
-                  Hardware Sizing Specifications (Battalion On-Premise)
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
-                  <div className="p-2 bg-black/40 border border-g-border rounded">
-                    <span className="text-g-muted block">AI Workloads:</span>
-                    <span className="text-g-text font-bold">30–35 Channels</span>
-                  </div>
-                  <div className="p-2 bg-black/40 border border-g-border rounded">
-                    <span className="text-g-muted block">Total Cameras:</span>
-                    <span className="text-g-text font-bold">100–120 CCTV/NVRs</span>
-                  </div>
-                  <div className="p-2 bg-black/40 border border-g-border rounded">
-                    <span className="text-g-muted block">Dev Compute:</span>
-                    <span className="text-g-text font-bold">1x RTX 3090/4090 (64GB)</span>
-                  </div>
-                  <div className="p-2 bg-black/40 border border-g-border rounded">
-                    <span className="text-g-muted block">Air-Gap Status:</span>
-                    <span className="text-emerald-400 font-bold">100% Local / On-Premise</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Modal Footer */}
-        <footer className="h-9 px-4 flex items-center justify-between border-t border-g-border bg-[#080d10] shrink-0 text-micro">
-          <span className="text-g-muted">
-            Target Sector: Kupwara, Northern Kashmir · Classification: Restricted
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-1 bg-g-bg border border-g-border text-g-text-2 hover:text-g-text hover:bg-g-hover rounded-[2px]"
-          >
-            DISMISS
-          </button>
-        </footer>
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }

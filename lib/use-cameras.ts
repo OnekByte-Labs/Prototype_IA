@@ -2,11 +2,10 @@
 
 import useSWR from 'swr';
 import type { Camera } from './dashboard-data';
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { apiFetcher } from './api-fetcher';
 
 export function useCameras() {
-  const { data, error, isLoading } = useSWR<Camera[]>('/api/cameras', fetcher, {
+  const { data, error, isLoading } = useSWR<Camera[]>('/api/cameras', apiFetcher, {
     refreshInterval: 10000,
     fallbackData: [],
   });

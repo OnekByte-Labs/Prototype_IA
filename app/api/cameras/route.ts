@@ -6,7 +6,7 @@ export async function GET() {
   const pipelineHost = process.env.PIPELINE_HOST || 'http://127.0.0.1:5556';
 
   try {
-    const res = await fetch(`${pipelineHost}/cameras`, { cache: 'no-store' });
+    const res = await fetch(`${pipelineHost}/cameras`, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
     if (!res.ok) throw new Error(`Pipeline returned ${res.status}`);
     const cameras = await res.json();
 

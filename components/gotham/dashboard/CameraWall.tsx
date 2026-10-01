@@ -1,22 +1,95 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Icon } from "@/components/ui/Icon";
-import {
-  DATASET_ANNOTATION_PRESETS,
-  DATASET_CATALOG,
-  TACTICAL_CAMERAS,
-  type DatasetSource,
-} from "@/lib/datasets/dataset-definitions";
-import { useClock } from "../hooks";
-import { Button, MicroLabel } from "../primitives";
-import type { GridDensity, TileMode } from "./DatasetControlBar";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PlaybackStats, WebRtcProfile } from "@/lib/live-video";
+import { Badge, Button, CameraTile, Icon } from "@/components/ds";
+import { cx } from "@/lib/design/cx";
+import { TACTICAL_CAMERAS, type TacticalCamera } from "@/lib/datasets/dataset-definitions";
+import { useConsole } from "../ConsoleProvider";
+
+export type GridDensity = 12 | 16 | 32;
+import { GlassIconButton, GlassPanel, GlassSegment, PanelHeader } from "./glass";
+import { DetectionModeSelector } from "./DetectionModeSelector";
+import { ModeAnalyticsPanel } from "./ModeAnalyticsPanel";
+import { RestrictedZoneEditor } from "./RestrictedZoneEditor";
 import { TacticalVideoFeed } from "./TacticalVideoFeed";
+
+type LiveDetection = { id: number; class: string; confidence: number; plate?: string };
+type LiveSnapshot = {
+  detections: LiveDetection[];
+  fps: number;
+  frameId: number;
+  analytics: Record<string, unknown>;
+  mode?: string;
+};
+
+/**
+ * Subscribe to a camera's live pipeline metadata (SSE) and expose a snapshot
+ * throttled to 4 Hz — the stream itself runs at up to 15 fps.
+ */
+function useLiveMetadata(url?: string): LiveSnapshot | null {
+  const [snap, setSnap] = useState<LiveSnapshot | null>(null);
+  useEffect(() => {
+    if (!url) return;
+    const es = new EventSource(url);
+    let latest: {
+      detections?: LiveDetection[]; frame_id?: number; analytics?: Record<string, unknown>; detection_mode?: string;
+    } | null = null;
+    const arrivals: number[] = [];
+    es.onmessage = (e) => {
+      try {
+        latest = JSON.parse(e.data);
+        arrivals.push(performance.now());
+        if (arrivals.length > 30) arrivals.shift();
+      } catch {
+        /* ignore malformed event */
+      }
+    };
+    const timer = setInterval(() => {
+      if (!latest) return;
+      const span = arrivals.length > 1 ? arrivals[arrivals.length - 1] - arrivals[0] : 0;
+      setSnap({
+        detections: latest.detections ?? [],
+        fps: span > 0 ? ((arrivals.length - 1) * 1000) / span : 0,
+        frameId: latest.frame_id ?? 0,
+        analytics: latest.analytics ?? {},
+        mode: latest.detection_mode,
+      });
+    }, 250);
+    return () => {
+      es.close();
+      clearInterval(timer);
+      setSnap(null);
+    };
+  }, [url]);
+  return snap;
+}
+
+/**
+ * NVR channels shown on the wall, in tile order. Channel numbers repeat across
+ * NVRs (CP Plus 3 vs Hikvision 3), so each entry names its NVR; `id` is the
+ * camera used until the backend reports which camera is bound to the channel.
+ */
+const WALL_FEEDS: { nvr: string; channel: number; id: string }[] = [
+  { nvr: "NVR-01", channel: 1, id: "CAM-01" },
+  { nvr: "NVR-01", channel: 2, id: "CAM-02" },
+  { nvr: "NVR-01", channel: 3, id: "CAM-21" },
+  { nvr: "HIK-01", channel: 3, id: "CAM-03" },
+  { nvr: "HIK-01", channel: 4, id: "CAM-04" },
+  { nvr: "NVR-01", channel: 5, id: "CAM-05" },
+  { nvr: "NVR-01", channel: 13, id: "CAM-13" },
+  { nvr: "HIK-01", channel: 14, id: "CAM-14" },
+  { nvr: "NVR-01", channel: 15, id: "CAM-15" },
+  // Looped 4K traffic clip (backend file source FILE-01), analysed like any live channel
+  { nvr: "FILE-01", channel: 1, id: "CAM-33" },
+];
 
 interface CameraWallProps {
   density?: GridDensity;
-  activeDataset?: DatasetSource | "ALL";
-  tileMode?: TileMode;
+  onChangeDensity?: (density: GridDensity) => void;
+  /** "Dynamic" layout: tiles with an active alert surface first. */
+  alertFirst?: boolean;
+  onChangeAlertFirst?: (on: boolean) => void;
   showAiBoxes?: boolean;
   alertingCameraIds?: string[];
   onAcknowledgeCamera?: (camId: string) => void;
@@ -24,10 +97,20 @@ interface CameraWallProps {
   onClearSelectedCamera?: () => void;
 }
 
+/** Grid shapes per density: columns × rows fill the panel exactly, as in the Stitch 3×3 matrix. */
+const GRID: Record<GridDensity, { cols: number; rows: number }> = {
+  12: { cols: 4, rows: 3 },
+  16: { cols: 4, rows: 4 },
+  32: { cols: 8, rows: 4 },
+};
+
+type LayoutId = "g12" | "g16" | "g32" | "dynamic";
+
 export function CameraWall({
-  density = 16,
-  activeDataset = "ALL",
-  tileMode = "all",
+  density = 12,
+  onChangeDensity,
+  alertFirst = false,
+  onChangeAlertFirst,
   showAiBoxes = false,
   alertingCameraIds = [],
   onAcknowledgeCamera,
@@ -36,7 +119,16 @@ export function CameraWall({
 }: CameraWallProps) {
   const [internalFocusId, setInternalFocusId] = useState<string | null>(null);
   const focusId = selectedCameraId ?? internalFocusId;
-  const clock = useClock();
+  const { liveStreams, cameras, pipelines, streamHealth, feedLink } = useConsole();
+  const [focusPlayback, setFocusPlayback] = useState<{
+    transport: "WEBRTC" | "MJPEG" | null; profile: WebRtcProfile | null; stats: PlaybackStats | null;
+  } | null>(null);
+  const onFocusPlayback = useCallback(
+    (p: { transport: "WEBRTC" | "MJPEG" | null; profile: WebRtcProfile | null; stats: PlaybackStats | null }) =>
+      setFocusPlayback(p),
+    [],
+  );
+  const [zoneEditorOpen, setZoneEditorOpen] = useState(false);
 
   const handleCloseFocus = () => {
     setInternalFocusId(null);
@@ -56,199 +148,283 @@ export function CameraWall({
     return () => window.removeEventListener("keydown", onKey);
   }, [focusId, onClearSelectedCamera]);
 
-  // Compute displayed cameras based on filter, dynamic alert eviction, and density
+  // The wall shows exactly these NVR channels, in this order, from the first
+  // tile on; every remaining tile stays an empty box.
   const displayedCameras = useMemo(() => {
-    let pool = [...TACTICAL_CAMERAS];
-
-    // Filter by dataset if not ALL
-    if (activeDataset !== "ALL") {
-      pool = pool.filter((c) => c.dataset === activeDataset);
+    const bound = Object.entries(liveStreams);
+    const feeds = WALL_FEEDS
+      .map((f) => {
+        const id = bound.find(([, st]) => st.nvrId === f.nvr && st.channel === f.channel)?.[0] ?? f.id;
+        return TACTICAL_CAMERAS.find((c) => c.id === id);
+      })
+      .filter((c): c is TacticalCamera => !!c);
+    // Dynamic layout: alerting tiles surface first (stable otherwise)
+    if (alertFirst) {
+      feeds.sort((a, b) => Number(alertingCameraIds.includes(b.id)) - Number(alertingCameraIds.includes(a.id)));
     }
-
-    // Filter by tile mode
-    if (tileMode === "fixed_only") {
-      return pool.filter((c) => c.isFixed);
-    }
-
-    if (tileMode === "dynamic_alerts") {
-      const alertSet = new Set(alertingCameraIds);
-      const alerting = pool.filter((c) => alertSet.has(c.id));
-      const fixed = pool.filter((c) => c.isFixed && !alertSet.has(c.id));
-      return [...alerting, ...fixed].slice(0, density);
-    }
-
-    // Standard mode: Fixed cameras always pinned first, alerting cameras next, then remaining up to density
-    const alertSet = new Set(alertingCameraIds);
-    const fixed = pool.filter((c) => c.isFixed);
-    const alerting = pool.filter((c) => alertSet.has(c.id) && !c.isFixed);
-    const regular = pool.filter((c) => !c.isFixed && !alertSet.has(c.id));
-
-    const combined = [...fixed, ...alerting, ...regular];
-    return combined.slice(0, density);
-  }, [activeDataset, tileMode, alertingCameraIds, density]);
+    return feeds.slice(0, density);
+  }, [density, liveStreams, alertFirst, alertingCameraIds]);
+  const blankSlots = Math.max(0, density - displayedCameras.length);
 
   const focusedCam = TACTICAL_CAMERAS.find((c) => c.id === focusId);
-  const focusedDataset = focusedCam ? DATASET_CATALOG[focusedCam.dataset] : null;
-  const focusedAnnotations = focusedCam ? DATASET_ANNOTATION_PRESETS[focusedCam.dataset] || [] : [];
-  const offlineCount = displayedCameras.filter((c) => !c.online).length;
-
-  // Grid CSS classes based on density
-  const gridClass = useMemo(() => {
-    switch (density) {
-      case 9:
-        return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-[160px]";
-      case 16:
-        return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 auto-rows-[135px]";
-      case 32:
-        return "grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 auto-rows-[110px]";
-      default:
-        return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 auto-rows-[135px]";
+  const focusedStream = focusedCam ? liveStreams[focusedCam.id] : undefined;
+  const live = useLiveMetadata(focusedStream?.metadataUrl);
+  const liveDetections = useMemo(
+    () => [...(live?.detections ?? [])].sort((a, b) => b.confidence - a.confidence),
+    [live],
+  );
+  const classCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const d of liveDetections) counts[d.class] = (counts[d.class] ?? 0) + 1;
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }, [liveDetections]);
+  // Header readouts: real ingest fps of the live tiles and the codec they carry
+  const wallLive = displayedCameras.filter((c) => liveStreams[c.id]?.sourceType === "rtsp");
+  const fpsVals = wallLive.map((c) => streamHealth[c.id]?.fps).filter((f): f is number => typeof f === "number" && f > 0);
+  const avgFps = fpsVals.length ? fpsVals.reduce((a, b) => a + b, 0) / fpsVals.length : null;
+  const codecs = wallLive.map((c) => liveStreams[c.id]?.codec).filter((c): c is string => !!c);
+  const codec = codecs.length
+    ? Object.entries(codecs.reduce<Record<string, number>>((m, c) => ((m[c] = (m[c] ?? 0) + 1), m), {})).sort((a, b) => b[1] - a[1])[0][0]
+    : null;
+  const panelRef = useRef<HTMLElement>(null);
+  const layout: LayoutId = alertFirst ? "dynamic" : (`g${density}` as LayoutId);
+  const setLayout = (id: LayoutId) => {
+    if (id === "dynamic") {
+      onChangeAlertFirst?.(true);
+      return;
     }
-  }, [density]);
+    onChangeAlertFirst?.(false);
+    onChangeDensity?.(Number(id.slice(1)) as GridDensity);
+  };
+  const grid = GRID[density] ?? GRID[12];
 
   return (
-    <section className="flex-1 bg-g-panel border border-g-border rounded-[4px] flex flex-col min-h-0 overflow-hidden">
-      {/* Header */}
-      <header className="h-8 px-3 flex items-center justify-between border-b border-g-border shrink-0 bg-[#090d10]">
-        <div className="flex items-center gap-2">
-          <MicroLabel>TACTICAL SURVEILLANCE WALL</MicroLabel>
-          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-g-blue/20 text-g-blue border border-g-blue/40">
-            {density} MATRIX
-          </span>
-          {activeDataset !== "ALL" && (
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-950/60 text-purple-300 border border-purple-600/40">
-              {activeDataset} FILTERED
+    <GlassPanel as="section" ref={panelRef} className="flex-1 rounded-2xl p-3 flex flex-col min-h-0 overflow-hidden">
+      <PanelHeader
+        icon="grid_view"
+        title="Surveillance Matrix"
+        left={
+          <GlassSegment<LayoutId>
+            label="Matrix layout"
+            className="ml-2"
+            value={layout}
+            onChange={setLayout}
+            items={[
+              { id: "g12", label: "4×3 Grid", title: "12 tiles" },
+              { id: "g16", label: "4×4 Grid", title: "16 tiles (battalion)" },
+              { id: "g32", label: "8×4 Grid", title: "32 tiles (full AI array)" },
+              { id: "dynamic", label: "Dynamic", title: `Dynamic alert eviction: tiles with an active alert surface first (${alertingCameraIds.length} now)` },
+            ]}
+          />
+        }
+        right={
+          <>
+            <span className="flex items-center gap-1.5" title="Mean ingest rate of the live AI channels on the wall">
+              <span className={cx("w-1.5 h-1.5 rounded-full", avgFps ? "bg-ok-ink" : "bg-crit-ink")} />
+              <span className="text-ink-2 tnum">{avgFps ? `${avgFps.toFixed(0)} FPS` : "NO LIVE FPS"}</span>
             </span>
-          )}
-        </div>
+            {codec && (
+              <>
+                <span className="text-white/15">/</span>
+                <span className="text-ink-2 font-medium uppercase">{codec}</span>
+              </>
+            )}
+            <span className="text-white/15">/</span>
+            <span className="text-ink-2 tnum" data-testid="wall-live">
+              {wallLive.length}/{displayedCameras.length} LIVE AI
+            </span>
+            {focusedCam && (
+              <button
+                type="button"
+                onClick={handleCloseFocus}
+                className="glass-button h-6 px-2 rounded flex items-center gap-1 text-ink-2 hover:text-white"
+              >
+                <Icon name="fullscreen_exit" size={13} />
+                Exit focus <span className="text-ink-3">Esc</span>
+              </button>
+            )}
+            <GlassIconButton
+              icon="fullscreen"
+              label="Fullscreen"
+              size={13}
+              className="w-6 h-6 rounded"
+              onClick={() => {
+                const el = panelRef.current;
+                if (!el) return;
+                if (document.fullscreenElement) void document.exitFullscreen();
+                else void el.requestFullscreen?.();
+              }}
+            />
+          </>
+        }
+      />
 
-        <div className="flex items-center gap-3">
-          <span className="text-micro font-mono text-g-muted">
-            {displayedCameras.length - offlineCount}/{displayedCameras.length} ONLINE
-          </span>
-          <span className="text-g-border-strong">|</span>
-          <span className="text-micro font-mono text-emerald-400">
-            AI WORKLOADS: {displayedCameras.filter((c) => c.aiEnabled).length} CHANNELS
-          </span>
-          {focusedCam && (
-            <button
-              type="button"
-              onClick={handleCloseFocus}
-              className="text-micro font-mono uppercase text-g-blue hover:underline flex items-center gap-1 ml-2"
-            >
-              <Icon name="fullscreen_exit" size={13} />
-              EXIT FOCUS (ESC)
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Main Wall Content */}
-      <div className="flex-1 min-h-0 relative p-1.5 bg-[#06090b]">
+      {/* Wall: live tiles fill the panel (or the focused inspection workspace) */}
+      <div className="flex-1 min-h-0 relative">
         {focusedCam ? (
-          /* Focused Full-Panel Inspection Workspace */
-          <div className="w-full h-full flex flex-col lg:flex-row gap-2 overflow-y-auto">
-            {/* Left/Main: Expanded Video Feed */}
-            <div className="flex-1 min-h-[360px] bg-black rounded border border-g-border overflow-hidden relative">
+          /* Focused full-panel inspection workspace */
+          <div className="w-full h-full flex flex-col lg:flex-row gap-3 overflow-y-auto">
+            {/* Expanded video feed */}
+            <CameraTile
+              className="flex-1 min-h-[360px]"
+              selected
+              alerting={alertingCameraIds.includes(focusedCam.id)}
+            >
               <TacticalVideoFeed
                 camera={focusedCam}
-                clock={clock}
+                liveMjpegUrl={focusedStream?.mjpegUrl}
+                pipeline={pipelines[focusedCam.id]}
+                stream={focusedStream}
+                health={streamHealth[focusedCam.id]}
+                feedLink={feedLink}
+                onPlayback={onFocusPlayback}
                 focused={true}
+                glass
                 showAiBoxes={showAiBoxes}
                 isBreached={alertingCameraIds.includes(focusedCam.id)}
               />
-            </div>
+            </CameraTile>
 
-            {/* Right: Telemetry & Model Diagnostic Panel */}
-            <div className="w-full lg:w-80 bg-g-panel border border-g-border rounded p-3 flex flex-col gap-3 font-mono text-micro shrink-0">
-              <div className="flex items-center justify-between border-b border-g-border pb-2">
-                <div>
-                  <h3 className="font-bold text-g-text text-ui">{focusedCam.name}</h3>
-                  <span className="text-g-muted">{focusedCam.id} · {focusedCam.sector}</span>
+            {/* Telemetry and model diagnostics */}
+            <div className="w-full lg:w-[340px] bg-surface border border-line rounded-lg p-4 flex flex-col gap-4 shrink-0 overflow-y-auto">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-section text-ink truncate">{focusedCam.name}</h3>
+                  <span className="text-caption text-ink-2 font-data">
+                    {focusedCam.id} · {focusedCam.sector}
+                  </span>
                 </div>
                 <Button size="sm" onClick={handleCloseFocus}>
-                  CLOSE
+                  Close
                 </Button>
               </div>
 
-              {/* Hardware & Stream Telemetry */}
-              <div className="space-y-1.5 bg-g-bg p-2 rounded border border-g-border">
-                <div className="flex justify-between">
-                  <span className="text-g-muted">MODEL:</span>
-                  <span className="text-g-text font-bold">{focusedCam.model}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-g-muted">IP / RTSP:</span>
-                  <span className="text-cyan-400 select-all">{focusedCam.ip}:554</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-g-muted">STREAM:</span>
-                  <span className="text-g-text">{focusedCam.resolution} @ {focusedCam.fps}fps</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-g-muted">PACKET LOSS:</span>
-                  <span className={focusedCam.packetLossPct > 0.05 ? "text-red-400" : "text-emerald-400"}>
-                    {(focusedCam.packetLossPct * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-g-muted">CORE TEMP:</span>
-                  <span className={focusedCam.tempC > 45 ? "text-amber-400" : "text-g-text"}>
-                    {focusedCam.tempC}°C
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-g-muted">MGRS GRID:</span>
-                  <span className="text-g-text-2">{focusedCam.mgrs}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-g-muted">ELEVATION:</span>
-                  <span className="text-g-text-2">{focusedCam.elevationM}m MSL</span>
-                </div>
-              </div>
-
-              {/* AI Inference Diagnostics */}
-              {focusedDataset && (
-                <div className="space-y-1.5 bg-g-bg p-2 rounded border border-g-border">
-                  <div className="text-g-blue font-bold uppercase text-[10px] tracking-wider border-b border-g-border/50 pb-1">
-                    AI WORKLOAD: {focusedCam.aiWorkload.toUpperCase()}
+              {/* Stream telemetry (real: backend stream health + browser playback) */}
+              {focusedStream?.sourceType === "rtsp" ? (() => {
+                const h = streamHealth[focusedCam.id];
+                const pb = focusPlayback?.stats;
+                const row = (k: string, v: React.ReactNode, cls = "text-ink") => (
+                  <div className="flex justify-between gap-3">
+                    <span className="text-ink-2 shrink-0">{k}</span>
+                    <span className={`${cls} text-right truncate`}>{v}</span>
+                  </div>
+                );
+                const st = h?.status ?? "RECONNECTING";
+                return (
+                  <div data-testid="focus-stream" className="space-y-1.5 bg-canvas p-3 rounded-md shadow-inset-sm text-caption font-data">
+                    {row("Source", `Live · ${focusedStream.nvrId} CH${String(focusedStream.channel).padStart(2, "0")}`)}
+                    {row("Status", `${st}${h?.reason ? ` · ${h.reason}` : ""}`,
+                      st === "CONNECTED" ? "text-ok-ink" : st === "DEGRADED" || st === "RECONNECTING" ? "text-warn-ink" : "text-crit-ink")}
+                    {row("AI stream", `${focusedStream.width}×${focusedStream.height} ${h?.codec ?? focusedStream.codec ?? ""} · ${(h?.fps ?? 0).toFixed(1)}/${h?.target_fps ?? "--"} fps`)}
+                    {row("Decoder", h?.decoder ?? "--")}
+                    {row("AI latency", h?.latency_ms != null ? `${h.latency_ms.toFixed(0)} ms (decode → result)` : "--")}
+                    {row("Bitrate", h?.bitrate_kbps != null ? `${(h.bitrate_kbps / 1000).toFixed(2)} Mbit/s` : "--")}
+                    {row("Reconnects", `${h?.reconnects ?? 0} ingest · ${h?.upstream_reconnects ?? 0} NVR`,
+                      (h?.reconnects ?? 0) + (h?.upstream_reconnects ?? 0) > 0 ? "text-warn-ink" : "text-ink")}
+                    {row("View", focusPlayback?.transport === "WEBRTC"
+                      ? `WebRTC ${focusPlayback.profile === "main_h264" ? "main (H.264 GPU)" : focusPlayback.profile}${pb?.width ? ` ${pb.width}×${pb.height}` : ""}${pb?.fps != null ? ` · ${pb.fps.toFixed(0)} fps` : ""}`
+                      : focusPlayback?.transport === "MJPEG" ? "MJPEG (AI stream)" : "connecting…")}
+                    {focusPlayback?.transport === "WEBRTC" && row("Playout delay", pb?.jitterMs != null ? `${pb.jitterMs.toFixed(0)} ms jitter buffer` : "--")}
+                  </div>
+                );
+              })() : (
+                <div className="space-y-1.5 bg-canvas p-3 rounded-md shadow-inset-sm text-caption font-data">
+                  <div className="flex justify-between">
+                    <span className="text-ink-2">Source</span>
+                    <span className="text-ink font-medium">{focusedStream ? "Recorded clip" : "No feed"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-g-muted">INFERENCE ENGINE:</span>
-                    <span className="text-g-text">{focusedDataset.inferenceModel}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">MODEL LATENCY:</span>
-                    <span className="text-emerald-400">{focusedDataset.modelLatencyMs} ms</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">DATASET PROXIED:</span>
-                    <span className="text-purple-400">{focusedDataset.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">PROVIDER:</span>
-                    <span className="text-g-muted">{focusedDataset.provider}</span>
+                    <span className="text-ink-2">Stream</span>
+                    <span className="text-ink">{focusedCam.resolution}</span>
                   </div>
                 </div>
               )}
 
-              {/* Detected Bounding Box Entities */}
-              <div className="flex-1 space-y-1 bg-g-bg p-2 rounded border border-g-border">
-                <div className="text-g-muted font-bold uppercase text-[10px] tracking-wider border-b border-g-border/50 pb-1 mb-1">
-                  CURRENT DETECTIONS ({focusedAnnotations.length})
+              {/* Runtime detection mode (backend-controlled pipeline) */}
+              <DetectionModeSelector cameraId={focusedCam.id} />
+
+              <div className="space-y-1.5 bg-canvas p-3 rounded-md shadow-inset-sm text-caption font-data">
+                <div className="flex justify-between">
+                  <span className="text-ink-2">Pipeline stream</span>
+                  <span className={focusedStream ? "text-ink" : "text-crit-ink"}>
+                    {focusedStream?.streamId ?? "Offline"}
+                  </span>
                 </div>
-                {focusedAnnotations.map((ann) => (
-                  <div
-                    key={ann.id}
-                    className="flex items-center justify-between py-0.5 border-b border-g-border/30 text-[10px]"
-                  >
-                    <span className="text-g-text truncate">{ann.label}</span>
-                    <span className="text-emerald-400 font-bold">{ann.confidence}%</span>
-                  </div>
-                ))}
+                <div className="flex justify-between">
+                  <span className="text-ink-2">Live FPS</span>
+                  <span className="text-ink">{live ? live.fps.toFixed(1) : "--"}</span>
+                </div>
               </div>
 
-              {/* Action Buttons */}
+              <ModeAnalyticsPanel
+                cameraId={focusedCam.id}
+                mode={pipelines[focusedCam.id]?.activeMode ?? null}
+                analytics={live?.analytics ?? {}}
+              />
+
+              {/* Live detections from the AI pipeline (tracked objects in the current frame) */}
+              <div className="min-h-32 flex-1 flex flex-col">
+                <div className="flex items-baseline justify-between pb-1.5 border-b border-line">
+                  <h4 className="text-ui font-semibold text-ink">
+                    Current detections <span className="text-ink-3 font-normal tnum">{liveDetections.length}</span>
+                  </h4>
+                  {live && <span className="text-caption text-ink-3 font-data">Frame {live.frameId}</span>}
+                </div>
+                {classCounts.length > 0 && (
+                  <div className="flex flex-wrap gap-1 py-1.5">
+                    {classCounts.map(([cls, n]) => (
+                      <Badge key={cls} mono>
+                        {cls} ×{n}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                  {!focusedStream ? (
+                    <div className="text-caption text-crit-ink py-2">AI pipeline offline — no live detections.</div>
+                  ) : !live ? (
+                    <div className="text-caption text-ink-2 py-2">Connecting to live inference…</div>
+                  ) : liveDetections.length === 0 ? (
+                    <div className="text-caption text-ink-2 py-2">No objects in view.</div>
+                  ) : (
+                    liveDetections.map((d) => (
+                      <div
+                        key={d.id}
+                        className="flex items-center justify-between py-1 border-b border-line last:border-0 text-ui"
+                      >
+                        <span className="text-ink truncate capitalize">
+                          {d.class} <span className="text-ink-3 font-data text-data">#{d.id}</span>
+                          {d.plate && <span className="text-accent-ink font-data text-data"> · {d.plate}</span>}
+                        </span>
+                        <span className="text-ink font-data text-data tnum">{(d.confidence * 100).toFixed(1)}%</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Zone / line for the camera's current mode */}
+              {(() => {
+                const mode = pipelines[focusedCam.id]?.mode;
+                const geom = cameras.find((c) => c.id === focusedCam.id)?.analytics;
+                if (mode === "intrusion") {
+                  return (
+                    <Button variant="danger" onClick={() => setZoneEditorOpen(true)}>
+                      {(geom?.zone?.length ?? 0) >= 3 ? "Edit restricted zone" : "Draw restricted zone"}
+                    </Button>
+                  );
+                }
+                if (mode === "vehicle_counting" || mode === "person_counting") {
+                  return (
+                    <Button onClick={() => setZoneEditorOpen(true)}>
+                      {(geom?.line?.length ?? 0) >= 2 ? "Edit counting line" : "Draw counting line"}
+                    </Button>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Actions */}
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
@@ -257,47 +433,81 @@ export function CameraWall({
                     if (onAcknowledgeCamera) onAcknowledgeCamera(focusedCam.id);
                   }}
                 >
-                  ACK CHANNEL
+                  Acknowledge channel
                 </Button>
                 <Button
                   onClick={() => {
-                    navigator.clipboard.writeText(focusedCam.rtspUri);
+                    navigator.clipboard.writeText(
+                      focusedStream?.sourceType === "rtsp"
+                        ? `${focusedCam.id} ${focusedStream.nvrId} channel ${focusedStream.channel}`
+                        : focusedCam.id,
+                    );
                   }}
-                  title="Copy RTSP Stream URL"
+                  title="Copy camera / NVR channel reference"
+                  aria-label="Copy camera reference"
                 >
-                  <Icon name="content_copy" size={13} />
+                  <Icon name="content_copy" size={15} />
                 </Button>
               </div>
             </div>
           </div>
         ) : (
-          /* Multi-Tile Video Matrix */
-          <div className={`grid gap-1.5 h-full overflow-y-auto ${gridClass}`}>
+          /* Multi-tile video matrix */
+          <div
+            className="grid gap-2 h-full min-h-0"
+            style={{
+              gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${grid.rows}, minmax(0, 1fr))`,
+            }}
+          >
             {displayedCameras.map((cam) => {
-              const isAlerting = alertingCameraIds.includes(cam.id);
+              const stream = liveStreams[cam.id];
+              const health = streamHealth[cam.id];
+              const alerting = alertingCameraIds.includes(cam.id);
+              const down = !stream || health?.status === "ERROR" || health?.status === "DISCONNECTED";
               return (
                 <div
                   key={cam.id}
-                  className={`rounded-[3px] overflow-hidden border transition-all ${
-                    isAlerting
-                      ? "border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)]"
-                      : "border-g-border hover:border-g-border-strong"
-                  }`}
+                  data-testid="wall-tile"
+                  data-alerting={alerting || undefined}
+                  className={cx(
+                    "glass-viewport rounded-xl relative overflow-hidden transition min-h-0 min-w-0",
+                    alerting
+                      ? "!border-warn/50 ring-1 ring-warn/20 bg-warn/5"
+                      : down
+                        ? "!border-crit/30 bg-crit/5"
+                        : "hover:!border-accent/40",
+                  )}
                 >
                   <TacticalVideoFeed
                     camera={cam}
-                    clock={clock}
+                    liveMjpegUrl={stream?.mjpegUrl}
+                    pipeline={pipelines[cam.id]}
+                    stream={stream}
+                    health={health}
+                    feedLink={feedLink}
                     focused={false}
+                    glass
                     showAiBoxes={showAiBoxes}
-                    isBreached={isAlerting}
+                    isBreached={alerting}
                     onClick={() => setInternalFocusId(cam.id)}
                   />
                 </div>
               );
             })}
+            {Array.from({ length: blankSlots }, (_, i) => (
+              <div key={`blank-${i}`} className="rounded-xl bg-white/[0.02] border border-dashed border-white/[0.08]" />
+            ))}
           </div>
         )}
       </div>
-    </section>
+      {zoneEditorOpen && focusedCam && (
+        <RestrictedZoneEditor
+          cameraId={focusedCam.id}
+          kind={pipelines[focusedCam.id]?.mode === "intrusion" ? "zone" : "line"}
+          onClose={() => setZoneEditorOpen(false)}
+        />
+      )}
+    </GlassPanel>
   );
 }

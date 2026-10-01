@@ -170,7 +170,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
   // --- HQ COMPLEX (MAIN GATE & CHECKPOINT ALPHA) ---
   {
     id: "CAM-01",
-    name: "MAIN GATE INGRESS",
+    name: "CHECKPOST 1",
     sector: "SECTOR-1 HQ",
     zone: "HQ COMPLEX",
     online: true,
@@ -193,7 +193,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
   },
   {
     id: "CAM-02",
-    name: "MAIN GATE VEHICLE BAY",
+    name: "CHECKPOST 2",
     sector: "SECTOR-1 HQ",
     zone: "HQ COMPLEX",
     online: true,
@@ -216,7 +216,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
   },
   {
     id: "CAM-03",
-    name: "CHECKPOINT ALPHA",
+    name: "GROUND FLOOR",
     sector: "SECTOR-1 HQ",
     zone: "HQ COMPLEX",
     online: true,
@@ -239,7 +239,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
   },
   {
     id: "CAM-04",
-    name: "VISITOR TRIAGE",
+    name: "CHECKPOST 3",
     sector: "SECTOR-1 HQ",
     zone: "HQ COMPLEX",
     online: true,
@@ -264,7 +264,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
   // --- PERIMETER EAST (VIRAT & KAGGLE BORDER) ---
   {
     id: "CAM-05",
-    name: "PERIMETER E POST 1",
+    name: "SITTING AREA",
     sector: "SECTOR-2 EAST",
     zone: "PERIMETER EAST",
     online: true,
@@ -452,7 +452,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
   // --- PERIMETER WEST & TREHGAM SECTOR (BORDER THREAT & VIRAT) ---
   {
     id: "CAM-13",
-    name: "TREHGAM APPROACH",
+    name: "OFFICE AREA",
     sector: "SECTOR-4 WEST",
     zone: "PERIMETER WEST",
     online: true,
@@ -475,7 +475,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
   },
   {
     id: "CAM-14",
-    name: "WEST GATE CHECKPOINT",
+    name: "TERRACE",
     sector: "SECTOR-4 WEST",
     zone: "PERIMETER WEST",
     online: true,
@@ -498,7 +498,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
   },
   {
     id: "CAM-15",
-    name: "PERIMETER W FENCE",
+    name: "TERRACE 2",
     sector: "SECTOR-4 WEST",
     zone: "PERIMETER WEST",
     online: true,
@@ -638,7 +638,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
   },
   {
     id: "CAM-21",
-    name: "KERAN SECTOR HIGHWAY",
+    name: "MAIN LOBBY",
     sector: "SECTOR-6 FORWARD",
     zone: "PERIMETER WEST",
     online: true,
@@ -913,6 +913,29 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
     videoSrc: "/feeds/feed-fence-breach.mp4",
     mgrs: "43R WQ 1290 8620",
     elevationM: 1795,
+  },
+  {
+    // Looped 4K road-traffic clip (backend streams.yaml FILE-01): ingested and analysed like a live channel
+    id: "CAM-33",
+    name: "4K TRAFFIC TEST FEED",
+    sector: "TEST",
+    zone: "TEST FEED",
+    online: true,
+    recording: false,
+    ip: "local file",
+    model: "LOOPED TEST VIDEO",
+    resolution: "3840×2160",
+    fps: 30,
+    uptimePct: 100,
+    packetLossPct: 0,
+    tempC: 0,
+    dataset: "MOT20",
+    aiEnabled: true,
+    aiWorkload: "vehicle",
+    isFixed: false,
+    rtspUri: "",
+    mgrs: "",
+    elevationM: 0,
   },
 ];
 

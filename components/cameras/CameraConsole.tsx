@@ -1,32 +1,45 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Icon } from "@/components/ui/Icon";
+import {
+  Badge,
+  Button,
+  CameraTile,
+  EmptyState,
+  Icon,
+  IconButton,
+  Input,
+  KeyValue,
+  PageHeader,
+  SegmentedControl,
+  DataTable,
+  StatusDot,
+  StatusIndicator,
+} from "@/components/ds";
+import { cx } from "@/lib/design/cx";
 import {
   DATASET_CATALOG,
   TACTICAL_CAMERAS,
   type DatasetSource,
-  type TacticalCamera,
 } from "@/lib/datasets/dataset-definitions";
 import { useConsole } from "@/components/gotham/ConsoleProvider";
-import { useClock } from "@/components/gotham/hooks";
 import { TacticalVideoFeed } from "@/components/gotham/dashboard/TacticalVideoFeed";
-import { Button, MicroLabel, StatusDot } from "@/components/gotham/primitives";
-import { useToast } from "@/components/gotham/Toast";
+import { RestrictedZoneEditor } from "@/components/gotham/dashboard/RestrictedZoneEditor";
+import { DetectionModeSelector } from "@/components/gotham/dashboard/DetectionModeSelector";
 
 type GridDensity = "2x2" | "3x3" | "4x4" | "all" | "table";
-type ZoneFilter = "ALL" | "HQ COMPLEX" | "PERIMETER EAST" | "PERIMETER WEST" | "DEPOT" | "MOTOR POOL";
+type ZoneFilter = "ALL" | "HQ COMPLEX" | "PERIMETER EAST" | "PERIMETER WEST" | "DEPOT" | "MOTOR POOL" | "TEST FEED";
 
-export function CameraConsole() {
-  const { alerts, triggerAlert } = useConsole();
-  const clock = useClock();
-  const toast = useToast();
+/** `initialInspectId` opens that camera's inspector (tactical map → "Open in cameras"). */
+export function CameraConsole({ initialInspectId }: { initialInspectId?: string } = {}) {
+  const { alerts, liveStreams, cameras, pipelines } = useConsole();
+  const [zoneEditorCamId, setZoneEditorCamId] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [selectedZone, setSelectedZone] = useState<ZoneFilter>("ALL");
   const [selectedDataset, setSelectedDataset] = useState<DatasetSource | "ALL">("ALL");
   const [density, setDensity] = useState<GridDensity>("4x4");
-  const [inspectedCamId, setInspectedCamId] = useState<string | null>(null);
+  const [inspectedCamId, setInspectedCamId] = useState<string | null>(initialInspectId ?? null);
   const [showAiBoxes, setShowAiBoxes] = useState(true);
 
   // Set of alerting camera IDs
@@ -58,24 +71,6 @@ export function CameraConsole() {
     return TACTICAL_CAMERAS.find((c) => c.id === inspectedCamId) || null;
   }, [inspectedCamId]);
 
-  // Handle manual diagnostic ping
-  const handlePingAll = () => {
-    toast(`Diagnostics ping sent to 32 tactical cameras · All 32 responded (avg 8.4ms)`, "ok");
-  };
-
-  // Copy RTSP URL
-  const handleCopyRtsp = (cam: TacticalCamera) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(cam.rtspUri);
-      toast(`Copied ${cam.id} RTSP stream URI to clipboard`, "ok");
-    }
-  };
-
-  // Trigger manual simulated alert on selected camera for testing
-  const handleSimulateAlert = (cam: TacticalCamera) => {
-    triggerAlert(cam.id, "intrusion", "high");
-    toast(`Simulated intrusion breach triggered on ${cam.id}`, "warn");
-  };
 
   const zones: ZoneFilter[] = [
     "ALL",
@@ -84,229 +79,172 @@ export function CameraConsole() {
     "PERIMETER WEST",
     "DEPOT",
     "MOTOR POOL",
+    "TEST FEED",
   ];
 
+  const sectionTitle = (t: string) => <h4 className="text-ui font-semibold text-ink pb-1.5 border-b border-line">{t}</h4>;
+
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-[#06080a] text-g-text overflow-hidden">
-      {/* Top Telemetry & Health Banner */}
-      <div className="h-11 shrink-0 px-3 bg-g-panel border-b border-g-border flex items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Icon name="videocam" size={16} className="text-cyan-400" />
-            <span className="text-ui font-semibold uppercase tracking-wider text-white">
-              Tactical Surveillance Wall
-            </span>
-          </div>
-
-          <span className="w-px h-4 bg-g-border hidden sm:block" />
-
-          <div className="hidden md:flex items-center gap-5 text-micro font-mono">
-            <div className="flex items-center gap-1.5">
-              <span className="text-g-muted">DEPLOYED:</span>
-              <span className="text-cyan-300 font-bold">{TACTICAL_CAMERAS.length} CAMS</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <StatusDot tone="ok" />
-              <span className="text-g-muted">ONLINE:</span>
-              <span className="text-emerald-400 font-bold">
-                {TACTICAL_CAMERAS.filter((c) => c.online).length} / 32
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-g-muted">OPTICAL FEEDS:</span>
-              <span className="text-white font-bold">100% UNFILTERED</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-g-muted">UNACK ALERTS:</span>
-              <span className={alertingCameraIds.size > 0 ? "text-rose-400 font-bold" : "text-emerald-400"}>
-                {alertingCameraIds.size}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button size="sm" onClick={handlePingAll} title="Broadcast ICMP echo to all camera subnets">
-            <Icon name="refresh" size={13} />
-            <span className="hidden sm:inline">Echo Ping</span>
-          </Button>
-
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <PageHeader
+        title="Cameras"
+        description="Live optical surveillance with real-time AI analytics"
+        meta={
+          <>
+            <span className="tnum">{TACTICAL_CAMERAS.length} deployed</span>
+            <StatusIndicator tone="ok" dim>
+              {TACTICAL_CAMERAS.filter((c) => c.online).length} / {TACTICAL_CAMERAS.length} online
+            </StatusIndicator>
+            <StatusIndicator tone={alertingCameraIds.size > 0 ? "crit" : "idle"} dim={alertingCameraIds.size === 0}>
+              {alertingCameraIds.size} unacknowledged
+            </StatusIndicator>
+          </>
+        }
+        actions={
           <Button
-            size="sm"
+            pressed={showAiBoxes}
             onClick={() => setShowAiBoxes(!showAiBoxes)}
             title="Toggle real-time AI bounding box overlays"
-            className={showAiBoxes ? "border-cyan-500/50 text-cyan-300 bg-cyan-950/30" : ""}
           >
-            <Icon name="grid_on" size={13} />
-            <span className="hidden sm:inline">AI HUD: {showAiBoxes ? "ON" : "OFF"}</span>
+            <Icon name="grid_on" size={15} />
+            AI overlay {showAiBoxes ? "on" : "off"}
           </Button>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Filter and Density Control Toolbar */}
-      <div className="px-3 py-2 bg-[#090d13] border-b border-g-border flex flex-wrap items-center justify-between gap-2.5">
-        {/* Search Input */}
-        <div className="relative min-w-[200px] max-w-xs flex-1">
-          <Icon
-            name="search"
-            size={14}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-g-muted pointer-events-none"
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search ID, name, sector, IP, MGRS…"
-            className="h-7 w-full pl-8 pr-2 bg-[#0d121b] border border-g-border-strong rounded-[2px] text-ui text-g-text placeholder:text-g-muted focus:border-cyan-400 focus:outline-none font-mono"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-g-muted hover:text-white"
-            >
-              ×
-            </button>
-          )}
-        </div>
-
-        {/* Zone Filter Pills */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 custom-scroll">
-          {zones.map((zone) => {
-            const active = selectedZone === zone;
-            const count =
-              zone === "ALL"
-                ? TACTICAL_CAMERAS.length
-                : TACTICAL_CAMERAS.filter((c) => c.zone === zone).length;
-            return (
+      {/* Filters and density */}
+      <div className="px-5 pb-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative w-80 shrink-0">
+            <Icon
+              name="search"
+              size={16}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none"
+            />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search ID, name, sector, IP, MGRS…"
+              aria-label="Search cameras"
+              className="w-full pl-8 pr-8"
+            />
+            {search && (
               <button
-                key={zone}
                 type="button"
-                onClick={() => setSelectedZone(zone)}
-                className={`h-7 px-2 border rounded-[2px] text-[11px] font-mono whitespace-nowrap transition-colors ${
-                  active
-                    ? "border-cyan-500 bg-cyan-950/40 text-cyan-300 font-semibold"
-                    : "border-g-border text-g-text-2 hover:text-white hover:bg-g-hover"
-                }`}
+                aria-label="Clear search"
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink"
               >
-                {zone} ({count})
+                <Icon name="close" size={15} />
               </button>
-            );
-          })}
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            <SegmentedControl<ZoneFilter>
+              label="Zone"
+              value={selectedZone}
+              onChange={setSelectedZone}
+              items={zones.map((zone) => ({
+                id: zone,
+                label: `${zone === "ALL" ? "All" : zone} (${
+                  zone === "ALL" ? TACTICAL_CAMERAS.length : TACTICAL_CAMERAS.filter((c) => c.zone === zone).length
+                })`,
+              }))}
+            />
+          </div>
         </div>
 
-        {/* Density Selector */}
-        <div className="flex items-center gap-1 bg-[#0d121b] p-0.5 border border-g-border rounded-[2px]">
-          {(
-            [
-              { id: "2x2", label: "2×2 Quad" },
-              { id: "3x3", label: "3×3" },
-              { id: "4x4", label: "4×4 Wall" },
-              { id: "all", label: "All 32" },
-              { id: "table", label: "Table" },
-            ] as const
-          ).map((mode) => (
-            <button
-              key={mode.id}
-              type="button"
-              onClick={() => setDensity(mode.id)}
-              className={`h-6 px-2 text-[10px] font-mono rounded-[2px] transition-colors ${
-                density === mode.id
-                  ? "bg-cyan-600 text-black font-bold"
-                  : "text-g-text-2 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              {mode.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl<GridDensity>
+          label="Layout"
+          value={density}
+          onChange={setDensity}
+          items={[
+            { id: "2x2", label: "2×2" },
+            { id: "3x3", label: "3×3" },
+            { id: "4x4", label: "4×4" },
+            { id: "all", label: "All 32" },
+            { id: "table", label: "Table" },
+          ]}
+        />
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-h-0 flex overflow-hidden">
-        {/* Left/Center: Camera Wall Grid or Table View */}
-        <div className="flex-1 min-h-0 p-2 overflow-y-auto custom-scroll">
+      {/* Main content */}
+      <div className="flex-1 min-h-0 flex gap-3 px-5 pb-4 overflow-hidden">
+        {/* Camera wall or table */}
+        <div className="flex-1 min-w-0 min-h-0 overflow-y-auto">
           {density === "table" ? (
-            /* Table View */
-            <div className="border border-g-border rounded-[2px] overflow-hidden bg-g-panel">
-              <table className="w-full text-left border-collapse text-ui">
-                <thead>
-                  <tr className="h-8 border-b border-g-border bg-[#0b0f17] text-micro uppercase text-g-muted font-mono">
-                    <th className="px-3 py-1">Camera</th>
-                    <th className="px-3 py-1">Sector / Zone</th>
-                    <th className="px-3 py-1">Model</th>
-                    <th className="px-3 py-1">Resolution & FPS</th>
-                    <th className="px-3 py-1">IP & RTSP</th>
-                    <th className="px-3 py-1">Dataset / AI</th>
-                    <th className="px-3 py-1">Status</th>
-                    <th className="px-3 py-1 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-g-border">
-                  {filteredCameras.map((cam) => {
-                    const isBreached = alertingCameraIds.has(cam.id);
-                    return (
-                      <tr
-                        key={cam.id}
-                        onClick={() => setInspectedCamId(cam.id)}
-                        className={`h-11 hover:bg-g-hover cursor-pointer transition-colors ${
-                          isBreached ? "bg-red-950/20 border-l-2 border-l-rose-500" : ""
-                        } ${inspectedCamId === cam.id ? "bg-cyan-950/30" : ""}`}
-                      >
-                        <td className="px-3 font-mono font-bold text-cyan-300">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                            {cam.id} · {cam.name}
-                          </div>
-                        </td>
-                        <td className="px-3 text-g-text-2 text-micro font-mono">
-                          {cam.sector} ({cam.zone})
-                        </td>
-                        <td className="px-3 text-micro text-g-text font-mono truncate max-w-[160px]">
-                          {cam.model}
-                        </td>
-                        <td className="px-3 text-micro font-mono text-emerald-400">
-                          {cam.resolution} @ {cam.fps}fps
-                        </td>
-                        <td className="px-3 text-micro font-mono text-g-muted truncate max-w-[180px]">
-                          {cam.ip}
-                        </td>
-                        <td className="px-3">
-                          <span className="px-1.5 py-0.5 rounded-[2px] bg-[#131b26] border border-cyan-800/60 text-cyan-300 text-[10px] font-mono">
-                            {cam.dataset} · {cam.aiWorkload.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="px-3">
-                          <span
-                            className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] ${
-                              isBreached
-                                ? "bg-rose-950 text-rose-300 border border-rose-600"
-                                : "bg-emerald-950/60 text-emerald-300 border border-emerald-700/60"
-                            }`}
-                          >
-                            {isBreached ? "BREACH ALERT" : "NOMINAL"}
-                          </span>
-                        </td>
-                        <td className="px-3 text-right">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setInspectedCamId(cam.id);
-                            }}
-                            className="h-6 px-2 text-[11px] font-mono bg-g-bg border border-g-border hover:border-cyan-400 text-white rounded-[2px]"
-                          >
-                            Inspect
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              className="border border-line rounded-lg bg-surface"
+              rows={filteredCameras}
+              rowKey={(cam) => cam.id}
+              selectedKey={inspectedCamId}
+              onRowClick={(cam) => setInspectedCamId(cam.id)}
+              rowClassName={(cam) => (alertingCameraIds.has(cam.id) && inspectedCamId !== cam.id ? "bg-crit-wash/40" : undefined)}
+              columns={[
+                {
+                  key: "camera",
+                  header: "Camera",
+                  cell: (cam) => (
+                    <div className="flex items-center gap-2">
+                      <StatusDot tone={alertingCameraIds.has(cam.id) ? "crit" : "ok"} />
+                      <span className="font-data text-data text-ink">{cam.id}</span>
+                      <span className="text-ink">{cam.name}</span>
+                    </div>
+                  ),
+                },
+                {
+                  key: "sector",
+                  header: "Sector / zone",
+                  cell: (cam) => (
+                    <span className="text-ink-2">
+                      {cam.sector} <span className="text-ink-3">({cam.zone})</span>
+                    </span>
+                  ),
+                },
+                { key: "model", header: "Model", cell: (cam) => <span className="text-ink-2 truncate block max-w-[160px]">{cam.model}</span> },
+                { key: "res", header: "Resolution & FPS", mono: true, cell: (cam) => <span className="text-ink-2">{cam.resolution} @ {cam.fps}fps</span> },
+                { key: "ip", header: "IP", mono: true, cell: (cam) => <span className="text-ink-3">{cam.ip}</span> },
+                {
+                  key: "ai",
+                  header: "Dataset / AI",
+                  cell: (cam) => (
+                    <Badge mono>
+                      {cam.dataset} · {cam.aiWorkload}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: "status",
+                  header: "Status",
+                  cell: (cam) =>
+                    alertingCameraIds.has(cam.id) ? (
+                      <StatusIndicator tone="crit" className="font-medium">Breach alert</StatusIndicator>
+                    ) : (
+                      <StatusIndicator tone="ok" dim>Nominal</StatusIndicator>
+                    ),
+                },
+                {
+                  key: "actions",
+                  header: "",
+                  align: "right",
+                  cell: (cam) => (
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInspectedCamId(cam.id);
+                      }}
+                    >
+                      Inspect
+                    </Button>
+                  ),
+                },
+              ]}
+            />
           ) : (
-            /* Video Grid View */
             <div
-              className={`grid gap-2 ${
+              className={`grid gap-3 ${
                 density === "2x2"
                   ? "grid-cols-1 md:grid-cols-2"
                   : density === "3x3"
@@ -320,198 +258,192 @@ export function CameraConsole() {
                 const isBreached = alertingCameraIds.has(cam.id);
                 const isInspected = inspectedCamId === cam.id;
                 return (
-                  <div
+                  <CameraTile
                     key={cam.id}
                     onClick={() => setInspectedCamId(cam.id)}
-                    className={`relative rounded-[2px] overflow-hidden border transition-all cursor-pointer aspect-video bg-[#040608] ${
-                      isInspected
-                        ? "border-cyan-400 shadow-[0_0_12px_rgba(56,189,248,0.3)] ring-1 ring-cyan-400"
-                        : isBreached
-                          ? "border-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]"
-                          : "border-g-border hover:border-g-border-strong"
-                    }`}
+                    selected={isInspected}
+                    alerting={isBreached && !isInspected}
+                    className="cursor-pointer aspect-video"
                   >
                     <TacticalVideoFeed
                       camera={cam}
-                      clock={clock}
+                      liveMjpegUrl={liveStreams[cam.id]?.mjpegUrl}
+                      pipeline={pipelines[cam.id]}
                       focused={isInspected}
                       showAiBoxes={showAiBoxes}
                       isBreached={isBreached}
                       onClick={() => setInspectedCamId(cam.id)}
                     />
-                  </div>
+                  </CameraTile>
                 );
               })}
             </div>
           )}
 
           {filteredCameras.length === 0 && (
-            <div className="h-64 flex flex-col items-center justify-center text-g-muted gap-2">
-              <Icon name="search" size={24} />
-              <div className="text-ui">No tactical cameras match current query & filters</div>
-              <Button size="sm" onClick={() => { setSearch(""); setSelectedZone("ALL"); setSelectedDataset("ALL"); }}>
-                Clear Filters
-              </Button>
+            <div className="h-64">
+              <EmptyState message="No tactical cameras match the current query and filters">
+                <Button
+                  onClick={() => {
+                    setSearch("");
+                    setSelectedZone("ALL");
+                    setSelectedDataset("ALL");
+                  }}
+                >
+                  Clear filters
+                </Button>
+              </EmptyState>
             </div>
           )}
         </div>
 
-        {/* Right: Camera Inspector Drawer */}
+        {/* Camera inspector */}
         {inspectedCamera && (
-          <aside className="w-80 lg:w-96 shrink-0 bg-g-panel border-l border-g-border flex flex-col overflow-y-auto custom-scroll">
-            {/* Drawer Header */}
-            <div className="h-11 shrink-0 px-3 bg-[#0d121a] border-b border-g-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
+          <aside className="w-80 lg:w-[380px] shrink-0 bg-surface border border-line rounded-lg shadow-card flex flex-col overflow-y-auto">
+            <div className="min-h-11 shrink-0 px-4 py-2 border-b border-line flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
                 <StatusDot tone="ok" />
-                <span className="text-ui font-mono font-bold text-cyan-300">
-                  {inspectedCamera.id} · TELEMETRY
-                </span>
+                <h2 className="text-section text-ink truncate">
+                  <span className="font-data text-data mr-2">{inspectedCamera.id}</span>
+                  Telemetry
+                </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setInspectedCamId(null)}
-                title="Close inspector"
-                className="w-7 h-7 flex items-center justify-center text-g-muted hover:text-white rounded-[2px]"
-              >
-                ×
-              </button>
+              <IconButton label="Close inspector" size="sm" onClick={() => setInspectedCamId(null)}>
+                <Icon name="close" size={18} />
+              </IconButton>
             </div>
 
-            {/* Active Stream Preview in Drawer */}
-            <div className="p-3 border-b border-g-border bg-black/40">
-              <div className="aspect-video w-full rounded-[2px] overflow-hidden border border-g-border relative bg-black">
+            {/* Active stream preview */}
+            <div className="p-4 border-b border-line">
+              <CameraTile className="aspect-video w-full">
                 <TacticalVideoFeed
                   camera={inspectedCamera}
-                  clock={clock}
+                  liveMjpegUrl={liveStreams[inspectedCamera.id]?.mjpegUrl}
+                  pipeline={pipelines[inspectedCamera.id]}
                   focused={true}
                   showAiBoxes={showAiBoxes}
                   isBreached={alertingCameraIds.has(inspectedCamera.id)}
                 />
-              </div>
+              </CameraTile>
 
-              <div className="mt-2 flex items-center justify-between text-micro font-mono">
-                <span className="text-emerald-400 font-bold">LIVE OPTICAL SURVEILLANCE</span>
-                <span className="text-g-muted">{inspectedCamera.resolution}</span>
+              <div className="mt-2 flex items-center justify-between text-caption">
+                <span className="text-ok-ink font-medium">Live optical surveillance</span>
+                <span className="text-ink-3 font-data">{inspectedCamera.resolution}</span>
               </div>
             </div>
 
-            {/* Specs & Intelligence Details */}
-            <div className="p-3 flex flex-col gap-4 text-ui">
-              {/* Identity & Location */}
-              <div>
-                <MicroLabel>LOCATION & SENSOR</MicroLabel>
-                <div className="mt-1 space-y-1 font-mono text-[11px] bg-[#070a0e] p-2 rounded border border-g-border">
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Name:</span>
-                    <span className="text-white font-semibold">{inspectedCamera.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Sector:</span>
-                    <span className="text-cyan-300">{inspectedCamera.sector}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Zone:</span>
-                    <span className="text-white">{inspectedCamera.zone}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">MGRS Grid:</span>
-                    <span className="text-amber-300">{inspectedCamera.mgrs}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Elevation:</span>
-                    <span className="text-white">{inspectedCamera.elevationM}m MSL</span>
-                  </div>
-                </div>
+            {/* Runtime detection mode (backend-controlled pipeline) */}
+            <div className="px-4 pt-4">
+              <DetectionModeSelector cameraId={inspectedCamera.id} />
+            </div>
+
+            {/* Zone / counting line for the camera's current mode */}
+            <RestrictedZonePanel
+              cameraId={inspectedCamera.id}
+              mode={pipelines[inspectedCamera.id]?.mode}
+              zone={cameras.find((c) => c.id === inspectedCamera.id)?.analytics?.zone}
+              line={cameras.find((c) => c.id === inspectedCamera.id)?.analytics?.line}
+              onEdit={() => setZoneEditorCamId(inspectedCamera.id)}
+            />
+
+            {/* Specs and intelligence */}
+            <div className="p-4 flex flex-col gap-5">
+              <div className="flex flex-col gap-1.5">
+                {sectionTitle("Location & sensor")}
+                <dl className="flex flex-col gap-1.5">
+                  <KeyValue label="Name">{inspectedCamera.name}</KeyValue>
+                  <KeyValue label="Sector">{inspectedCamera.sector}</KeyValue>
+                  <KeyValue label="Zone">{inspectedCamera.zone}</KeyValue>
+                  <KeyValue label="MGRS grid" mono>{inspectedCamera.mgrs}</KeyValue>
+                  <KeyValue label="Elevation" mono>{inspectedCamera.elevationM} m MSL</KeyValue>
+                </dl>
               </div>
 
-              {/* Hardware & Video Ingest */}
-              <div>
-                <MicroLabel>HARDWARE & CARRIER</MicroLabel>
-                <div className="mt-1 space-y-1 font-mono text-[11px] bg-[#070a0e] p-2 rounded border border-g-border">
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Hardware:</span>
-                    <span className="text-white truncate max-w-[180px]">{inspectedCamera.model}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">IP Address:</span>
-                    <span className="text-cyan-300">{inspectedCamera.ip}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Sensor Uptime:</span>
-                    <span className="text-emerald-400">{inspectedCamera.uptimePct}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Core Temp:</span>
-                    <span className="text-white">{inspectedCamera.tempC}°C</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Packet Loss:</span>
-                    <span className="text-emerald-400">{inspectedCamera.packetLossPct}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Carrier Status:</span>
-                    <span className="text-emerald-400 font-bold">1000BASE-T LOCKED</span>
-                  </div>
-                </div>
+              <div className="flex flex-col gap-1.5">
+                {sectionTitle("Hardware & carrier")}
+                <dl className="flex flex-col gap-1.5">
+                  <KeyValue label="Hardware">{inspectedCamera.model}</KeyValue>
+                  <KeyValue label="IP address" mono>{inspectedCamera.ip}</KeyValue>
+                  <KeyValue label="Sensor uptime" mono>{inspectedCamera.uptimePct}%</KeyValue>
+                  <KeyValue label="Core temperature" mono>{inspectedCamera.tempC}°C</KeyValue>
+                  <KeyValue label="Packet loss" mono>{inspectedCamera.packetLossPct}%</KeyValue>
+                  <KeyValue label="Carrier status" mono>1000BASE-T locked</KeyValue>
+                </dl>
               </div>
 
-              {/* AI Detection Pipeline */}
-              <div>
-                <MicroLabel>AI DETECTION MODEL</MicroLabel>
-                <div className="mt-1 space-y-1 font-mono text-[11px] bg-[#070a0e] p-2 rounded border border-g-border">
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Dataset:</span>
-                    <span className="text-cyan-300 font-semibold">{inspectedCamera.dataset}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Inference Model:</span>
-                    <span className="text-white">
-                      {DATASET_CATALOG[inspectedCamera.dataset]?.inferenceModel || "YOLOv11-OpticalEdge"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Workload:</span>
-                    <span className="text-emerald-400 uppercase font-semibold">
-                      {inspectedCamera.aiWorkload}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Latency:</span>
-                    <span className="text-white">
-                      {DATASET_CATALOG[inspectedCamera.dataset]?.modelLatencyMs || 12.4} ms
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-g-muted">Palette:</span>
-                    <span className="text-emerald-300">Natural RGB Optical</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="pt-2 flex flex-col gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => handleCopyRtsp(inspectedCamera)}
-                  className="w-full justify-center"
-                >
-                  <Icon name="link" size={13} />
-                  <span>Copy RTSP URL</span>
-                </Button>
-
-                <Button
-                  size="sm"
-                  onClick={() => handleSimulateAlert(inspectedCamera)}
-                  className="w-full justify-center border-rose-600/60 text-rose-300 hover:bg-rose-950/40"
-                >
-                  <Icon name="warning" size={13} />
-                  <span>Test Trigger Incident Alert</span>
-                </Button>
+              <div className="flex flex-col gap-1.5">
+                {sectionTitle("AI detection model")}
+                <dl className="flex flex-col gap-1.5">
+                  <KeyValue label="Dataset">{inspectedCamera.dataset}</KeyValue>
+                  <KeyValue label="Inference model">
+                    {DATASET_CATALOG[inspectedCamera.dataset]?.inferenceModel || "YOLOv11-OpticalEdge"}
+                  </KeyValue>
+                  <KeyValue label="Workload">{inspectedCamera.aiWorkload}</KeyValue>
+                  <KeyValue label="Latency" mono>
+                    {DATASET_CATALOG[inspectedCamera.dataset]?.modelLatencyMs || 12.4} ms
+                  </KeyValue>
+                  <KeyValue label="Palette">Natural RGB optical</KeyValue>
+                </dl>
               </div>
             </div>
           </aside>
         )}
       </div>
+      {zoneEditorCamId && (
+        <RestrictedZoneEditor
+          cameraId={zoneEditorCamId}
+          kind={pipelines[zoneEditorCamId]?.mode === "intrusion" ? "zone" : "line"}
+          onClose={() => setZoneEditorCamId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Inspector panel: the zone/line used by the camera's current detection mode. */
+function RestrictedZonePanel({
+  cameraId,
+  mode,
+  zone,
+  line,
+  onEdit,
+}: {
+  cameraId: string;
+  mode?: string;
+  zone?: number[][];
+  line?: number[][];
+  onEdit: () => void;
+}) {
+  const counting = mode === "vehicle_counting" || mode === "person_counting";
+  if (mode !== "intrusion" && !counting) return null;
+  const has = counting ? Boolean(line && line.length >= 2) : Boolean(zone && zone.length >= 3);
+  return (
+    <div className="px-4 pt-5 flex flex-col gap-2">
+      <h4 className="text-ui font-semibold text-ink pb-1.5 border-b border-line">
+        {counting ? "Counting line" : "Restricted zone · intrusion"}
+      </h4>
+      <div className="flex justify-between items-baseline gap-3">
+        <span className="text-caption text-ink-2">Status</span>
+        <span className={cx("text-ui font-medium text-right", has ? (counting ? "text-ink" : "text-crit-ink") : "text-warn-ink")}>
+          {has
+            ? counting
+              ? `Active · ${line!.length} points`
+              : `Armed · ${zone!.length} vertices`
+            : counting
+              ? "No line — draw one to count"
+              : "No zone — draw one to arm"}
+        </span>
+      </div>
+      <p className="text-caption text-ink-3">
+        {counting
+          ? `${cameraId} counts each tracked object once when it crosses the line.`
+          : "Alerts fire once when a person enters the red zone; re-entry after leaving alerts again."}
+      </p>
+      <Button variant={counting ? "default" : "danger"} onClick={onEdit}>
+        {counting
+          ? has ? "Edit counting line" : "Draw counting line"
+          : has ? "Edit restricted zone" : "Draw restricted zone"}
+      </Button>
     </div>
   );
 }

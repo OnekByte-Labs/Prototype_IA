@@ -13,7 +13,8 @@ from typing import List, Tuple
 
 import cv2
 import numpy as np
-import onnxruntime as ort
+
+from .gpu import create_session
 
 logger = logging.getLogger(__name__)
 
@@ -48,21 +49,8 @@ class YOLODetector:
         self.conf_threshold = conf_threshold
         self.iou_threshold = iou_threshold
 
-        # ── select execution provider ──
-        available = ort.get_available_providers()
-        providers = []
-        if "CUDAExecutionProvider" in available:
-            providers.append("CUDAExecutionProvider")
-        if "DmlExecutionProvider" in available:
-            providers.append("DmlExecutionProvider")
-        providers.append("CPUExecutionProvider")
-
-        logger.info("ONNX available providers: %s", available)
-        logger.info("Requesting providers:     %s", providers)
-
-        self.session = ort.InferenceSession(str(model_path), providers=providers)
-        active = self.session.get_providers()
-        logger.info("Active providers:         %s", active)
+        # ── select execution provider (CUDA → DirectML → CPU) ──
+        self.session = create_session(model_path, "YOLODetector")
 
         # ── introspect input tensor ──
         inputs = self.session.get_inputs()
@@ -112,8 +100,12 @@ class YOLODetector:
 
         pad_w = (self.input_w - new_w) // 2
         pad_h = (self.input_h - new_h) // 2
-        padded = np.full((self.input_h, self.input_w, 3), 114, dtype=np.uint8)
-        padded[pad_h : pad_h + new_h, pad_w : pad_w + new_w] = resized
+        padded = cv2.copyMakeBorder(
+            resized,
+            pad_h, self.input_h - new_h - pad_h,
+            pad_w, self.input_w - new_w - pad_w,
+            cv2.BORDER_CONSTANT, value=(114, 114, 114),
+        )
 
         return padded, scale, (pad_w, pad_h)
 
@@ -121,11 +113,9 @@ class YOLODetector:
         """
         Standard YOLO preprocessing: BGR→RGB, letterbox, /255, NCHW, float32.
         """
-        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        letterboxed, scale, pad = self._letterbox(rgb)
-        blob = letterboxed.astype(np.float32) / 255.0
-        blob = blob.transpose(2, 0, 1)  # HWC → CHW
-        blob = np.expand_dims(blob, axis=0)  # add batch dim
+        letterboxed, scale, pad = self._letterbox(img)
+        # BGR→RGB, /255, HWC→NCHW in one optimised OpenCV call
+        blob = cv2.dnn.blobFromImage(letterboxed, 1.0 / 255.0, swapRB=True)
         return blob, scale, pad
 
     # ── postprocessing ──────────────────────────────────────────────

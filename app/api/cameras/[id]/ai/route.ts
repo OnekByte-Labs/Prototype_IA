@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { authHeaders } from '@/lib/server/backend';
 
 export async function POST(
   request: Request,
@@ -12,6 +13,7 @@ export async function POST(
     const res = await fetch(`${pipelineHost}/cameras/${id}/ai`, {
       method: 'POST',
       headers: {
+        ...authHeaders(request),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),

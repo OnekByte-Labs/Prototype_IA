@@ -85,7 +85,7 @@ export const alerts: Alert[] = [
   {
     id: "a4",
     type: "PERSON",
-    camera: "CAM-03 · CHECKPOINT ALPHA",
+    camera: "CAM-03 · GROUND FLOOR",
     time: "13:58:04",
     severity: "LOW",
   },

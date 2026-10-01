@@ -1,40 +1,73 @@
-# Stream configuration — maps each test video to a stream ID.
-# Video paths are relative to the project root (E:\MIlitary_Prototype_IA).
+# Live video ingest. Every camera is an NVR channel (configs/cameras.yaml
+# `nvr` / `channel`), pulled ONCE by the media server and shared by the AI
+# ingest and browsers. There are no recorded / mock feeds.
+#
+# Decoding is ON DEMAND: a channel is decoded (NVDEC) only while its camera
+# has an active detection pipeline or an MJPEG / zone-editor viewer. Browser
+# tiles play the stream over WebRTC from the media server when the browser
+# can decode its codec — no server-side decoding at all.
+ingest:
+  process_fps: 12.5          # frames/s handed to the AI pipelines (NVR sends 25; surplus dropped, never duplicated)
+  max_width: 1280            # wider streams are resized inside NVDEC before crossing to the CPU
+  stall_timeout_s: 5         # no frame for this long → decoder restarted (reconnect)
+  degraded_after_s: 2        # frame older than this → DEGRADED
+  degraded_fps_ratio: 0.6    # fps below ratio × process_fps → DEGRADED
+  disconnected_after_s: 30   # lost for longer than this → DISCONNECTED (still retried)
+  max_backoff_s: 15
+  idle_stop_after_s: 10      # decoder stopped this long after its last pipeline / MJPEG viewer went away
+  # MJPEG fallback (browsers that cannot play the stream's codec over WebRTC):
+  # raw frames at tile size — detections are drawn by the browser from metadata
+  mjpeg_max_width: 640
+  mjpeg_fps: 12.5
+  mjpeg_quality: 75
 
-streams:
-  - id: cam_01
-    video_path: "Dataset/Test/4K Road traffic video for object detection and tracking.mp4"
-    label: "CAM-01 · MAIN GATE"
+# ── NVRs ────────────────────────────────────────────────────────────
+# Connection details come ONLY from environment variables (project-root .env,
+# loaded by the backend). Never put a host password in this file.
+nvrs:
+  # Each NVR reads ITS OWN environment variables; credentials are never shared.
+  - id: NVR-01
+    name: CP PLUS NVR
+    type: cpplus
+    vendor: dahua-compatible
+    env: {host: CPPLUS_NVR_HOST, port: CPPLUS_NVR_PORT, username: CPPLUS_NVR_USERNAME, password: CPPLUS_NVR_PASSWORD}
+    rtsp_path: "/cam/realmonitor?channel={channel}&subtype={subtype}"
+    channels: 20
+  # (id is HIK-01, not NVR-02: the map's company recorders already use NVR-01…NVR-08)
+  - id: HIK-01
+    name: HIKVISION NVR
+    type: hikvision
+    vendor: hikvision
+    env: {host: HIKVISION_NVR_HOST, port: HIKVISION_NVR_PORT, username: HIKVISION_NVR_USERNAME, password: HIKVISION_NVR_PASSWORD}
+    # /Streaming/Channels/<channel><stream>: stream 01 = main, 02 = sub  (channel 3 → 301 / 302, channel 11 → 1101 / 1102)
+    rtsp_path: "/Streaming/Channels/{channel}0{stream}"
+    channels: 32
 
-  - id: cam_02
-    video_path: "Dataset/Test/Animal_car.mp4"
-    label: "CAM-02 · PERIMETER EAST"
+# ── Local video file (type `file`) ──────────────────────────────────
+# Not a recorder: `files` maps channel numbers to video files that the media
+# server loops as a live stream, so the file goes through the same ingest,
+# WebRTC, health, detection modes and alerts as an NVR channel. Paths are
+# relative to the project root. No host, no credentials.
+  - id: FILE-01
+    name: TEST VIDEO (4K TRAFFIC)
+    type: file
+    vendor: file
+    channels: 1
+    files:
+      1: "Dataset/Test/4K Road traffic video for object detection and tracking_h264.mp4"
 
-  - id: cam_03
-    video_path: "Dataset/Test/Person.mp4"
-    label: "CAM-03 · CHECKPOINT ALPHA"
-
-  - id: cam_04
-    video_path: "Dataset/Test/Person_crossing_line.mp4"
-    label: "CAM-04 · PERIMETER SOUTH"
-
-  - id: cam_05
-    video_path: "Dataset/Test/Robbery.mp4"
-    label: "CAM-05 · ARMOURY SECTOR 4"
-
-  - id: cam_06
-    video_path: "Dataset/Test/Traffic Control CCTV.mp4"
-    label: "CAM-06 · VEHICLE DEPOT"
-
-  - id: cam_07
-    video_path: "Dataset/Test/pedestrian_2.mp4"
-    label: "CAM-07 · HQ ENTRANCE"
-
-  - id: cam_08
-    video_path: "Dataset/Test/person-bicycle-car-detection.mp4"
-    label: "CAM-08 · MOTOR POOL"
-
-  - id: cam_09
-    video_path: "Dataset/Test/feed-worker-zone-intrusion.mp4"
-    label: "CAM-09 · WAREHOUSE 1"
-
+# ── Media server (MediaMTX, supervised by the backend) ─────────────
+# One upstream RTSP connection per NVR channel, shared by AI ingest and browsers.
+media_server:
+  binary: backend/bin/mediamtx        # or MEDIAMTX_BIN / PATH (backend/scripts/install_mediamtx.sh)
+  rtsp_port: 8554                     # 127.0.0.1 only (AI ingest)
+  api_port: 9997                      # 127.0.0.1 only
+  webrtc_port: 8889                   # 127.0.0.1 only — browsers go through the backend WHEP proxy
+  webrtc_ice_udp_port: 8189           # media (ICE/UDP) — must be reachable from operator browsers
+  webrtc_additional_hosts: []         # extra IPs/hostnames to advertise as ICE candidates (NAT)
+  # Browsers that cannot decode H.265 get the focused camera's main stream as
+  # H.264 transcoded on the GPU (NVDEC→NVENC), on demand, one camera at a time.
+  # `off` = no transcoding (such browsers use the AI stream's MJPEG instead).
+  browser_transcode: h264_nvenc
+  transcode_max_width: 1920
+  transcode_bitrate: 3M

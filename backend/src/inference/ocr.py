@@ -11,8 +11,9 @@ from typing import Optional
 
 import cv2
 import numpy as np
-import onnxruntime as ort
 import yaml
+
+from .gpu import create_session
 
 logger = logging.getLogger(__name__)
 
@@ -48,16 +49,7 @@ class PlateOCR:
         self._char_list = list(self.alphabet)
 
         # Load ONNX model
-        available = ort.get_available_providers()
-        providers = []
-        if "CUDAExecutionProvider" in available:
-            providers.append("CUDAExecutionProvider")
-        if "DmlExecutionProvider" in available:
-            providers.append("DmlExecutionProvider")
-        providers.append("CPUExecutionProvider")
-
-        self.session = ort.InferenceSession(str(model_path), providers=providers)
-        logger.info("[PlateOCR] Active providers: %s", self.session.get_providers())
+        self.session = create_session(model_path, "PlateOCR", tensorrt=False)
 
         inp = self.session.get_inputs()[0]
         self.input_name = inp.name

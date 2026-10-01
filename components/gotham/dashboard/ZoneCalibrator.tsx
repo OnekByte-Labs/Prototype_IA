@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Badge, Button, Icon, IconButton, Modal, StatusDot, StatusIndicator, textareaClass } from "@/components/ds";
 import type { Camera } from "@/lib/gotham/model";
 
 interface ZoneCalibratorProps {
@@ -89,8 +90,81 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
     return [nativeX, nativeY];
   }, [origW, origH]);
 
+  // SVG user space matches the stream's aspect ratio (not a fixed 16:9)
+  const svgH = (1000 * origH) / origW;
   const toSvgX = (x: number) => (x / origW) * 1000;
-  const toSvgY = (y: number) => (y / origH) * 562.5;
+  const toSvgY = (y: number) => (y / origH) * svgH;
+
+  // ── Whole-polygon move (drag the shaded area) ──
+  const moveRef = useRef<{ start: [number, number]; orig: number[][] } | null>(null);
+  const clampPt = useCallback(
+    (x: number, y: number): number[] => [
+      Math.round(Math.max(0, Math.min(origW, x))),
+      Math.round(Math.max(0, Math.min(origH, y))),
+    ],
+    [origW, origH],
+  );
+
+  const handlePolygonPointerDown = (e: React.PointerEvent) => {
+    if (isPlotting || isLine || e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const start = clientToNative(e.clientX, e.clientY);
+    if (!start) return;
+    moveRef.current = { start, orig: points.map((p) => [...p]) };
+    justDraggedRef.current = false;
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const m = moveRef.current;
+      if (!m) return;
+      const cur = clientToNative(e.clientX, e.clientY);
+      if (!cur) return;
+      justDraggedRef.current = true;
+      // Clamp the translation so the whole polygon stays inside the frame
+      const xs = m.orig.map((p) => p[0]);
+      const ys = m.orig.map((p) => p[1]);
+      const dx = Math.max(-Math.min(...xs), Math.min(origW - Math.max(...xs), cur[0] - m.start[0]));
+      const dy = Math.max(-Math.min(...ys), Math.min(origH - Math.max(...ys), cur[1] - m.start[1]));
+      setPoints(m.orig.map((p) => clampPt(p[0] + dx, p[1] + dy)));
+    };
+    const onUp = () => {
+      if (!moveRef.current) return;
+      moveRef.current = null;
+      setIsDragging(false);
+      setTimeout(() => {
+        justDraggedRef.current = false;
+      }, 150);
+    };
+    window.addEventListener("pointermove", onMove, true);
+    window.addEventListener("pointerup", onUp, true);
+    window.addEventListener("pointercancel", onUp, true);
+    return () => {
+      window.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointerup", onUp, true);
+      window.removeEventListener("pointercancel", onUp, true);
+    };
+  }, [clientToNative, clampPt, origW, origH]);
+
+  // ── Resize: scale the polygon about its centroid ──
+  const scalePolygon = useCallback(
+    (factor: number) => {
+      setPoints((prev) => {
+        if (prev.length < 3) return prev;
+        const cx = prev.reduce((a, p) => a + p[0], 0) / prev.length;
+        const cy = prev.reduce((a, p) => a + p[1], 0) / prev.length;
+        return prev.map((p) => clampPt(cx + (p[0] - cx) * factor, cy + (p[1] - cy) * factor));
+      });
+    },
+    [clampPt],
+  );
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (isPlotting || isLine || points.length < 3) return;
+    scalePolygon(e.deltaY < 0 ? 1.05 : 1 / 1.05);
+  };
 
   const handlePointerDown = (idx: number, e: React.MouseEvent | React.PointerEvent) => {
     e.preventDefault();
@@ -190,11 +264,14 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
   const handleSvgClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (e.button !== 0) return;
-    if (isDraggingRef.current || justDraggedRef.current) return;
+    if (!isPlotting && (isDraggingRef.current || justDraggedRef.current)) return;
     const coords = clientToNative(e.clientX, e.clientY);
     if (!coords) return;
 
     if (isPlotting) {
+      // The 2nd click of a double-click (which finishes the shape) must not add a duplicate point
+      const lastPt = points[points.length - 1];
+      if (lastPt && Math.hypot(lastPt[0] - coords[0], lastPt[1] - coords[1]) < origW * 0.01) return;
       if (isLine) {
         const next = [...points, coords];
         setPoints(next);
@@ -224,6 +301,16 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
     setSelectedIdx(null);
   };
 
+  const handleSvgDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isPlotting) finishPlotting();
+  };
+
+  const handleSvgContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isPlotting) finishPlotting();
+  };
+
   const handleSvgMouseMove = (e: React.MouseEvent) => {
     if (isPlotting) {
       const coords = clientToNative(e.clientX, e.clientY);
@@ -245,14 +332,55 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
     setCursorCoords(null);
   };
 
+  const minPoints = isLine ? 2 : 3;
+  const canSave = points.length >= minPoints && !saving;
+  // Unsaved edits relative to the zone the pipeline is currently using
+  const dirty = JSON.stringify(points) !== JSON.stringify(initialPoints);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+
   const handleSave = async () => {
-    setSaving(true);
-    const ok = await onSave(points);
-    setSaving(false);
-    if (ok) {
-      onClose();
+    if (!canSave) return;
+    // Saving while still plotting closes the polygon with the points placed
+    if (isPlotting) {
+      setIsPlotting(false);
+      setCursorCoords(null);
     }
+    setSaving(true);
+    const ok = await onSave(points.map((p) => [Math.round(p[0]), Math.round(p[1])]));
+    setSaving(false);
+    // On success return to the camera view; on failure stay so nothing is lost
+    if (ok) onClose();
   };
+
+  /** Cancel/Back: leaves the saved zone untouched; asks first if there are edits. */
+  const handleCancel = useCallback(() => {
+    if (dirty && !confirmDiscard) {
+      setConfirmDiscard(true);
+      return;
+    }
+    onClose();
+  }, [dirty, confirmDiscard, onClose]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (isPlotting && (e.key === "Enter" || e.key === "Backspace")) {
+        e.preventDefault();
+        if (e.key === "Enter") finishPlotting();
+        else undoLastPoint();
+        return;
+      }
+      if (e.key !== "Escape") return;
+      // Esc belongs to the editor while it is open (don't also exit focus view)
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      if (showYamlModal) setShowYamlModal(false);
+      else if (isPlotting) cancelPlotting();
+      else if (confirmDiscard) setConfirmDiscard(false);
+      else handleCancel();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  });
 
   const openYamlModal = () => {
     setYamlText(generateYaml(points));
@@ -281,316 +409,243 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
 
   const polyPointsString = points.map(p => `${toSvgX(p[0])},${toSvgY(p[1])}`).join(" ");
 
+  const DRAW = isLine ? "#f2a65a" : "#ff6b64";
+  const RED_FILL = "rgba(255, 107, 100, 0.26)";
+  const INK = "#f3efe6";
+  const NODE_BG = "rgba(20, 19, 17, 0.92)";
+  const nodeColor = (dragging: boolean, selected: boolean) => (dragging ? "#e67e22" : selected ? INK : DRAW);
+
   return (
     <div
       onClick={e => e.stopPropagation()}
       onContextMenu={e => e.preventDefault()}
-      className="absolute inset-0 z-40 flex flex-col bg-black/40 select-none pointer-events-auto font-sans"
+      className="absolute inset-0 z-40 flex flex-col bg-surface select-none pointer-events-auto"
     >
-      {/* Sleek Tactical Header Toolbar */}
-      <header className="h-9 px-3 bg-g-bg/95 border-b border-g-border flex items-center justify-between shrink-0 z-50 backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-5 h-5 rounded-[2px] bg-g-blue/15 text-g-blue border border-g-blue/30">
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="22" y1="12" x2="18" y2="12" />
-              <line x1="6" y1="12" x2="2" y2="12" />
-              <line x1="12" y1="6" x2="12" y2="2" />
-              <line x1="12" y1="22" x2="12" y2="18" />
-            </svg>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-g-text">
-              {isLine ? "TRAFFIC LINE" : "INTRUSION PERIMETER"}
-            </span>
-            <span className="text-[10px] font-mono text-g-blue font-bold">
-              {cam.id}
-            </span>
-          </div>
-
-          <span className="text-[9px] px-1.5 py-0.5 rounded-[2px] bg-g-panel border border-g-border text-g-muted font-mono tracking-wider">
-            {points.length} {isLine ? "POINTS" : "VERTICES"}
-          </span>
+      {/* Toolbar */}
+      <header className="h-11 px-4 bg-surface border-b border-line flex items-center justify-between gap-3 shrink-0 z-50">
+        <div className="flex items-center gap-3 min-w-0">
+          <h2 className="text-section text-ink whitespace-nowrap">{isLine ? "Counting line" : "Restricted zone"}</h2>
+          <span className="text-ui text-ink-2 font-data">{cam.id}</span>
+          <Badge>
+            {points.length} {isLine ? "points" : "vertices"}
+          </Badge>
+          {dirty && <Badge tone="warn">Unsaved</Badge>}
         </div>
 
         <div className="flex items-center gap-1.5">
           {!isPlotting ? (
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
+            <>
+              <Button
+                size="sm"
+                variant="primary"
                 onClick={startPlotting}
-                className="h-6 px-2.5 rounded-[2px] bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/60 text-cyan-300 font-mono text-[10px] font-bold tracking-wider flex items-center gap-1.5 transition-colors shadow-sm"
                 title={isLine ? "Click 2 points anywhere on the screen to draw a tripwire" : "Click anywhere on screen to plot perimeter boundary"}
               >
-                <svg className="w-3 h-3 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="16" />
-                  <line x1="8" y1="12" x2="16" y2="12" />
-                </svg>
-                <span>{points.length > 0 ? (isLine ? "REDRAW TRIPWIRE" : "REDRAW PERIMETER") : (isLine ? "DRAW TRIPWIRE" : "DRAW PERIMETER")}</span>
-              </button>
+                <Icon name="add" size={15} />
+                {points.length > 0 ? (isLine ? "Redraw tripwire" : "Redraw perimeter") : (isLine ? "Draw tripwire" : "Draw perimeter")}
+              </Button>
 
               {isLine && points.length >= 2 && (
-                <button
-                  type="button"
-                  onClick={addWaypoint}
-                  className="h-6 px-2 rounded-[2px] bg-g-panel border border-g-border text-g-text-2 hover:text-white hover:border-g-blue/50 flex items-center gap-1 text-[9.5px] font-mono tracking-wider transition-colors"
-                  title="Add additional waypoint node to line"
-                >
-                  <span>+ WAYPOINT</span>
-                </button>
+                <Button size="sm" onClick={addWaypoint} title="Add additional waypoint node to line">
+                  + Waypoint
+                </Button>
               )}
-            </div>
+            </>
           ) : (
-            <div className="flex items-center gap-1.5">
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded-[1px] bg-cyan-950/80 border border-cyan-500/60 text-cyan-300 font-bold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-                DRAWING ACTIVE
-              </span>
+            <>
+              <StatusIndicator tone="accent" pulse className="mr-1">
+                Drawing
+              </StatusIndicator>
               {points.length > 0 && (
-                <button
-                  type="button"
-                  onClick={undoLastPoint}
-                  className="h-6 px-2 rounded-[2px] bg-g-panel border border-g-border text-g-text hover:text-white font-mono text-[9px] transition-colors"
-                >
-                  UNDO
-                </button>
+                <Button size="sm" onClick={undoLastPoint}>
+                  Undo
+                </Button>
               )}
               {points.length >= (isLine ? 2 : 3) && (
-                <button
-                  type="button"
-                  onClick={finishPlotting}
-                  className="h-6 px-2.5 rounded-[2px] bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 font-mono text-[9px] font-bold tracking-wider transition-colors"
-                >
-                  {isLine ? "FINISH TRIPWIRE" : "CLOSE PERIMETER"}
-                </button>
+                <Button size="sm" variant="primary" onClick={finishPlotting}>
+                  {isLine ? "Finish tripwire" : "Close perimeter"}
+                </Button>
               )}
-              <button
-                type="button"
-                onClick={cancelPlotting}
-                className="h-6 px-2 rounded-[2px] bg-red-950/40 border border-red-500/40 text-red-400 hover:bg-red-900/40 font-mono text-[9px] transition-colors"
-              >
-                CANCEL
-              </button>
-            </div>
+              <Button size="sm" variant="danger" onClick={cancelPlotting}>
+                Stop drawing
+              </Button>
+            </>
           )}
 
           {selectedIdx !== null && points.length > (isLine ? 2 : 3) && !isPlotting && (
-            <button
-              type="button"
-              onClick={removeSelected}
-              className="h-6 px-2 rounded-[2px] bg-red-950/40 border border-red-500/40 text-red-400 hover:bg-red-900/40 flex items-center gap-1 text-[10px] font-mono transition-colors"
-            >
-              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-              DEL P{selectedIdx + 1}
-            </button>
+            <Button size="sm" variant="danger" onClick={removeSelected}>
+              <Icon name="delete" size={15} />
+              Delete P{selectedIdx + 1}
+            </Button>
           )}
 
-          <button
-            type="button"
-            onClick={openYamlModal}
-            title="Inspect / Edit Raw YAML coordinates"
-            className="h-6 px-2 rounded-[2px] bg-g-panel border border-g-border text-g-text-2 hover:text-g-text hover:border-g-blue/50 flex items-center gap-1 text-[10px] font-mono tracking-wider transition-colors"
-          >
-            <svg className="w-2.5 h-2.5 text-g-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="16 18 22 12 16 6" />
-              <polyline points="8 6 2 12 8 18" />
-            </svg>
+          <Button size="sm" onClick={openYamlModal} title="Inspect / Edit Raw YAML coordinates">
+            <Icon name="code" size={15} className="text-ink-2" />
             YAML
-          </button>
+          </Button>
 
-          <button
-            type="button"
-            onClick={resetDefault}
-            title="Reset to default perimeter"
-            className="h-6 px-2 rounded-[2px] bg-g-panel border border-g-border text-g-muted hover:text-g-text hover:border-g-border-strong flex items-center gap-1 text-[10px] font-mono tracking-wider transition-colors"
-          >
-            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-            </svg>
-            RESET
-          </button>
+          {!isLine && !isPlotting && points.length >= 3 && (
+            <>
+              <IconButton
+                variant="default"
+                size="sm"
+                label="Shrink restricted zone (or scroll down over it)"
+                onClick={() => scalePolygon(1 / 1.1)}
+              >
+                <Icon name="remove" size={16} />
+              </IconButton>
+              <IconButton
+                variant="default"
+                size="sm"
+                label="Enlarge restricted zone (or scroll up over it)"
+                onClick={() => scalePolygon(1.1)}
+              >
+                <Icon name="add" size={16} />
+              </IconButton>
+            </>
+          )}
 
-          <div className="w-[1px] h-3.5 bg-g-border mx-1" />
+          <Button size="sm" variant="ghost" onClick={resetDefault} title="Revert to the currently saved zone">
+            <Icon name="undo" size={15} />
+            Revert
+          </Button>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || isPlotting}
-            className="h-6 px-2.5 rounded-[2px] bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/50 text-emerald-400 font-mono text-[10px] font-bold tracking-wider flex items-center gap-1 transition-colors disabled:opacity-50"
-          >
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {saving ? "SAVING..." : "SAVE PERIMETER"}
-          </button>
+          <span className="w-px h-5 bg-line mx-1" />
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-6 w-6 rounded-[2px] bg-g-panel border border-g-border text-g-muted hover:text-g-text hover:border-g-border-strong flex items-center justify-center transition-colors"
-            title="Exit Calibrator"
-          >
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          {confirmDiscard ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-ui text-warn-ink">Discard unsaved changes?</span>
+              <Button size="sm" variant="danger" onClick={onClose}>
+                Discard
+              </Button>
+              <Button size="sm" onClick={() => setConfirmDiscard(false)}>
+                Keep editing
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Button size="sm" onClick={handleCancel} title="Discard unsaved changes and go back (Esc). The saved zone stays active.">
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={handleSave}
+                disabled={!canSave}
+                title={
+                  canSave
+                    ? "Replace the active zone with this polygon and go back"
+                    : `Place at least ${minPoints} points first`
+                }
+              >
+                <Icon name="check" size={15} />
+                {saving ? "Saving…" : isLine ? "Save tripwire" : "Save zone"}
+              </Button>
+            </>
+          )}
         </div>
       </header>
 
-      {/* Main Interactive Canvas Area */}
+      {/* Interactive canvas over the clean live feed */}
       <div
         ref={containerRef}
-        className="flex-1 relative overflow-hidden cursor-crosshair bg-black flex items-center justify-center"
+        className="flex-1 relative overflow-hidden cursor-crosshair bg-video flex items-center justify-center"
       >
-        {/* Plotting HUD Guide Banner */}
+        {/* Plotting guide */}
         {isPlotting && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-[2px] bg-black/90 border border-cyan-500/70 shadow-2xl flex items-center gap-3 backdrop-blur-md pointer-events-auto">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-300 uppercase">
-                {points.length === 0
-                  ? "STEP 1: CLICK ANYWHERE ON SCREEN TO SET POINT A (START)"
-                  : points.length === 1
-                  ? (isLine
-                      ? "STEP 2: CLICK ANYWHERE ELSE TO SET POINT B (END)"
-                      : "STEP 2: CLICK TO PLACE NODE 02")
-                  : isLine
-                  ? `NODE ${points.length} PLACED · CLICK TO EXTEND OR 'FINISH'`
-                  : `NODE ${points.length} PLACED · CLICK TO EXTEND OR CLICK NODE 01 TO CLOSE`}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 border-l border-white/20 pl-2">
-              {points.length > 0 && (
-                <button
-                  type="button"
-                  onClick={undoLastPoint}
-                  className="px-2 py-0.5 rounded-[1px] bg-white/10 hover:bg-white/20 text-white font-mono text-[9px] font-bold"
-                >
-                  UNDO
-                </button>
-              )}
-              {points.length >= (isLine ? 2 : 3) && (
-                <button
-                  type="button"
-                  onClick={finishPlotting}
-                  className="px-2.5 py-0.5 rounded-[1px] bg-emerald-500/25 hover:bg-emerald-500/40 border border-emerald-500/60 text-emerald-300 font-mono text-[9px] font-bold uppercase tracking-wider"
-                >
-                  {isLine ? "FINISH" : "CLOSE"}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={cancelPlotting}
-                className="px-2 py-0.5 rounded-[1px] bg-red-500/20 hover:bg-red-500/30 text-red-300 font-mono text-[9px]"
-              >
-                CANCEL
-              </button>
-            </div>
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 rounded-md bg-video/90 flex items-center gap-3 pointer-events-auto">
+            <span className="w-2 h-2 rounded-full bg-accent-soft animate-breathe" />
+            <span className="text-caption font-medium text-video-ink">
+              {points.length === 0
+                ? "Step 1: click anywhere on the screen to set point A (start)"
+                : points.length === 1
+                ? (isLine
+                    ? "Step 2: click anywhere else to set point B (end)"
+                    : "Step 2: click to place node 02")
+                : isLine
+                ? `Node ${points.length} placed · click to extend · double-click / Enter / Finish to end`
+                : `Node ${points.length} placed · click to extend · click node 01, double-click, right-click or Enter to close`}
+            </span>
           </div>
         )}
 
-        {/* Empty State when no points defined */}
+        {/* Empty state when no geometry is defined */}
         {points.length === 0 && !isPlotting && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-20">
-            <div className="p-4 rounded-[3px] bg-black/90 border border-g-border shadow-2xl flex flex-col items-center text-center gap-2 pointer-events-auto backdrop-blur-md">
-              <div className="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/50 flex items-center justify-center text-cyan-400">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="16" />
-                  <line x1="8" y1="12" x2="16" y2="12" />
-                </svg>
-              </div>
-              <span className="text-[11px] font-mono font-bold text-white tracking-wider uppercase">
-                {isLine ? "NO TRIPWIRE DEFINED" : "NO PERIMETER DEFINED"}
+            <div className="p-5 rounded-lg bg-surface border border-line shadow-pop flex flex-col items-center text-center gap-2 pointer-events-auto">
+              <span className="text-section text-ink">
+                {isLine ? "No tripwire defined" : "No perimeter defined"}
               </span>
-              <span className="text-[9.5px] font-mono text-g-muted max-w-[240px]">
+              <span className="text-ui text-ink-2 max-w-[260px]">
                 {isLine
-                  ? "Click below to place 2 points anywhere on the live video stream."
-                  : "Click below to plot perimeter boundary vertices."}
+                  ? "Place 2 points anywhere on the live video stream."
+                  : "Plot the perimeter boundary vertices on the live video stream."}
               </span>
-              <button
-                type="button"
-                onClick={startPlotting}
-                className="mt-1 h-7 px-3.5 rounded-[2px] bg-cyan-500/25 hover:bg-cyan-500/35 border border-cyan-500/60 text-cyan-300 font-mono text-[10px] font-bold tracking-wider transition-colors"
-              >
-                {isLine ? "DRAW TRIPWIRE LINE" : "DRAW PERIMETER"}
-              </button>
+              <Button variant="primary" onClick={startPlotting} className="mt-1">
+                {isLine ? "Draw tripwire line" : "Draw perimeter"}
+              </Button>
             </div>
           </div>
         )}
 
-        {/* Start Point Crosshair Hint when isPlotting and 0 points */}
+        {/* Start-point hint while plotting with 0 points */}
         {isPlotting && points.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-10">
-            <div className="px-4 py-2 rounded-[2px] bg-black/75 border border-dashed border-cyan-500/50 text-cyan-300 font-mono text-[10.5px] tracking-wider uppercase flex items-center gap-2 backdrop-blur-xs">
-              <span className="text-cyan-400 font-bold text-sm">+</span>
-              <span>CLICK ANYWHERE ON STREAM TO SET POINT A (START)</span>
+            <div className="px-4 py-2 rounded-md bg-video/80 border border-dashed border-accent-soft/60 text-video-ink text-ui flex items-center gap-2">
+              <span className="text-accent-soft font-semibold">+</span>
+              <span>Click anywhere on the stream to set point A (start)</span>
             </div>
           </div>
         )}
 
-        {/* Background Camera Video Feed */}
+        {/* Background camera feed */}
         {cam.mjpegUrl ? (
+          // Clean feed (no burned-in overlays) so only the editable draft shows
+          // eslint-disable-next-line @next/next/no-img-element -- MJPEG stream
           <img
-            src={cam.mjpegUrl}
+            src={`${cam.mjpegUrl}${cam.mjpegUrl.includes("?") ? "&" : "?"}clean=1`}
             alt={cam.name}
             className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none z-0"
           />
         ) : (
-          <video
-            src={`/api/videos/${cam.id}`}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none z-0"
-          />
+          <div className="absolute inset-0 flex items-center justify-center bg-video text-video-ink/70 text-ui pointer-events-none select-none z-0">
+            No live feed for {cam.id}
+          </div>
         )}
 
         <svg
-          viewBox="0 0 1000 562.5"
+          viewBox={`0 0 1000 ${svgH}`}
           preserveAspectRatio="xMidYMid meet"
           onClick={handleSvgClick}
+          onDoubleClick={handleSvgDoubleClick}
+          onContextMenu={handleSvgContextMenu}
+          onWheel={handleWheel}
           onMouseMove={handleSvgMouseMove}
           className="absolute inset-0 w-full h-full pointer-events-auto z-10"
         >
-          <defs>
-            <radialGradient id="tacticalActiveGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.7" />
-              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
-            </radialGradient>
-            <radialGradient id="tacticalSelectGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-
-          {/* Polygon Fill */}
+          {/* Polygon fill */}
           {points.length >= 2 && (isLine ? (
             <polyline
               points={polyPointsString}
               fill="none"
-              stroke="#38bdf8"
-              strokeWidth="1.5"
+              stroke={DRAW}
+              strokeWidth="2"
             />
           ) : (
             <polygon
               points={polyPointsString}
-              fill="rgba(34, 197, 94, 0.12)"
-              stroke="rgba(34, 197, 94, 0.85)"
+              fill={RED_FILL}
+              stroke={DRAW}
               strokeWidth="2"
-              strokeDasharray="6 3"
-            />
+              strokeDasharray={isPlotting ? "6 3" : undefined}
+              onPointerDown={handlePolygonPointerDown}
+              style={{ cursor: isPlotting ? "crosshair" : isDragging ? "grabbing" : "grab" }}
+            >
+              <title>Drag to move the restricted zone · scroll to resize · drag a vertex to reshape</title>
+            </polygon>
           ))}
 
-          {/* Live Rubberband Guideline When Plotting */}
+          {/* Live rubber-band guideline while plotting */}
           {isPlotting && points.length > 0 && cursorCoords && (
             <g className="pointer-events-none">
               <line
@@ -598,7 +653,7 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
                 y1={toSvgY(points[points.length - 1][1])}
                 x2={toSvgX(cursorCoords[0])}
                 y2={toSvgY(cursorCoords[1])}
-                stroke={isLine ? "#38bdf8" : "#22c55e"}
+                stroke={DRAW}
                 strokeWidth="1.5"
               />
               {!isLine && points.length >= 2 && (
@@ -607,7 +662,7 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
                   y1={toSvgY(cursorCoords[1])}
                   x2={toSvgX(points[0][0])}
                   y2={toSvgY(points[0][1])}
-                  stroke="rgba(34, 197, 94, 0.4)"
+                  stroke="rgba(255, 107, 100, 0.55)"
                   strokeWidth="1.5"
                   strokeDasharray="4 4"
                 />
@@ -617,19 +672,19 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
                 cy={toSvgY(cursorCoords[1])}
                 r="6"
                 fill="none"
-                stroke={isLine ? "#38bdf8" : "#22c55e"}
+                stroke={DRAW}
                 strokeWidth="1.5"
               />
               <circle
                 cx={toSvgX(cursorCoords[0])}
                 cy={toSvgY(cursorCoords[1])}
                 r="1.5"
-                fill="#ffffff"
+                fill={INK}
               />
             </g>
           )}
 
-          {/* Segment Connector Lines */}
+          {/* Segment connector lines */}
           {points.map((p, i) => {
             const nextP = isLine ? points[i + 1] : points[(i + 1) % points.length];
             if (!nextP) return null;
@@ -640,13 +695,27 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
                 y1={toSvgY(p[1])}
                 x2={toSvgX(nextP[0])}
                 y2={toSvgY(nextP[1])}
-                stroke={isLine ? "#00c8ff" : "rgba(34, 197, 94, 0.9)"}
+                stroke={DRAW}
                 strokeWidth="1.5"
               />
             );
           })}
 
-          {/* Draggable Vertex Handles */}
+          {/* Closing target: click the first vertex to close the polygon */}
+          {isPlotting && !isLine && points.length >= 3 && (
+            <circle
+              cx={toSvgX(points[0][0])}
+              cy={toSvgY(points[0][1])}
+              r="16"
+              fill="rgba(143, 220, 172, 0.16)"
+              stroke="#8fdcac"
+              strokeWidth="2"
+              strokeDasharray="4 3"
+              className="pointer-events-none"
+            />
+          )}
+
+          {/* Draggable vertex handles */}
           {points.map((p, idx) => {
             const sx = toSvgX(p[0]);
             const sy = toSvgY(p[1]);
@@ -654,87 +723,41 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
             const isThisDragging = dragIdx === idx;
             const isHovered = hoveredIdx === idx;
             const showDetails = isThisDragging || isSelected || isHovered;
+            const c = nodeColor(isThisDragging, isSelected);
 
             return (
               <g
                 key={`node-${idx}`}
                 transform={`translate(${sx}, ${sy})`}
-                onPointerDown={e => handlePointerDown(idx, e)}
-                onMouseDown={e => handlePointerDown(idx, e)}
+                onPointerDown={e => !isPlotting && handlePointerDown(idx, e)}
+                style={isPlotting ? { pointerEvents: "none" } : undefined}
                 onContextMenu={e => e.preventDefault()}
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() => setHoveredIdx(null)}
                 className="cursor-move group"
               >
-                {/* Glow ring when active */}
-                {showDetails && (
-                  <circle
-                    r={isThisDragging ? 18 : 14}
-                    fill={isThisDragging ? "url(#tacticalActiveGlow)" : "url(#tacticalSelectGlow)"}
-                  />
-                )}
-
-                {/* Outer Reticle Ring */}
+                {/* Handle */}
                 <circle
-                  r={isThisDragging ? 7 : isSelected ? 6 : 5}
-                  fill={isThisDragging ? "#f59e0b" : isSelected ? "#38bdf8" : "rgba(10, 15, 25, 0.9)"}
-                  stroke={isThisDragging ? "#fbbf24" : isSelected ? "#38bdf8" : "#22c55e"}
-                  strokeWidth="1.5"
+                  r={isThisDragging ? 8 : isSelected ? 7 : 6}
+                  fill={isThisDragging ? "#e67e22" : NODE_BG}
+                  stroke={c}
+                  strokeWidth="2"
                 />
+                <circle r="2" fill={INK} />
 
-                {/* Center target pip */}
-                <circle
-                  r="2"
-                  fill="#ffffff"
-                />
-
-                {/* Tactical Node Badge (e.g. 01, 02) */}
-                <g transform="translate(0, -11)" className="pointer-events-none">
-                  <rect
-                    x="-9"
-                    y="-6"
-                    width="18"
-                    height="12"
-                    rx="1.5"
-                    fill="rgba(5, 10, 18, 0.92)"
-                    stroke={isThisDragging ? "#f59e0b" : isSelected ? "#38bdf8" : "rgba(34, 197, 94, 0.7)"}
-                    strokeWidth="0.75"
-                  />
-                  <text
-                    x="0"
-                    y="3"
-                    textAnchor="middle"
-                    fill={isThisDragging ? "#f59e0b" : isSelected ? "#38bdf8" : "#22c55e"}
-                    fontSize="8.5"
-                    fontFamily="monospace"
-                    fontWeight="bold"
-                  >
+                {/* Node number */}
+                <g transform="translate(0, -13)" className="pointer-events-none">
+                  <rect x="-10" y="-7" width="20" height="14" rx="3" fill={NODE_BG} />
+                  <text x="0" y="3.5" textAnchor="middle" fill={c} fontSize="10" fontFamily="ui-monospace, monospace" fontWeight="600">
                     {String(idx + 1).padStart(2, "0")}
                   </text>
                 </g>
 
-                {/* Floating Precision Coordinate Pill (Only on Hover or Drag) */}
+                {/* Coordinate readout (hover / drag only) */}
                 {showDetails && (
                   <g transform="translate(14, -14)" className="pointer-events-none">
-                    <rect
-                      x="0"
-                      y="0"
-                      width={isThisDragging ? 90 : 75}
-                      height="16"
-                      rx="2"
-                      fill="rgba(5, 10, 18, 0.95)"
-                      stroke={isThisDragging ? "#f59e0b" : "#38bdf8"}
-                      strokeWidth="1"
-                    />
-                    <text
-                      x="5"
-                      y="11.5"
-                      fill={isThisDragging ? "#f59e0b" : "#38bdf8"}
-                      fontSize="9"
-                      fontFamily="monospace"
-                      fontWeight="bold"
-                      letterSpacing="0.5"
-                    >
+                    <rect x="0" y="0" width={isThisDragging ? 96 : 80} height="18" rx="3" fill={NODE_BG} />
+                    <text x="6" y="12.5" fill={isThisDragging ? "#f2a65a" : INK} fontSize="10.5" fontFamily="ui-monospace, monospace" fontWeight="600">
                       {isThisDragging
                         ? `[${Math.round(p[0])}, ${Math.round(p[1])}] ◄`
                         : `[${Math.round(p[0])}, ${Math.round(p[1])}]`}
@@ -745,94 +768,61 @@ export function ZoneCalibrator({ cam, onClose, onSave }: ZoneCalibratorProps) {
             );
           })}
         </svg>
-
-        {/* Integrated Tactical Status Bar at Bottom */}
-        <footer className="h-6 px-3 bg-g-bg/95 border-t border-g-border flex items-center justify-between shrink-0 absolute bottom-0 left-0 right-0 z-30 font-mono text-[9.5px] text-g-muted">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-g-text-2">
-              HOLD RIGHT-CLICK OR LEFT-CLICK ON ANY HANDLE TO REPOSITION · RELEASE TO SET
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span>RES: {origW}×{origH} PX</span>
-            <span>TOTAL: {points.length} NODES</span>
-          </div>
-        </footer>
       </div>
 
-      {/* Raw YAML / Coords Modal */}
-      {showYamlModal && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-g-panel border border-g-border rounded-[4px] shadow-2xl flex flex-col p-4 gap-3">
-            <div className="flex items-center justify-between border-b border-g-border pb-2">
-              <span className="text-[11px] font-bold uppercase text-g-text flex items-center gap-2 tracking-wider">
-                <svg className="w-3.5 h-3.5 text-g-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="16 18 22 12 16 6" />
-                  <polyline points="8 6 2 12 8 18" />
-                </svg>
-                pipeline.yaml Coordinate Configuration
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowYamlModal(false)}
-                className="text-g-muted hover:text-g-text"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            <p className="text-[11px] text-g-muted">
-              Inspect or paste coordinates directly into{" "}
-              <code className="text-g-blue">backend/configs/pipeline.yaml</code>:
-            </p>
-
-            <textarea
-              value={yamlText}
-              onChange={e => setYamlText(e.target.value)}
-              rows={8}
-              className="w-full bg-black/90 border border-g-border rounded-[2px] p-2 text-xs font-mono text-emerald-400 focus:outline-hidden focus:border-g-blue"
-            />
-
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(yamlText);
-                }}
-                className="text-[10px] font-mono px-2.5 py-1 rounded-[2px] bg-g-bg border border-g-border text-g-text hover:border-g-blue flex items-center gap-1 transition-colors"
-              >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-                COPY TO CLIPBOARD
-              </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowYamlModal(false)}
-                  className="text-[10px] font-mono px-3 py-1 rounded-[2px] bg-g-bg border border-g-border text-g-muted hover:text-g-text transition-colors"
-                >
-                  CANCEL
-                </button>
-                <button
-                  type="button"
-                  onClick={applyYamlText}
-                  className="text-[10px] font-mono px-3 py-1 rounded-[2px] bg-g-blue hover:bg-g-blue/90 text-white font-bold transition-colors"
-                >
-                  APPLY COORDS
-                </button>
-              </div>
-            </div>
-          </div>
+      {/* Status bar below the video (never overlaps the editable area) */}
+      <footer className="h-7 px-4 bg-surface border-t border-line flex items-center justify-between shrink-0 z-30 text-caption text-ink-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <StatusDot tone="ok" />
+          <span className="truncate">
+            {isPlotting
+              ? "Click to add points · double-click, right-click or Enter to finish · Backspace undoes · Esc cancels"
+              : isLine
+                ? "Drag a handle to move it · Save to apply · Esc / Cancel to go back"
+                : "Drag a vertex to reshape · drag inside the zone to move · scroll or −/+ to resize · Esc / Cancel to go back"}
+          </span>
         </div>
-      )}
+
+        <div className="flex items-center gap-4 shrink-0 pl-3 font-data text-data">
+          <span>{origW}×{origH} px</span>
+          <span>{points.length} nodes</span>
+        </div>
+      </footer>
+
+      {/* Raw YAML / coordinates dialog */}
+      <Modal
+        open={showYamlModal}
+        onClose={() => setShowYamlModal(false)}
+        title="Coordinate configuration"
+        description={<>Inspect or paste coordinates directly into <code className="font-data text-data text-accent-ink">backend/configs/pipeline.yaml</code></>}
+        size="md"
+        footer={
+          <>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(yamlText);
+              }}
+              className="mr-auto"
+            >
+              <Icon name="content_copy" size={15} />
+              Copy to clipboard
+            </Button>
+            <Button variant="ghost" onClick={() => setShowYamlModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={applyYamlText}>
+              Apply coordinates
+            </Button>
+          </>
+        }
+      >
+        <textarea
+          value={yamlText}
+          onChange={e => setYamlText(e.target.value)}
+          rows={9}
+          className={`${textareaClass} w-full font-data text-data`}
+        />
+      </Modal>
     </div>
   );
 }

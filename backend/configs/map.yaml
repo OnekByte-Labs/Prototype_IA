@@ -1,0 +1,114 @@
+# Tactical GIS map — basemaps/terrain, status rules and the seed layout.
+#
+# ⚠ EVERY POSITION IS SYNTHETIC. The AOR is an arbitrary stretch of forested
+#   mountains (a US national park) chosen only because it gives realistic
+#   mountain / valley / jungle-like terrain for development. Nothing here is,
+#   or is derived from, a real post / company / camera location. Replace it
+#   through Edit Map mode on the deployed system.
+#
+# The seed only populates the database when it is empty or when `seed.version`
+# is newer than the version the database was seeded with (the previous layout
+# is then backed up to backend/data/map_backup_<time>.json). Afterwards the
+# database is the source of truth, changed through Edit Map (PUT /api/v1/map).
+
+basemaps:
+  # Development (online): Esri World Imagery (official ArcGIS tile service) +
+  # AWS Terrain Tiles elevation (hillshade / contours computed in the browser)
+  # + Esri transportation reference (roads). Not for the air-gapped build.
+  - id: satellite_terrain
+    label: Satellite + terrain (dev · online)
+    url: https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}
+    attribution: "Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+    max_native_zoom: 18
+    dem: &aws_dem
+      url: https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png
+      encoding: terrarium
+      max_native_zoom: 15
+      attribution: "Elevation: AWS Terrain Tiles (SRTM, USGS 3DEP, GMTED & others)"
+    reference: &esri_roads
+      url: https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}
+      attribution: "Roads © Esri"
+      max_native_zoom: 18
+  - id: relief_dev
+    label: Terrain relief only (dev · online)
+    url: null
+    dem: *aws_dem
+    reference: *esri_roads
+  # Offline / air-gapped: XYZ imagery from local_tiles_dir and Terrarium DEM
+  # tiles from local_dem_dir, both served by this backend and proxied
+  # same-origin by the frontend (/api/tiles/…, /api/dem/…).
+  - id: local_offline
+    label: Local imagery + terrain (offline)
+    url: /api/tiles/{z}/{x}/{y}
+    attribution: Local tile cache
+    max_native_zoom: 18
+    dem: &local_dem
+      url: /api/dem/{z}/{x}/{y}
+      encoding: terrarium
+      max_native_zoom: 15
+      attribution: Local elevation cache
+  - id: local_relief
+    label: Local terrain relief only (offline)
+    url: null
+    dem: *local_dem
+default_basemap: satellite_terrain
+local_tiles_dir: backend/data/tiles     # {z}/{x}/{y}.jpg|.png|.webp
+local_dem_dir: backend/data/dem         # {z}/{x}/{y}.png (Terrarium encoding)
+
+status:
+  alert_hold_s: 60        # camera shows ALERT this long after its last alert
+  frame_stale_s: 5        # no new frame for this long → OFFLINE
+  frame_degraded_s: 2     # frames late by more than this → DEGRADED
+  tick_s: 1.0             # status re-evaluation period (changes pushed over /api/v1/ws)
+
+relationships:
+  adjacent_m: 600         # cameras closer than this (and not overlapping) are ADJACENT
+
+edit:
+  # Edit Map mode needs this passphrase. Set MAP_EDIT_PASSPHRASE in the
+  # backend's environment; dev_passphrase is only used when it is unset.
+  passphrase_env: MAP_EDIT_PASSPHRASE
+  dev_passphrase: aegis-dev-edit
+  session_ttl_s: 1800
+
+seed:
+  version: 4
+  rng_seed: 20260929
+  origin: {lat: 35.66, lon: -83.44}      # SYNTHETIC placeholder origin
+  # Elevation used only while seeding (posts on high ground, cameras aimed
+  # downhill). local_dir is tried first; without any DEM, placement is random.
+  dem:
+    url: https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png
+    local_dir: backend/data/dem
+    zoom: 12
+  battalion: {id: BN-HQ, name: BATTALION HQ, at: [-600, 2200]}
+  # Area-of-responsibility boundary, metres (east, north) from the origin.
+  boundary_m: [[-12500, 8200], [-6000, 9600], [1500, 9200], [7800, 9800], [12800, 7600], [13200, 1000],
+               [12600, -6500], [6500, -8900], [-1000, -8200], [-7500, -9300], [-12800, -6000], [-13000, 1500]]
+  # Exactly 8 companies; `posts` per company (8–10), 2 cameras per post.
+  companies:
+    - {id: COY-01, name: COMPANY 01, at: [-9300, 5400], posts: 9}
+    - {id: COY-02, name: COMPANY 02, at: [-3400, 6700], posts: 10}
+    - {id: COY-03, name: COMPANY 03, at: [3300, 5900], posts: 9}
+    - {id: COY-04, name: COMPANY 04, at: [9200, 4700], posts: 8}
+    - {id: COY-05, name: COMPANY 05, at: [-8900, -2600], posts: 10}
+    - {id: COY-06, name: COMPANY 06, at: [-2700, -1300], posts: 9}
+    - {id: COY-07, name: COMPANY 07, at: [3900, -3100], posts: 10}
+    - {id: COY-08, name: COMPANY 08, at: [9500, -4300], posts: 9}
+  posts:
+    min_m: 700            # distance from the company location
+    max_m: 3000
+    spacing_m: 700        # minimum distance between any two posts
+    boundary_margin_m: 400
+    candidates: 6         # with a DEM, the highest of N valid candidates wins
+  cameras:
+    per_post: 2
+    fov: [55, 85]
+    range: [400, 800]
+    standoff_m: 40         # camera mast distance from the post
+    second_camera_offset: [100, 160]   # degrees between a post's two cameras
+    # The cameras bound to live video (cameras.yaml, CAM-01..) are spread
+    # this many per company; every other camera is registered without a
+    # video source and reports OFFLINE until one is bound.
+    live_per_company: 4
+  nvr: {offset_m: 220, bearing: 135}   # one NVR per company, near the company location

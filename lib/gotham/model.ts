@@ -71,7 +71,7 @@ export const NVRS: Nvr[] = [
   { id: "NVR-04", name: "DEPOT & MOTOR POOL", zone: "DEPOT", cams: 8, camsOk: 8, usedTb: 17.2, totalTb: 32, tempC: 40, state: "ok" },
 ];
 
-export type AlertClass = "intrusion" | "person" | "vehicle" | "animal";
+export type AlertClass = "intrusion" | "person" | "vehicle" | "animal" | "anomaly";
 export type Severity = "high" | "med" | "low";
 export type AlertStatus = "new" | "ack" | "dispatched";
 
@@ -89,6 +89,11 @@ export type Alert = {
   ackAt?: number;
   /** Set on alerts pushed by the live generator so the row can animate in. */
   live?: boolean;
+  /** Pipeline alerts only: id of the backing row in the backend events table. */
+  eventId?: number;
+  /** Pipeline alerts only: camera / post / company names from the backend database. */
+  site?: { cameraName?: string | null; postName?: string | null; companyName?: string | null };
+  trackId?: number | null;
 };
 
 export const OPERATOR = "CAPT. A. VERMA";
@@ -118,6 +123,7 @@ function drawClass(rng: Rng): AlertClass {
 /** Severity is a function of what was seen and where — never random on its own. */
 export function severityFor(cls: AlertClass, zone: Zone, cameraId: string): Severity {
   if (cls === "intrusion") return "high";
+  if (cls === "anomaly") return "med";
   if (cls === "animal") return "low";
   if (cls === "person") {
     if (cameraId === "CAM-12" || zone === "DEPOT" || zone === "PERIMETER EAST" || zone === "PERIMETER WEST") return "high";
@@ -128,6 +134,7 @@ export function severityFor(cls: AlertClass, zone: Zone, cameraId: string): Seve
 }
 
 const CONF: Record<AlertClass, [number, number]> = {
+  anomaly: [60.0, 95.0],
   intrusion: [92.0, 99.8],
   person: [88.0, 99.6],
   vehicle: [84.0, 98.2],
@@ -151,7 +158,7 @@ export function alertId(n: number) {
 function makeAlert(rng: Rng, t: number, n: number, live?: boolean): Alert {
   // Only CAM-05 has implemented behavior analytics for now
   const cam = CAMERAS.find((c) => c.id === "CAM-05")!;
-  const cls = drawClass(rng, cam.id);
+  const cls = drawClass(rng);
   const [lo, hi] = CONF[cls];
   return {
     id: alertId(n),
@@ -201,6 +208,7 @@ export function nextAlert(rng: Rng, now: Date): Alert {
 }
 
 export const CLASS_LABEL: Record<AlertClass, string> = {
+  anomaly: "Anomaly",
   intrusion: "Intrusion",
   person: "Person",
   vehicle: "Vehicle",

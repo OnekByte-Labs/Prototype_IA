@@ -33,9 +33,13 @@ class KalmanBoxState:
         h = y2 - y1
         self.state = np.array([cx, cy, w, h, 0.0, 0.0, 0.0, 0.0], dtype=np.float64)
 
-    def predict(self):
-        """Advance state by one timestep using constant-velocity model."""
-        self.state[:4] += self.state[4:]
+    def predict(self, step: float = 1.0):
+        """Advance state by ``step`` update-intervals (constant velocity).
+
+        Velocity is learned per detector update; when the detector only runs
+        every N frames, each video frame advances 1/N of that.
+        """
+        self.state[:4] += self.state[4:] * step
 
     def update(self, bbox: Tuple[int, int, int, int]):
         """Update state with a new measurement."""
@@ -65,11 +69,8 @@ class KalmanBoxState:
 class Track:
     """A single tracked object."""
 
-    _next_id = 1
-
-    def __init__(self, bbox: Tuple[int, int, int, int], class_id: int, confidence: float):
-        self.track_id: int = Track._next_id
-        Track._next_id += 1
+    def __init__(self, track_id: int, bbox: Tuple[int, int, int, int], class_id: int, confidence: float):
+        self.track_id: int = track_id
         self.class_id: int = class_id
         self.confidence: float = confidence
         self.kalman = KalmanBoxState(bbox)
@@ -82,8 +83,8 @@ class Track:
     def bbox(self) -> Tuple[int, int, int, int]:
         return self.kalman.bbox
 
-    def predict(self):
-        self.kalman.predict()
+    def predict(self, step: float = 1.0):
+        self.kalman.predict(step)
         self.age += 1
         self.time_since_update += 1
 
@@ -201,12 +202,33 @@ class ByteTracker:
         self.iou_threshold = iou_threshold
         self.max_age = max_age
         self.tracks: List[Track] = []
+        # Fraction of a detector interval per video frame (1/detect_interval).
+        self.motion_step = 1.0
+        # Per-tracker (i.e. per-stream) id counter — a shared class-level
+        # counter let one stream's loop reset hand out ids still live elsewhere.
+        self._next_id = 1
+
+    def _visible(self) -> List[Track]:
+        """Confirmed tracks matched in the latest detector step (or the one
+        before, to ride out single-frame misses). Lost tracks keep coasting
+        internally for re-association but aren't reported: their extrapolated
+        boxes drift and grow and show up as ghost boxes."""
+        return [t for t in self.tracks if t.is_confirmed and t.time_since_update <= 1]
+
+    def predict_only(self) -> List[Track]:
+        """Advance tracks one video frame on a frame the detector skipped.
+
+        Tracks aren't aged here — ageing counts detector updates only.
+        """
+        for t in self.tracks:
+            t.kalman.predict(self.motion_step)
+        return self._visible()
 
     def reset_on_loop(self):
         """Clear all tracks when the video loops back to frame 0."""
         n = len(self.tracks)
         self.tracks.clear()
-        Track._next_id = 1
+        self._next_id = 1
         logger.info("[%s] Tracker reset on loop — cleared %d tracks", self.stream_id, n)
 
     def update(
@@ -223,11 +245,11 @@ class ByteTracker:
         """
         # Predict step
         for t in self.tracks:
-            t.predict()
+            t.predict(self.motion_step)
 
         if not detections:
             self.tracks = [t for t in self.tracks if t.time_since_update <= self.max_age]
-            return [t for t in self.tracks if t.is_confirmed]
+            return self._visible()
 
         det_array = np.array([d[0] for d in detections], dtype=np.float64)  # (N, 4)
         det_confs = np.array([d[1] for d in detections])
@@ -282,13 +304,15 @@ class ByteTracker:
         # ── Create new tracks for unmatched high-conf detections ──
         for d_idx in unmatched_high_dets:
             new_track = Track(
+                track_id=self._next_id,
                 bbox=tuple(det_array[d_idx].astype(int)),
                 class_id=int(det_classes[d_idx]),
                 confidence=float(det_confs[d_idx]),
             )
+            self._next_id += 1
             self.tracks.append(new_track)
 
         # ── Remove dead tracks ──
         self.tracks = [t for t in self.tracks if t.time_since_update <= self.max_age]
 
-        return [t for t in self.tracks if t.is_confirmed]
+        return self._visible()

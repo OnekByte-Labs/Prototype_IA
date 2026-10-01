@@ -1,287 +1,152 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type { DatasetSource } from "@/lib/datasets/dataset-definitions";
-import { NVRS, cameraById, hms, type Alert } from "@/lib/gotham/model";
 import { useConsole } from "../ConsoleProvider";
-import { Button, ClassTag, KpiCard, Panel, SeverityChip, StatusDot } from "../primitives";
-import { CameraWall } from "./CameraWall";
-import {
-  DatasetControlBar,
-  type GridDensity,
-  type TileMode,
-} from "./DatasetControlBar";
+import { CameraWall, type GridDensity } from "./CameraWall";
+import { AlertFeedPanel, AlertHistogramPanel, DeviceTelemetryPanel, KpiCard, type LiveNvr } from "./GlassPanels";
 
-/* ----------------------------------------------------------------- alert feed */
-
-function FeedRow({
-  a,
-  onAck,
-  onSelectCamera,
-}: {
-  a: Alert;
-  onAck: (id: string) => void;
-  onSelectCamera?: (cameraId: string) => void;
-}) {
-  const cam = cameraById(a.cameraId);
-  const unacked = a.status === "new";
-
-  return (
-    <div
-      data-testid="feed-row"
-      data-status={a.status}
-      onClick={() => onSelectCamera?.(a.cameraId)}
-      title={`Click to focus ${a.cameraId} (${cam?.name ?? ""}) on tactical wall`}
-      className={`group h-11 px-3 flex items-center gap-2.5 border-l-2 hover:bg-g-hover transition-none cursor-pointer ${
-        unacked ? "border-l-g-red bg-red-950/10" : "border-l-transparent"
-      } ${a.live ? "animate-g-in" : ""}`}
-    >
-      <span className="text-data font-data text-g-text-2 w-[58px] shrink-0">{hms(a.t)}</span>
-      <ClassTag cls={a.cls} />
-      <div className="min-w-0 flex-1">
-        <div className={`text-ui truncate ${unacked ? "text-g-text font-medium" : "text-g-text-2"}`}>
-          {a.cameraId} · {cam?.name ?? ""}
-        </div>
-        <div className="text-micro uppercase text-g-muted truncate">
-          {a.zone} · {a.confidence.toFixed(1)}%
-        </div>
-      </div>
-      <SeverityChip severity={a.severity} />
-      {unacked ? (
-        <Button
-          size="sm"
-          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-            e.stopPropagation();
-            onAck(a.id);
-          }}
-          className="opacity-0 group-hover:opacity-100 focus:opacity-100"
-          title={`Acknowledge ${a.id}`}
-        >
-          Ack
-        </Button>
-      ) : (
-        <span className="text-micro uppercase text-g-muted w-14 text-right truncate">
-          {a.status === "dispatched" ? "QRF" : (a.ackBy ?? "Ack")}
-        </span>
-      )}
-    </div>
-  );
-}
-
-/* --------------------------------------------------------------- device health */
-
-function DeviceHealth({ degraded }: { degraded: string[] }) {
-  const router = useRouter();
-
-  return (
-    <Panel
-      label="Device health & NVR status"
-      flush
-      aside={
-        <Link href="/devices" className="text-micro uppercase text-g-blue hover:underline">
-          All devices
-        </Link>
-      }
-    >
-      <div className="divide-y divide-g-border">
-        {NVRS.map((n) => {
-          const pct = Math.round((n.usedTb / n.totalTb) * 100);
-          const fault = n.state === "fault";
-          return (
-            <button
-              key={n.id}
-              type="button"
-              onClick={() => router.push("/devices")}
-              className="w-full h-11 px-3 flex items-center gap-3 hover:bg-g-hover text-left transition-none"
-            >
-              <StatusDot tone={fault ? "err" : "ok"} />
-              <div className="min-w-0 flex-1">
-                <div className="text-ui text-g-text truncate">
-                  {n.id} · {n.name}
-                </div>
-                <div className="text-micro uppercase text-g-muted truncate">
-                  {n.camsOk}/{n.cams} cams · {n.tempC}°C
-                </div>
-              </div>
-              <div className="w-16 shrink-0">
-                <div className="h-1 bg-g-bg border border-g-border">
-                  <div
-                    className={`h-full ${pct >= 90 ? "bg-g-amber" : "bg-g-green"}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <div className="text-micro font-data text-g-muted mt-0.5 text-right">{pct}%</div>
-              </div>
-              <span
-                className={`text-micro uppercase w-12 text-right shrink-0 ${fault ? "text-g-red" : "text-g-muted"}`}
-              >
-                {fault ? "Fault" : "OK"}
-              </span>
-            </button>
-          );
-        })}
-
-        {degraded.map((id) => (
-          <div
-            key={id}
-            data-testid="degraded-row"
-            className="h-11 px-3 flex items-center gap-3 bg-g-red/5 border-l-2 border-l-g-red animate-g-in"
-          >
-            <StatusDot tone="err" className="animate-pulse" />
-            <div className="min-w-0 flex-1">
-              <div className="text-ui text-g-red truncate">{id} · link lost</div>
-              <div className="text-micro uppercase text-g-muted truncate">
-                Carrier drop · auto-recovery armed
-              </div>
-            </div>
-            <span className="text-micro uppercase text-g-red shrink-0">Offline</span>
-          </div>
-        ))}
-      </div>
-    </Panel>
-  );
-}
-
-/* ------------------------------------------------------------------ dashboard */
-
+/**
+ * Main command dashboard — the Stitch "ISCC Liquid Glass Command Console":
+ * four key figures and a 7/5 split (surveillance matrix + histogram |
+ * real-time alerts + NVR telemetry) under the shared glass title bar and dock. Every figure,
+ * tile and alert is the live console state; nothing here is simulated.
+ */
 export function Dashboard() {
-  const { alerts, unacked, ack, cameras, degraded, liveOn, toggleLive } = useConsole();
+  const { alerts: allAlerts, ack, cameras, degraded, liveOn, toggleLive, liveStreams, intrusionCameraIds, streamHealth } = useConsole();
 
-  // Dataset & Matrix State
-  const [activeDataset, setActiveDataset] = useState<DatasetSource | "ALL">("ALL");
-  const [density, setDensity] = useState<GridDensity>(16);
-  const [tileMode, setTileMode] = useState<TileMode>("all");
+  // Real NVRs: channels bound to live cameras and how many are streaming right now
+  const liveNvrs = useMemo(() => {
+    const by: Record<string, LiveNvr> = {};
+    for (const [camId, s] of Object.entries(liveStreams)) {
+      if (s.sourceType !== "rtsp" || !s.nvrId) continue;
+      const n = (by[s.nvrId] ??= { id: s.nvrId, bound: 0, up: 0, kbps: 0, down: [] });
+      const h = streamHealth[camId];
+      n.bound += 1;
+      if (h?.status === "CONNECTED" || h?.status === "DEGRADED") {
+        n.up += 1;
+        n.kbps += h.bitrate_kbps ?? 0;
+      } else n.down.push(camId);
+    }
+    return Object.values(by).sort((a, b) => a.id.localeCompare(b.id));
+  }, [liveStreams, streamHealth]);
+  const liveAiCount = Object.keys(liveStreams).length;
+
+  // The main dashboard is an intrusion console: only restricted-zone intrusion
+  // alerts from the intrusion cameras. Other alert types live on the Alerts page.
+  const alerts = useMemo(
+    () => allAlerts.filter((a) => a.cls === "intrusion" && intrusionCameraIds.includes(a.cameraId)),
+    [allAlerts, intrusionCameraIds],
+  );
+  const unacked = alerts.filter((a) => a.status === "new").length;
+
+  // Wall state
+  const [density, setDensity] = useState<GridDensity>(12);
+  const [alertFirst, setAlertFirst] = useState(false);
   const [showAiBoxes] = useState(false);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 
-  const alertingCameraIds = useMemo(() => {
-    return Array.from(new Set(alerts.filter((a) => a.status === "new").map((a) => a.cameraId)));
-  }, [alerts]);
-
+  const alertingCameraIds = useMemo(
+    () => Array.from(new Set(alerts.filter((a) => a.status === "new").map((a) => a.cameraId))),
+    [alerts],
+  );
   const handleAcknowledgeCamera = (camId: string) => {
-    const matchingAlerts = alerts.filter((a) => a.cameraId === camId && a.status === "new");
-    matchingAlerts.forEach((a) => ack(a.id));
+    alerts.filter((a) => a.cameraId === camId && a.status === "new").forEach((a) => ack(a.id));
   };
 
+  // Key figures
   const offlineCams = cameras.filter((c) => !c.online);
-  const nvrFaults = NVRS.filter((n) => n.state === "fault").length;
-  const feed = alerts.slice(0, 7);
-
-  const camTone = degraded.length ? "red" : offlineCams.length ? "amber" : "default";
-  const camNote = degraded.length
-    ? `${degraded[0]} link lost — recovering`
+  const nvrUp = liveNvrs.reduce((a, n) => a + n.up, 0);
+  const nvrBound = liveNvrs.reduce((a, n) => a + n.bound, 0);
+  const nvrDown = liveNvrs.reduce((a, n) => a + n.down.length, 0);
+  const deviceFaults = degraded.length + offlineCams.length + nvrDown;
+  const liveNote = degraded.length
+    ? `${degraded.length} reconnect`
     : offlineCams.length
-      ? `${offlineCams.map((c) => c.id).join(", ")} offline`
-      : "Kupwara Battalion HQ Nominal";
+      ? `${offlineCams[0].id} offline`
+      : liveAiCount
+        ? "All nominal"
+        : "Start the backend";
+  const faultNote = degraded[0]
+    ? `${degraded[0]} link lost`
+    : nvrDown
+      ? `${liveNvrs.find((n) => n.down.length)?.down[0]} down`
+      : offlineCams[0]
+        ? `${offlineCams[0].id} offline`
+        : undefined;
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col gap-2 p-2 overflow-hidden bg-[#06080a]">
-      {/* Top KPI Strip */}
-      <div className="grid grid-cols-4 gap-2 shrink-0">
+    <div className="h-full flex flex-col gap-2.5 overflow-y-auto lg:overflow-hidden">
+
+      {/* Key figures */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0" aria-label="Key figures">
         <KpiCard
-          label="Battalion Cameras"
-          value={
-            <>
-              32
-              <span className="text-g-muted">/32 Active AI</span>
-            </>
-          }
-          note={camNote}
-          tone={camTone}
+          icon="videocam"
+          label="Cameras online"
+          value={liveAiCount}
+          unit={`/ ${cameras.length}`}
+          chip={liveAiCount ? `${((liveAiCount / Math.max(1, cameras.length)) * 100).toFixed(1)}%` : "AI OFFLINE"}
+          note={liveNote}
+          tone={!liveAiCount ? "crit" : degraded.length || offlineCams.length ? "warn" : "ok"}
         />
         <KpiCard
-          label="Unacknowledged Alerts"
+          icon="dns"
+          label="NVR channels"
+          value={nvrUp}
+          unit={`/ ${nvrBound}`}
+          chip={nvrBound ? `${Math.round((nvrUp / nvrBound) * 100)}% STREAMING` : "NO INGEST"}
+          note={liveNvrs.map((n) => n.id).join(" · ") || "No live NVR"}
+          tone={nvrBound && nvrUp === nvrBound ? "neutral" : nvrUp === 0 ? "crit" : "warn"}
+        />
+        <KpiCard
+          icon="notifications_active"
+          label="Active intrusions"
           value={unacked}
-          note={unacked ? "Operator Action Mandated" : "Sectors Clear"}
-          tone={unacked ? "red" : "green"}
+          unit={unacked ? "UNACKED" : "CLEAR"}
+          chip={unacked ? "ACTION REQ" : "SECTORS CLEAR"}
+          note={`${alerts.length} in log`}
+          tone={unacked ? "crit" : "neutral"}
         />
         <KpiCard
-          label="NVR Ingest Clusters"
-          value={
-            <>
-              {NVRS.length - nvrFaults}
-              <span className="text-g-muted">/{NVRS.length}</span>
-            </>
-          }
-          note="CP Plus / RTSP Ingest Active"
-          tone={nvrFaults ? "amber" : "default"}
+          icon="build"
+          label="Device faults"
+          value={deviceFaults}
+          unit={deviceFaults ? "PENDING" : "NONE"}
+          chip={deviceFaults ? "ATTN PENDING" : "NOMINAL"}
+          note={faultNote}
+          tone={deviceFaults ? "warn" : "neutral"}
         />
-        <KpiCard
-          label="24H Event Log"
-          value={alerts.length}
-          note={`${alerts.filter((a) => a.severity === "high").length} High Priority Breaches`}
-        />
-      </div>
+      </section>
 
-      {/* Dataset & Matrix Diagnostic Control Bar */}
-      <DatasetControlBar
-        activeDataset={activeDataset}
-        onSelectDataset={setActiveDataset}
-        density={density}
-        onChangeDensity={setDensity}
-        tileMode={tileMode}
-        onChangeTileMode={setTileMode}
-        alertCount={alertingCameraIds.length}
-      />
-
-      {/* Surveillance Matrix & Side Intelligence Panels */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 gap-2">
-        {/* Left/Main Column: Tactical Camera Wall */}
-        <div className="lg:col-span-3 min-h-0 flex flex-col">
+      {/* Operational workspace: matrix + histogram | alerts + telemetry */}
+      <main className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 lg:flex-1 min-h-0 lg:overflow-hidden">
+        <div className="lg:col-span-7 flex flex-col gap-2.5 min-h-[560px] lg:min-h-0 lg:h-full lg:overflow-hidden">
           <CameraWall
             density={density}
-            activeDataset={activeDataset}
-            tileMode={tileMode}
+            onChangeDensity={setDensity}
+            alertFirst={alertFirst}
+            onChangeAlertFirst={setAlertFirst}
             showAiBoxes={showAiBoxes}
             alertingCameraIds={alertingCameraIds}
             onAcknowledgeCamera={handleAcknowledgeCamera}
             selectedCameraId={selectedCameraId}
             onClearSelectedCamera={() => setSelectedCameraId(null)}
           />
+          <AlertHistogramPanel alerts={alerts} />
         </div>
 
-        {/* Right Column: Alert Feed & Hardware Health */}
-        <div className="lg:col-span-2 min-h-0 grid grid-rows-2 gap-2">
-          {/* Live Alert Feed */}
-          <Panel
-            label="Live alert feed"
-            flush
-            aside={
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  data-testid="live-toggle"
-                  onClick={toggleLive}
-                  title={liveOn ? "Pause live feed" : "Resume live feed"}
-                  className="flex items-center gap-1 text-micro uppercase text-g-text-2 hover:text-g-text font-mono"
-                >
-                  <StatusDot tone={liveOn ? "ok" : "idle"} className={liveOn ? "animate-pulse" : ""} />
-                  {liveOn ? "STREAM: LIVE" : "STREAM: PAUSED"}
-                </button>
-                <Link href="/alerts" className="text-micro uppercase text-g-blue hover:underline font-mono">
-                  All Alerts
-                </Link>
-              </div>
-            }
-          >
-            <div className="h-full overflow-y-auto divide-y divide-g-border">
-              {feed.map((a) => (
-                <FeedRow
-                  key={a.id}
-                  a={a}
-                  onAck={ack}
-                  onSelectCamera={(camId) => setSelectedCameraId(camId)}
-                />
-              ))}
-            </div>
-          </Panel>
-
-          {/* Device & NVR Status */}
-          <DeviceHealth degraded={degraded} />
+        <div className="lg:col-span-5 flex flex-col gap-2.5 min-h-[480px] lg:min-h-0 lg:h-full lg:overflow-hidden">
+          <AlertFeedPanel
+            alerts={alerts}
+            unacked={unacked}
+            liveOn={liveOn}
+            onToggleLive={toggleLive}
+            onAck={ack}
+            onSelect={setSelectedCameraId}
+          />
+          <DeviceTelemetryPanel nvrs={liveNvrs} degraded={degraded} />
         </div>
-      </div>
+      </main>
+
     </div>
   );
 }
