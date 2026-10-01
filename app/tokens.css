@@ -1,0 +1,166 @@
+/* ============================================================================
+   DESIGN TOKENS — single source of truth for the Command Centre visual language.
+
+   Warm ivory neumorphism. Depth is made with paired soft shadows (a warm
+   shadow bottom-right, a white highlight top-left) and communicates hierarchy:
+
+     canvas   page background, the lowest plane
+     surface  panels and cards that sit on the canvas
+     raised   things you can press: buttons, selected tabs, popovers
+     sunken   things you type into or that are pressed / selected (inset)
+
+   Orange is an interaction colour (selection, focus, primary action).
+   Green / amber / red mean status and nothing else.
+
+   Colours exist in two forms where the fill is too light to carry text:
+   `--ds-accent` is for fills and indicators, `--ds-accent-ink` for text and
+   icons (>= 4.5:1 on every surface). Same for ok / warn / crit.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ── surfaces ── */
+  --ds-canvas: #f5f1e8;
+  --ds-surface: #fbf9f4;
+  --ds-raised: #fffdf9;
+  --ds-sunken: #eee8db;
+  --ds-hover: #f0ebdf;
+
+  /* ── lines ── */
+  --ds-line: #e5ded2;
+  --ds-line-strong: #d3cabb;
+
+  /* ── text ── */
+  --ds-ink: #252525;
+  --ds-ink-2: #6f6a62;
+  --ds-ink-3: #726c64;
+
+  /* ── interaction accent ── */
+  --ds-accent: #e67e22;
+  --ds-accent-soft: #f2a65a;
+  --ds-accent-wash: #fbebd9;
+  --ds-accent-ink: #9f520d;
+
+  /* ── status ── */
+  --ds-ok: #2e8b57;
+  --ds-ok-wash: #e4f1e8;
+  --ds-ok-ink: #247046;
+  --ds-warn: #c88920;
+  --ds-warn-wash: #f7ecd2;
+  --ds-warn-ink: #8a5f06;
+  --ds-crit: #c94c4c;
+  --ds-crit-wash: #f7e1de;
+  --ds-crit-ink: #b03a3a;
+
+  /* ── video / map frames stay dark so footage is never washed out ── */
+  --ds-video: #141311;
+  --ds-video-ink: #f3efe6;
+  --ds-video-ok: #8fdcac;
+  --ds-video-warn: #f3c969;
+  --ds-video-crit: #ff9c97;
+
+  /* ── depth ── */
+  --ds-shadow-dark: rgba(150, 128, 94, 0.22);
+  --ds-shadow-light: rgba(255, 255, 255, 0.95);
+
+  --ds-shadow-card: 3px 3px 9px rgba(150, 128, 94, 0.13), -3px -3px 8px rgba(255, 255, 255, 0.85);
+  --ds-shadow-key: 2px 2px 4px rgba(150, 128, 94, 0.2), -2px -2px 4px rgba(255, 255, 255, 0.95);
+  --ds-shadow-key-sm: 1px 1px 3px rgba(150, 128, 94, 0.2), -1px -1px 3px rgba(255, 255, 255, 0.95);
+  --ds-shadow-inset: inset 2px 2px 4px rgba(150, 128, 94, 0.24), inset -2px -2px 4px rgba(255, 255, 255, 0.9);
+  --ds-shadow-inset-sm: inset 1px 1px 3px rgba(150, 128, 94, 0.24), inset -1px -1px 2px rgba(255, 255, 255, 0.9);
+  --ds-shadow-pop: 0 14px 34px rgba(70, 52, 26, 0.16), 0 2px 6px rgba(70, 52, 26, 0.08);
+  --ds-shadow-tile: 2px 3px 8px rgba(120, 98, 62, 0.22), -2px -2px 6px rgba(255, 255, 255, 0.9);
+
+  /* ── shape: one small and one medium radius, nothing pill-shaped ── */
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 6px;
+  --ds-radius-lg: 8px;
+  --ds-radius-xl: 12px;
+
+  /* ── type ── */
+  --ds-font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --ds-font-data: var(--font-plex-mono), "SF Mono", ui-monospace, "JetBrains Mono", monospace;
+
+  /* ── layout ── */
+  --ds-nav-w: 72px;
+  --ds-header-h: 52px;
+  --ds-page-gutter: 20px;
+}
+
+/* ============================================================================
+   GLASS — dark "liquid glass" scope (Stitch "ISCC Liquid Glass Command Console").
+   Applied to the main dashboard only. Re-points the same tokens, so every ds
+   component used inside it restyles with no component changes. The glass
+   materials themselves (panels, buttons, viewports) live in glass.css.
+   Accent is system blue; green / amber / red remain status-only.
+   ========================================================================== */
+.theme-glass {
+  color-scheme: dark;
+
+  --ds-canvas: #0c0d0f;
+  --ds-surface: #131418;
+  --ds-raised: #202229;
+  --ds-sunken: #08090b;
+  --ds-hover: rgba(255, 255, 255, 0.06);
+
+  --ds-line: rgba(255, 255, 255, 0.08);
+  --ds-line-strong: rgba(255, 255, 255, 0.14);
+
+  --ds-ink: #f5f5f7;
+  --ds-ink-2: #a1a1a6;
+  --ds-ink-3: #6e6e73;
+
+  --ds-accent: #0a84ff;
+  --ds-accent-soft: #409cff;
+  --ds-accent-wash: rgba(10, 132, 255, 0.15);
+  --ds-accent-ink: #60a5fa;
+
+  --ds-ok: #30d158;
+  --ds-ok-wash: rgba(48, 209, 88, 0.15);
+  --ds-ok-ink: #34d399;
+  --ds-warn: #ff9f0a;
+  --ds-warn-wash: rgba(255, 159, 10, 0.15);
+  --ds-warn-ink: #fbbf24;
+  --ds-crit: #ff453a;
+  --ds-crit-wash: rgba(255, 69, 58, 0.15);
+  --ds-crit-ink: #fb7185;
+
+  --ds-video: #060709;
+  --ds-video-ink: #f5f5f7;
+  --ds-video-ok: #34d399;
+  --ds-video-warn: #fbbf24;
+  --ds-video-crit: #fb7185;
+
+  --ds-shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --ds-shadow-key: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.35);
+  --ds-shadow-key-sm: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ds-shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+  --ds-shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  --ds-shadow-pop: 0 14px 34px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.5);
+  --ds-shadow-tile: none;
+
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 6px;
+  --ds-radius-lg: 8px;
+  --ds-radius-xl: 12px;
+
+  --ds-font-data: var(--font-jetbrains), "SF Mono", ui-monospace, Menlo, monospace;
+}
+
+.theme-glass * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+.theme-glass ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.theme-glass ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border: 0;
+  border-radius: 9999px;
+}
+.theme-glass ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}

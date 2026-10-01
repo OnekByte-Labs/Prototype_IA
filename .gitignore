@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -45,14 +46,41 @@ __pycache__/
 *.py[cod]
 *$py.class
 backend/venv/
+backend/.trt_cache/
+backend/data/
+# MediaMTX binary (backend/scripts/install_mediamtx.sh)
+backend/bin/
 # allow tracking of outputs/precomputed
 backend/outputs/events.jsonl
 .pytest_cache/
 skills/
-.agents/
-docs/
-venv/
-venv
-.venv/
-.venv
 
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Databases
+*.db
+*.db-*
+backend/backups/
+
+# Generated runtime output
+backend/outputs/evidence/
+backend/outputs/training_candidates/
+
+# Local datasets / recordings
+Dataset/
+*.mp4
+*.mkv
+*.avi
+*.mov
+
+# Local AI model artifacts
+models/
+*.onnx
+*.engine
+
+# Local benchmark/generated files
+gpu_full16_nojpeg.csv

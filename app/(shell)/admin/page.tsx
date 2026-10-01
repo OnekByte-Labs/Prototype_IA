@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { AdminConsole } from "@/components/gotham/admin/AdminConsole";
+import { Suspense } from "react";
+import { AdminConsole } from "@/components/admin/AdminConsole";
 
 export const metadata: Metadata = {
-  title: "ISCC MATRIX // SYS-ADMIN & SECURITY ACCESS",
+  title: "Administration · ARGUS",
 };
 
-/** Unified Gotham tactical administrative console */
 export default function AdminPage() {
   return (
-    <main className="flex-1 flex overflow-hidden bg-g-bg">
+    <Suspense>
       <AdminConsole />
-    </main>
+    </Suspense>
   );
 }

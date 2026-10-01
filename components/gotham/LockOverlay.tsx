@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Icon } from "@/components/ui/Icon";
-import { Button, MicroLabel } from "./primitives";
+import { Button, Icon, Input } from "@/components/ds";
+import { cx } from "@/lib/design/cx";
+import { signOut, useSession } from "@/lib/use-session";
 
 const IDLE_MS = 15 * 60 * 1000;
 
@@ -13,7 +14,9 @@ const IDLE_MS = 15 * 60 * 1000;
 export function LockOverlay() {
   const [locked, setLocked] = useState(false);
   const [pw, setPw] = useState("");
-  const [bad, setBad] = useState(false);
+  const [bad, setBad] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const { session } = useSession();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
@@ -36,46 +39,72 @@ export function LockOverlay() {
 
   if (!locked) return null;
 
-  const unlock = () => {
-    // Mock credential: any non-empty password re-enters the session.
-    if (pw.trim().length === 0) {
-      setBad(true);
-      setTimeout(() => setBad(false), 400);
-      return;
+  const unlock = async () => {
+    if (pw.trim().length === 0 || busy) return;
+    setBusy(true);
+    try {
+      // Re-authenticates the signed-in user against the backend (audited; failures count toward lockout)
+      const res = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.status === 423 || res.status === 403) {
+        await signOut();
+        return;
+      }
+      if (!res.ok) {
+        setBad(body.error ?? "Incorrect password");
+        setTimeout(() => setBad(null), 1500);
+        return;
+      }
+      setPw("");
+      setLocked(false);
+    } finally {
+      setBusy(false);
     }
-    setPw("");
-    setLocked(false);
   };
 
   return (
-    <div
-      data-testid="lock-overlay"
-      className="fixed inset-0 z-[200] bg-g-bg/92 flex items-center justify-center"
-    >
+    <div data-testid="lock-overlay" className="theme-glass fixed inset-0 z-[300] bg-canvas/95 flex items-center justify-center">
       <div
-        className={`w-80 bg-g-panel border border-g-border-strong rounded-[4px] ${bad ? "animate-g-shake border-g-red" : ""}`}
+        className={cx(
+          "w-[360px] bg-raised border rounded-xl shadow-pop p-6 flex flex-col gap-4",
+          bad ? "border-crit animate-shake" : "border-line",
+        )}
       >
-        <div className="h-8 px-3 flex items-center gap-2 border-b border-g-border">
-          <Icon name="lock" size={14} className="text-g-amber" />
-          <MicroLabel>Session locked · 15 min idle</MicroLabel>
+        <div className="flex items-center gap-3">
+          <span className="w-10 h-10 rounded-md bg-surface border border-line shadow-key flex items-center justify-center text-warn-ink">
+            <Icon name="lock" size={20} />
+          </span>
+          <div>
+            <h2 className="text-headline text-ink">Session locked</h2>
+            <p className="text-caption text-ink-2">No activity for 15 minutes</p>
+          </div>
         </div>
-        <div className="p-3 flex flex-col gap-2">
-          <p className="text-ui text-g-text-2">
-            Terminal 01 · <span className="font-data">A. VERMA</span>
-          </p>
-          <input
+        <p className="text-ui text-ink-2">
+          <span className="text-ink font-medium">{session?.display_name ?? "—"}</span>
+          <span className="text-ink-3"> · {session?.username}</span>
+        </p>
+        <div className="flex flex-col gap-2">
+          <Input
             autoFocus
             type="password"
             value={pw}
             onChange={(e) => setPw(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && unlock()}
-            placeholder="Operator password"
+            onKeyDown={(e) => e.key === "Enter" && void unlock()}
+            placeholder="Password"
             aria-label="Operator password"
-            className="h-8 px-2 bg-g-bg border border-g-border-strong rounded-[2px] text-ui text-g-text placeholder:text-g-muted focus:border-g-blue focus:outline-none"
           />
-          {bad && <span className="text-data font-data text-g-red">Password required</span>}
-          <Button variant="primary" onClick={unlock}>
-            Re-enter session
+          {bad && <span className="text-caption text-crit-ink">{bad}</span>}
+        </div>
+        <div className="flex flex-col gap-2">
+          <Button variant="primary" size="lg" onClick={() => void unlock()} disabled={busy}>
+            Resume session
+          </Button>
+          <Button variant="ghost" onClick={() => void signOut()}>
+            Sign out
           </Button>
         </div>
       </div>

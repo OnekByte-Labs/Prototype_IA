@@ -1,4 +1,5 @@
 import { intRange, mulberry32, pick, range, type Rng } from "./rng";
+import { TACTICAL_CAMERAS } from "@/lib/datasets/dataset-definitions";
 
 export const ZONES = [
   "HQ COMPLEX",
@@ -10,21 +11,10 @@ export const ZONES = [
 
 export type Zone = (typeof ZONES)[number];
 
-export type AnalyticsConfig = {
-  type?: "traffic_count" | "intrusion_zone" | "tracking" | "none" | string;
-  line?: number[][];
-  zone?: number[][];
-  buffer_px?: number;
-  required_consecutive_frames?: number;
-  [key: string]: unknown;
-};
-
 export type Camera = {
   id: string;
   name: string;
-  label?: string;
   zone: Zone;
-  sector?: string;
   online: boolean;
   ip: string;
   model: string;
@@ -35,334 +25,29 @@ export type Camera = {
   sensitivity: number;
   recording: boolean;
   uptime: number;
-  mgrs?: string;
-  elevationM?: number;
-  dataset?: string;
-  aiWorkload?: string;
   hlsUrl?: string;
   rtspUrl?: string;
   webrtcUrl?: string;
-  videoUrl?: string;
   mjpegUrl?: string;
   metadataUrl?: string;
-  precomputedUrl?: string;
   aiEnabled?: boolean;
-  analytics?: AnalyticsConfig;
+  analytics?: Record<string, unknown>;
 };
 
-export const CAMERAS: Camera[] = [
-  {
-    id: "CAM-01",
-    name: "MAIN GATE",
-    label: "CAM-01 · MAIN GATE",
-    zone: "HQ COMPLEX",
-    sector: "SECTOR-1 HQ",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.12.101",
-    model: "AXIS Q6135-LE / CP PLUS 4K",
-    firmware: "11.8.42",
-    resolution: "3840×2160",
-    fps: 60,
-    sensitivity: 72,
-    recording: true,
-    uptime: 99.98,
-    mgrs: "43R WQ 1820 8120",
-    elevationM: 1680,
-    dataset: "VIRAT",
-    aiWorkload: "traffic_count",
-    videoUrl: "/api/videos/cam_01",
-    precomputedUrl: "/api/precomputed/cam_01",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_01",
-    analytics: {
-      type: "traffic_count",
-      line: [[327.0, 1129.0], [2339.0, 1023.0], [3820.0, 1400.0]],
-    },
-  },
-  {
-    id: "CAM-02",
-    name: "PERIMETER EAST",
-    label: "CAM-02 · PERIMETER EAST",
-    zone: "PERIMETER EAST",
-    sector: "SECTOR-2 PERIMETER",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.12.103",
-    model: "AXIS P3245-LV / CP PLUS HD",
-    firmware: "10.2.1",
-    resolution: "1920×1080",
-    fps: 30,
-    sensitivity: 64,
-    recording: true,
-    uptime: 99.91,
-    mgrs: "43R WQ 1845 8116",
-    elevationM: 1686,
-    dataset: "MOT20",
-    aiWorkload: "traffic_count",
-    videoUrl: "/api/videos/cam_02",
-    precomputedUrl: "/api/precomputed/cam_02",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_02",
-    analytics: {
-      type: "traffic_count",
-      line: [[384.0, 540.0], [1536.0, 540.0]],
-      zone: [[480.0, 270.0], [1440.0, 270.0], [1440.0, 810.0], [480.0, 810.0]],
-      buffer_px: 15,
-      required_consecutive_frames: 8,
-    },
-  },
-  {
-    id: "CAM-03",
-    name: "CHECKPOINT ALPHA",
-    label: "CAM-03 · CHECKPOINT ALPHA",
-    zone: "HQ COMPLEX",
-    sector: "SECTOR-1 HQ",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.14.107",
-    model: "BOSCH AUTODOME 7000i",
-    firmware: "7.82.01",
-    resolution: "3840×2160",
-    fps: 30,
-    sensitivity: 80,
-    recording: true,
-    uptime: 99.94,
-    mgrs: "43R WQ 1890 8140",
-    elevationM: 1690,
-    dataset: "MOT20",
-    aiWorkload: "tracking",
-    videoUrl: "/api/videos/cam_03",
-    precomputedUrl: "/api/precomputed/cam_03",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_03",
-  },
-  {
-    id: "CAM-04",
-    name: "PERIMETER SOUTH",
-    label: "CAM-04 · PERIMETER SOUTH",
-    zone: "DEPOT",
-    sector: "SECTOR-3 DEPOT",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.20.109",
-    model: "CP PLUS CP-UNC-TA51ZL6",
-    firmware: "4.2.1",
-    resolution: "1920×1080",
-    fps: 30,
-    sensitivity: 88,
-    recording: true,
-    uptime: 98.12,
-    mgrs: "43R WQ 1650 7980",
-    elevationM: 1675,
-    dataset: "VIRAT",
-    aiWorkload: "intrusion",
-    videoUrl: "/api/videos/cam_04",
-    precomputedUrl: "/api/precomputed/cam_04",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_04",
-  },
-  {
-    id: "CAM-05",
-    name: "ARMOURY SECTOR 4",
-    label: "CAM-05 · ARMOURY SECTOR 4",
-    zone: "DEPOT",
-    sector: "SECTOR-3 DEPOT",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.20.112",
-    model: "PELCO SPECTRA PRO",
-    firmware: "3.14.9",
-    resolution: "1920×1080",
-    fps: 60,
-    sensitivity: 91,
-    recording: true,
-    uptime: 99.99,
-    mgrs: "43R WQ 1630 7950",
-    elevationM: 1672,
-    dataset: "VIRAT",
-    aiWorkload: "intrusion_zone",
-    videoUrl: "/api/videos/cam_05",
-    precomputedUrl: "/api/precomputed/cam_05",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_05",
-    analytics: {
-      type: "intrusion_zone",
-      zone: [[350, 80], [1050, 80], [1050, 620], [350, 620]],
-      buffer_px: 15,
-      required_consecutive_frames: 8,
-    },
-  },
-  {
-    id: "CAM-06",
-    name: "VEHICLE DEPOT",
-    label: "CAM-06 · VEHICLE DEPOT",
-    zone: "PERIMETER WEST",
-    sector: "SECTOR-4 WEST",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.16.115",
-    model: "BOSCH MIC IP 7100i",
-    firmware: "7.80.00",
-    resolution: "1920×1080",
-    fps: 30,
-    sensitivity: 70,
-    recording: true,
-    uptime: 99.4,
-    mgrs: "43R WQ 1540 8210",
-    elevationM: 1665,
-    dataset: "UFPR_ALPR",
-    aiWorkload: "anpr",
-    videoUrl: "/api/videos/cam_06",
-    precomputedUrl: "/api/precomputed/cam_06",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_06",
-  },
-  {
-    id: "CAM-07",
-    name: "HQ ENTRANCE",
-    label: "CAM-07 · HQ ENTRANCE",
-    zone: "HQ COMPLEX",
-    sector: "SECTOR-1 HQ",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.12.116",
-    model: "AXIS P3245-LV",
-    firmware: "10.2.1",
-    resolution: "1920×1080",
-    fps: 30,
-    sensitivity: 58,
-    recording: true,
-    uptime: 99.91,
-    mgrs: "43R WQ 1860 8130",
-    elevationM: 1688,
-    dataset: "MOT20",
-    aiWorkload: "tracking",
-    videoUrl: "/api/videos/cam_07",
-    precomputedUrl: "/api/precomputed/cam_07",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_07",
-  },
-  {
-    id: "CAM-08",
-    name: "MOTOR POOL",
-    label: "CAM-08 · MOTOR POOL",
-    zone: "MOTOR POOL",
-    sector: "SECTOR-5 MOTOR POOL",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.30.122",
-    model: "HANWHA XNV-8080R",
-    firmware: "2.01.0",
-    resolution: "1920×1080",
-    fps: 30,
-    sensitivity: 61,
-    recording: true,
-    uptime: 99.85,
-    mgrs: "43R WQ 1720 8340",
-    elevationM: 1670,
-    dataset: "VIRAT",
-    aiWorkload: "tracking",
-    videoUrl: "/api/videos/cam_08",
-    precomputedUrl: "/api/precomputed/cam_08",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_08",
-  },
-  {
-    id: "CAM-09",
-    name: "WAREHOUSE 1",
-    label: "CAM-09 · WAREHOUSE 1",
-    zone: "PERIMETER WEST",
-    sector: "SECTOR-4 WEST",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.16.128",
-    model: "BOSCH MIC IP 7100i",
-    firmware: "7.80.00",
-    resolution: "1920×1080",
-    fps: 60,
-    sensitivity: 70,
-    recording: true,
-    uptime: 99.2,
-    mgrs: "43R WQ 1590 8270",
-    elevationM: 1668,
-    dataset: "VIRAT",
-    aiWorkload: "intrusion_zone",
-    videoUrl: "/api/videos/cam_09",
-    precomputedUrl: "/api/precomputed/cam_09",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_09",
-    analytics: {
-      type: "intrusion_zone",
-      zone: [[0.0, 80.0], [780.0, 80.0], [670.0, 650.0], [230.0, 971.0], [0.0, 817.0]],
-      buffer_px: 15,
-      required_consecutive_frames: 8,
-    },
-  },
-  {
-    id: "CAM-10",
-    name: "AIRSTRIP ACCESS",
-    label: "CAM-10 · AIRSTRIP ACCESS",
-    zone: "HQ COMPLEX",
-    sector: "SECTOR-1 HQ",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.12.125",
-    model: "AXIS Q6135-LE",
-    firmware: "11.8.42",
-    resolution: "1920×1080",
-    fps: 30,
-    sensitivity: 75,
-    recording: true,
-    uptime: 99.1,
-    mgrs: "43R WQ 1920 8190",
-    elevationM: 1692,
-    dataset: "MOT20",
-    aiWorkload: "tracking",
-    videoUrl: "/api/videos/cam_10",
-    precomputedUrl: "/api/precomputed/cam_10",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_10",
-  },
-  {
-    id: "CAM-11",
-    name: "WATCHTOWER 3",
-    label: "CAM-11 · WATCHTOWER 3",
-    zone: "PERIMETER EAST",
-    sector: "SECTOR-2 PERIMETER",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.14.130",
-    model: "CP PLUS CP-UNC-TA51ZL6",
-    firmware: "4.2.1",
-    resolution: "1920×1080",
-    fps: 30,
-    sensitivity: 82,
-    recording: true,
-    uptime: 98.7,
-    mgrs: "43R WQ 2140 8380",
-    elevationM: 1740,
-    dataset: "BORDER_THREAT",
-    aiWorkload: "intrusion",
-    videoUrl: "/api/videos/cam_11",
-    precomputedUrl: "/api/precomputed/cam_11",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_11",
-  },
-  {
-    id: "CAM-12",
-    name: "AMMUNITION BUNKERS",
-    label: "CAM-12 · AMMUNITION BUNKERS",
-    zone: "DEPOT",
-    sector: "SECTOR-3 DEPOT",
-    online: true,
-    aiEnabled: true,
-    ip: "10.142.20.135",
-    model: "BOSCH MIC IP 7100i",
-    firmware: "7.80.00",
-    resolution: "1920×1080",
-    fps: 30,
-    sensitivity: 90,
-    recording: true,
-    uptime: 99.5,
-    mgrs: "43R WQ 1610 7920",
-    elevationM: 1670,
-    dataset: "VIRAT",
-    aiWorkload: "intrusion",
-    videoUrl: "/api/videos/cam_12",
-    precomputedUrl: "/api/precomputed/cam_12",
-    metadataUrl: "http://127.0.0.1:5556/metadata/cam_12",
-  },
-];
+export const CAMERAS: Camera[] = TACTICAL_CAMERAS.map((tc) => ({
+  id: tc.id,
+  name: tc.name,
+  zone: (ZONES.includes(tc.zone as Zone) ? tc.zone : "HQ COMPLEX") as Zone,
+  online: tc.online,
+  ip: tc.ip,
+  model: tc.model,
+  firmware: "11.8.42",
+  resolution: tc.resolution,
+  fps: tc.fps,
+  sensitivity: tc.aiEnabled ? 85 : 60,
+  recording: tc.recording,
+  uptime: tc.uptimePct,
+}));
 
 export const cameraById = (id: string) => CAMERAS.find((c) => c.id === id);
 export const cameraLabel = (c: Camera) => `${c.id} · ${c.name}`;
@@ -386,7 +71,7 @@ export const NVRS: Nvr[] = [
   { id: "NVR-04", name: "DEPOT & MOTOR POOL", zone: "DEPOT", cams: 8, camsOk: 8, usedTb: 17.2, totalTb: 32, tempC: 40, state: "ok" },
 ];
 
-export type AlertClass = "person" | "vehicle" | "animal";
+export type AlertClass = "intrusion" | "person" | "vehicle" | "animal" | "anomaly";
 export type Severity = "high" | "med" | "low";
 export type AlertStatus = "new" | "ack" | "dispatched";
 
@@ -404,9 +89,11 @@ export type Alert = {
   ackAt?: number;
   /** Set on alerts pushed by the live generator so the row can animate in. */
   live?: boolean;
-  plate?: string;
-  details?: string;
-  modelName?: string;
+  /** Pipeline alerts only: id of the backing row in the backend events table. */
+  eventId?: number;
+  /** Pipeline alerts only: camera / post / company names from the backend database. */
+  site?: { cameraName?: string | null; postName?: string | null; companyName?: string | null };
+  trackId?: number | null;
 };
 
 export const OPERATOR = "CAPT. A. VERMA";
@@ -424,206 +111,65 @@ export const hm = (t: number) => hms(t).slice(0, 5);
 export const secondsOfDay = (d: Date) =>
   d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
 
+/** 35% intrusion, 30% person, 25% vehicle, 10% animal. */
+function drawClass(rng: Rng): AlertClass {
+  const r = rng();
+  if (r < 0.35) return "intrusion";
+  if (r < 0.65) return "person";
+  if (r < 0.90) return "vehicle";
+  return "animal";
+}
+
 /** Severity is a function of what was seen and where — never random on its own. */
 export function severityFor(cls: AlertClass, zone: Zone, cameraId: string): Severity {
+  if (cls === "intrusion") return "high";
+  if (cls === "anomaly") return "med";
   if (cls === "animal") return "low";
   if (cls === "person") {
-    if (cameraId === "CAM-12" || zone === "DEPOT" || cameraId === "CAM-05" || cameraId === "CAM-09") return "high";
-    if (zone === "PERIMETER EAST" || zone === "PERIMETER WEST") return "med";
+    if (cameraId === "CAM-12" || zone === "DEPOT" || zone === "PERIMETER EAST" || zone === "PERIMETER WEST") return "high";
     return "med";
   }
-  if (zone === "DEPOT") return "high";
+  if (zone === "DEPOT" || zone === "PERIMETER EAST" || zone === "PERIMETER WEST") return "high";
   return zone === "MOTOR POOL" ? "low" : "med";
 }
 
 const CONF: Record<AlertClass, [number, number]> = {
-  person: [88, 99.6],
-  vehicle: [84, 98.2],
-  animal: [72, 94],
+  anomaly: [60.0, 95.0],
+  intrusion: [92.0, 99.8],
+  person: [88.0, 99.6],
+  vehicle: [84.0, 98.2],
+  animal: [72.0, 94.0],
 };
 
+/**
+ * Incident numbering. The backlog counts DOWN from SEED_START (newest first) and
+ * live alerts count UP from SEED_START, so the two streams can never mint the
+ * same id — a collision would give two rows the same React key and silently
+ * corrupt filtering, sorting and selection.
+ */
 const SEED_START = 400;
 let liveSeq = SEED_START;
 
 export function alertId(n: number) {
   // ALT-<MMDD of the exercise date>-<sequence>
-  return `ALT-0929-${String(n).padStart(4, "0")}`;
+  return `ALT-0919-${String(n).padStart(4, "0")}`;
 }
 
-// Curated model incident events matching the real camera precomputed dataset
-const MODEL_INCIDENTS: {
-  camId: string;
-  cls: AlertClass;
-  severity: Severity;
-  confidence: number;
-  plate?: string;
-  details: string;
-  modelName: string;
-}[] = [
-  {
-    camId: "CAM-05",
-    cls: "person",
-    severity: "high",
-    confidence: 98.4,
-    details: "Armoury Sector 4 perimeter cordon breach detected",
-    modelName: "YOLOv11x + ByteTrack",
-  },
-  {
-    camId: "CAM-09",
-    cls: "person",
-    severity: "high",
-    confidence: 97.2,
-    details: "Warehouse 1 restricted polygon cordon breach",
-    modelName: "YOLOv11x Intrusion",
-  },
-  {
-    camId: "CAM-04",
-    cls: "person",
-    severity: "high",
-    confidence: 96.8,
-    details: "Depot south perimeter line crossing violation",
-    modelName: "ByteTrack Tripwire",
-  },
-  {
-    camId: "CAM-01",
-    cls: "person",
-    severity: "med",
-    confidence: 94.1,
-    details: "Pedestrian crossed inbound traffic lane outside marked walkway",
-    modelName: "ByteTrack Tripwire",
-  },
-  {
-    camId: "CAM-05",
-    cls: "person",
-    severity: "high",
-    confidence: 96.8,
-    details: "Armoury Sector 4 perimeter cordon boundary breach: unauthorized individual in secure zone",
-    modelName: "YOLOv11x Intrusion + ByteTrack",
-  },
-  {
-    camId: "CAM-09",
-    cls: "person",
-    severity: "high",
-    confidence: 97.4,
-    details: "Warehouse 1 perimeter security fence intrusion breach detected",
-    modelName: "YOLOv11x Intrusion Model",
-  },
-  {
-    camId: "CAM-06",
-    cls: "person",
-    severity: "high",
-    confidence: 93.5,
-    details: "Unauthorized individual detected in vehicle depot restricted transit corridor",
-    modelName: "YOLOv11x Intrusion",
-  },
-  {
-    camId: "CAM-11",
-    cls: "person",
-    severity: "high",
-    confidence: 95.3,
-    details: "Watchtower 3 perimeter fence boundary movement",
-    modelName: "YOLOv11 Optical Sensor",
-  },
-  {
-    camId: "CAM-12",
-    cls: "person",
-    severity: "high",
-    confidence: 99.1,
-    details: "Ammunition bunker security perimeter line crossed",
-    modelName: "ByteTrack Tripwire",
-  },
-  {
-    camId: "CAM-02",
-    cls: "person",
-    severity: "med",
-    confidence: 93.6,
-    details: "Perimeter East fence line motion detected",
-    modelName: "YOLOv11x Object Tracker",
-  },
-  {
-    camId: "CAM-07",
-    cls: "person",
-    severity: "low",
-    confidence: 91.2,
-    details: "HQ entrance pedestrian cluster tracking",
-    modelName: "MOT20 Edge Tracker",
-  },
-  {
-    camId: "CAM-08",
-    cls: "person",
-    severity: "low",
-    confidence: 92.8,
-    details: "Maintenance crew detected in motor pool restricted service bay",
-    modelName: "YOLOv11x Object Tracker",
-  },
-  {
-    camId: "CAM-03",
-    cls: "person",
-    severity: "med",
-    confidence: 89.8,
-    details: "Checkpoint Alpha unidentified pedestrian in vehicle lane",
-    modelName: "MOT20 Edge Tracker",
-  },
-  {
-    camId: "CAM-10",
-    cls: "person",
-    severity: "med",
-    confidence: 90.4,
-    details: "Airstrip access gate boundary activity",
-    modelName: "YOLOv11x Object Tracker",
-  },
-  {
-    camId: "CAM-01",
-    cls: "person",
-    severity: "med",
-    confidence: 96.2,
-    details: "Unidentified person loitering near Main Gate outer turnstile",
-    modelName: "MOT20 Edge Tracker",
-  },
-  {
-    camId: "CAM-06",
-    cls: "person",
-    severity: "high",
-    confidence: 94.7,
-    details: "Perimeter fence breach alert near depot rear ammunition loading bay",
-    modelName: "YOLOv11x Intrusion",
-  },
-  {
-    camId: "CAM-02",
-    cls: "animal",
-    severity: "low",
-    confidence: 89.6,
-    details: "Wild boar movement near eastern buffer ditch",
-    modelName: "YOLOv11x Animal Classifier",
-  },
-  {
-    camId: "CAM-11",
-    cls: "animal",
-    severity: "low",
-    confidence: 86.4,
-    details: "Stray animal detected outside perimeter fence",
-    modelName: "YOLOv11x Animal Classifier",
-  },
-];
-
 function makeAlert(rng: Rng, t: number, n: number, live?: boolean): Alert {
-  const inc = pick(rng, MODEL_INCIDENTS);
-  const cam = CAMERAS.find((c) => c.id === inc.camId) || CAMERAS[0];
-  const [lo, hi] = CONF[inc.cls];
-
+  // Only CAM-05 has implemented behavior analytics for now
+  const cam = CAMERAS.find((c) => c.id === "CAM-05")!;
+  const cls = drawClass(rng);
+  const [lo, hi] = CONF[cls];
   return {
     id: alertId(n),
     t,
     cameraId: cam.id,
     zone: cam.zone,
-    cls: inc.cls,
-    severity: inc.severity,
+    cls,
+    severity: severityFor(cls, cam.zone, cam.id),
     confidence: Math.round(range(rng, lo, hi) * 10) / 10,
     status: "new",
     live,
-    plate: inc.plate,
-    details: inc.details,
-    modelName: inc.modelName,
   };
 }
 
@@ -637,46 +183,21 @@ export function seedAlerts(count = 48, seed = 0x15cc): Alert[] {
   let t = 14 * 3600 + 32 * 60 + 8;
   let n = SEED_START;
   liveSeq = SEED_START;
-
   for (let i = 0; i < count; i++) {
-    // Top 3 alerts match active high-priority incidents
-    let a: Alert;
-    if (i < MODEL_INCIDENTS.length) {
-      const inc = MODEL_INCIDENTS[i];
-      const cam = CAMERAS.find((c) => c.id === inc.camId) || CAMERAS[0];
-      a = {
-        id: alertId(n--),
-        t,
-        cameraId: cam.id,
-        zone: cam.zone,
-        cls: inc.cls,
-        severity: inc.severity,
-        confidence: inc.confidence,
-        status: i < 3 ? "new" : "ack",
-        plate: inc.plate,
-        details: inc.details,
-        modelName: inc.modelName,
-      };
+    const a = makeAlert(rng, t, n--);
+    // Historical event log: all past events are logged and resolved
+    const r = rng();
+    if (r < 0.85) {
+      a.status = "ack";
+      a.ackBy = pick(rng, ["A. VERMA", "R. SINGH", "M. KUMAR", "P. NAIR"]);
+      a.ackAt = a.t + intRange(rng, 20, 240);
     } else {
-      a = makeAlert(rng, t, n--);
+      a.status = "dispatched";
+      a.ackBy = "A. VERMA";
+      a.ackAt = a.t + intRange(rng, 15, 90);
     }
-
-    // Older alerts are mostly resolved; the newest few are still open.
-    if (i > 2) {
-      const r = rng();
-      if (r < 0.72) {
-        a.status = "ack";
-        a.ackBy = pick(rng, ["A. VERMA", "R. SINGH", "M. KUMAR", "P. NAIR"]);
-        a.ackAt = a.t + intRange(rng, 20, 240);
-      } else if (r < 0.88) {
-        a.status = "dispatched";
-        a.ackBy = "A. VERMA";
-        a.ackAt = a.t + intRange(rng, 15, 90);
-      }
-    }
-
     out.push(a);
-    t -= intRange(rng, 120, 1800);
+    t -= intRange(rng, 90, 1500);
   }
   return out;
 }
@@ -687,6 +208,8 @@ export function nextAlert(rng: Rng, now: Date): Alert {
 }
 
 export const CLASS_LABEL: Record<AlertClass, string> = {
+  anomaly: "Anomaly",
+  intrusion: "Intrusion",
   person: "Person",
   vehicle: "Vehicle",
   animal: "Animal",

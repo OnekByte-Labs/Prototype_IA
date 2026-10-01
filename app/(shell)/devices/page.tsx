@@ -1,22 +1,14 @@
 import type { Metadata } from "next";
-import { DevicesToolbar, KpiCards } from "@/components/devices/DevicesOverview";
-import { NvrPanel, TerminalPanel } from "@/components/devices/PreviewPanels";
-import { SensorMatrix } from "@/components/devices/SensorMatrix";
+import { DeviceRegistry } from "@/components/devices/DeviceRegistry";
 
 export const metadata: Metadata = {
-  title: "ISCC // SYS-DIAGNOSTICS & TELEMETRY",
+  title: "Device registry · ARGUS",
 };
 
-export default function DevicesPage() {
-  return (
-    <main className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto custom-scroll p-2.5 gap-2.5">
-      <DevicesToolbar />
-      <KpiCards />
-      <SensorMatrix />
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5 pb-2">
-        <NvrPanel />
-        <TerminalPanel />
-      </div>
-    </main>
-  );
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+
+/** `?nvr=NVR-03` opens that recorder; `?q=CAM-40` pre-fills the search (linked from Argus Agent). */
+export default async function DevicesPage({ searchParams }: PageProps<"/devices">) {
+  const { nvr, q } = await searchParams;
+  return <DeviceRegistry key={`${one(nvr) ?? ""}|${one(q) ?? ""}`} initialNvr={one(nvr)} initialQuery={one(q)} />;
 }

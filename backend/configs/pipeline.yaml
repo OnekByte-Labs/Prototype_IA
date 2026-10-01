@@ -3,7 +3,48 @@ models:
   plate_detector: {path: models/yolov8n_plate.onnx, conf_threshold: 0.3, iou_threshold: 0.45}
   ocr: {model_path: models/cct-xs-v2-global-model.onnx, config_path: models/plate_config.yaml}
 server: {host: 0.0.0.0, port: 5556}
+alerts: {cooldown_s: 120, min_confidence: 0.5}
+# Alert evidence snapshots (backend/outputs/evidence); oldest pruned beyond max_files
+evidence: {max_files: 5000}
+# Alert → incident grouping and device-health history (src/situation.py): an alert joins its camera's
+# incident if it fires within incident_gap_s of the last one; health transitions are checked every tick
+situation: {incident_gap_s: 600, health_tick_s: 5, health_grace_s: 20}
+# Argus Agent (src/agent): local Ollama model answering from the situation tools. Nothing leaves the laptop.
+agent:
+  ollama_url: http://127.0.0.1:11434
+  model: qwen3.5:4b
+  num_ctx: 16384
+  temperature: 0.2
+  think: false             # qwen3.5 reasoning mode: better on hard questions, several times slower on the laptop GPU
+  keep_alive: 10m           # GPU memory goes back to detection after 10 idle minutes
+  gpu_reserve_mb: 800       # VRAM always left free for the detection pipelines (mode switches load models)
+  max_tool_rounds: 4
+  max_answer_tokens: 450    # caps answer length (generation is the slow part with layers on the CPU)
+  history_turns: 6
+detect_interval: 2
+# Per-camera detection pipelines (runtime-switchable, see /api/v1/...detection-mode)
+pipelines:
+  intrusion_confirm_frames: 5     # frames inside the zone before PERIMETER_BREACH
+  anpr_max_per_frame: 2           # vehicles through LPDNet→LPRNet per detector frame
+  anpr_min_vehicle_px: 80         # smaller vehicles can't carry a readable plate
+  anpr_min_plate_conf: 0.6        # LPRNet mean char confidence to accept a read
+  anomaly_warmup_s: 60            # baseline learning time before anomaly rules arm
+  anomaly_loiter_s: 20
+  anomaly_speed_k: 4.0            # robust z (median + k*MAD) for abnormal motion
+  anomaly_min_speed: 1.2          # body-heights/s floor for abnormal motion
+# NOTE: `analytics` below is legacy (mock mode). In live mode zones/lines live
+# in the database per camera (migrated from here on first start).
+workers: 3
 analytics:
+  cam_09:
+    type: intrusion_zone
+    zone:
+    - [70.0, 381.0]
+    - [1070.0, 510.0]
+    - [447.0, 1080.0]
+    - [0.0, 758.0]
+    buffer_px: 15
+    required_consecutive_frames: 8
   cam_02:
     type: traffic_count
     line:
@@ -22,16 +63,10 @@ analytics:
     - [327.0, 1129.0]
     - [2339.0, 1023.0]
     - [3820.0, 1400.0]
-  cam_09:
+  feed_intel_people_detection:
     type: intrusion_zone
-    line:
-    - [384.0, 540.0]
-    - [1536.0, 540.0]
     zone:
-    - [0.0, 80.0]
-    - [780.0, 80.0]
-    - [670.0, 650.0]
-    - [230.0, 971.0]
-    - [0.0, 817.0]
-    buffer_px: 15
-    required_consecutive_frames: 8
+    - [120.0, 220.0]
+    - [567.0, 211.0]
+    - [535.0, 281.0]
+    - [119.0, 374.0]

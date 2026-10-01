@@ -4,14 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "mock": "backend\\venv\\Scripts\\python.exe backend\\src\\run_mock.py",
     "live": "backend\\venv\\Scripts\\python.exe backend\\src\\run_live.py",
+    "live:linux": "backend/venv/bin/python backend/src/run_live.py",
+    "agent:ollama": "ollama serve",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "hls.js": "^1.7.3",
+    "leaflet": "^1.9.4",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

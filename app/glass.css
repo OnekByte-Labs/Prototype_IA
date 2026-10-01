@@ -1,0 +1,106 @@
+/* ============================================================================
+   Liquid-glass materials for the main dashboard (Stitch "ISCC Liquid Glass
+   Command Console"). Used inside `.theme-glass`.
+
+   The Stitch panels use backdrop-filter, but every panel sits on the flat
+   #0c0d0f canvas, so the blur changes nothing visible. It is left out on
+   purpose: it would force a compositing layer over the live video tiles.
+   ========================================================================== */
+
+.glass-panel {
+  --gp-from: rgba(22, 22, 26, 0.7);
+  --gp-to: rgba(5, 5, 8, 0.8);
+  --gp-top: rgba(255, 255, 255, 0.28);
+  --gp-side: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(var(--gp-from) 0%, var(--gp-to) 100%);
+  border: 1px solid var(--gp-side);
+  border-top-color: var(--gp-top);
+  box-shadow:
+    0 16px 40px 0 rgba(0, 0, 0, 0.85),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 0 16px 0 rgba(255, 255, 255, 0.02);
+}
+
+/* KPI cards and the title bar: slightly lighter drop shadow */
+.glass-panel-kpi {
+  --gp-from: rgba(24, 24, 28, 0.65);
+  --gp-to: rgba(6, 6, 8, 0.78);
+  box-shadow:
+    0 12px 30px 0 rgba(0, 0, 0, 0.75),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.glass-panel-bar {
+  --gp-from: rgba(26, 26, 30, 0.68);
+  --gp-to: rgba(8, 8, 10, 0.78);
+  --gp-top: rgba(255, 255, 255, 0.32);
+  --gp-side: rgba(255, 255, 255, 0.13);
+}
+
+/* The "device faults" card is amber-tinted in the design */
+.glass-panel-warn {
+  --gp-from: rgba(32, 22, 14, 0.65);
+  --gp-to: rgba(10, 8, 6, 0.8);
+  --gp-top: rgba(255, 190, 80, 0.32);
+  --gp-side: rgba(255, 159, 10, 0.28);
+}
+
+.glass-panel-subtle {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.glass-button:active {
+  background: rgba(255, 255, 255, 0.04);
+  transform: scale(0.98);
+}
+
+/* A camera tile: radial dark well with a fine border */
+.glass-viewport {
+  background: radial-gradient(circle at 50% 50%, #151820 0%, #060709 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cctv-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+@keyframes glass-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.92);
+  }
+}
+.glass-pulse {
+  animation: glass-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Cards nested inside a glass page panel: a quiet inset plane, not a second glass slab */
+.theme-glass .ds-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: none;
+}
+
+/* Checked boxes sit on the blue accent: white tick */
+.theme-glass .ds-check:checked {
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%23ffffff' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
