@@ -471,15 +471,15 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
         catchUpAlerts();
       };
       ws.onmessage = (e) => {
-        let m: Record<string, unknown>;
+        let m: any;
         try {
           m = JSON.parse(e.data);
         } catch {
           return;
         }
-        if (m.type === "snapshot" && Array.isArray(m.cameras)) (m.cameras as CameraPipelineState[]).forEach(applyState);
-        else if (m.type === "pipeline_state") applyState(m as unknown as CameraPipelineState);
-        else if (m.type === "alert") ingestAlert(m.alert as Alert);
+        if (m.type === "snapshot") m.cameras.forEach(applyState);
+        else if (m.type === "pipeline_state") applyState(m);
+        else if (m.type === "alert") ingestAlert(m.alert);
         else if (m.type === "event") {
           const ev: PipelineEvent = m.event;
           setRecentEvents((prev) => ({ ...prev, [ev.camera_id]: [ev, ...(prev[ev.camera_id] ?? [])].slice(0, 25) }));
@@ -631,7 +631,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   // Optimistic analytics edits, held only until the pipeline confirms them.
   // Not persisted: the pipeline (pipeline.yaml) is the single source of truth,
   // so the UI can never show a zone the backend isn't actually using.
-  const [analyticsOverrides, setAnalyticsOverrides] = useState<Record<string, Record<string, unknown>>>({});
+  const [analyticsOverrides, setAnalyticsOverrides] = useState<Record<string, any>>({});
   const dropOverride = useCallback((id: string) => {
     setAnalyticsOverrides((prev) => {
       if (!(id in prev)) return prev;
@@ -832,7 +832,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     setAnalyticsOverrides((prev) => ({ ...prev, [id]: optimisticAnalytics }));
 
     try {
-      const payload: Record<string, unknown> = { type };
+      const payload: any = { type };
       if (type === 'traffic_count') {
         payload.line = defaultLine;
       } else if (type === 'intrusion_zone') {
@@ -884,7 +884,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
 
       const analytics = analyticsOverrides[c.id] !== undefined
         ? analyticsOverrides[c.id]
-        : (((liveData as unknown as Record<string, unknown>)?.analytics as Record<string, unknown> | undefined) ?? c.analytics);
+        : ((liveData as any)?.analytics ?? c.analytics);
       
       return { 
         ...c, 

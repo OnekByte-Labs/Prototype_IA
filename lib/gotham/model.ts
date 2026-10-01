@@ -31,7 +31,7 @@ export type Camera = {
   mjpegUrl?: string;
   metadataUrl?: string;
   aiEnabled?: boolean;
-  analytics?: Record<string, unknown>;
+  analytics?: any;
 };
 
 export const CAMERAS: Camera[] = TACTICAL_CAMERAS.map((tc) => ({
