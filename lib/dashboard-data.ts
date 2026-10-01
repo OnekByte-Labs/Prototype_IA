@@ -1,6 +1,4 @@
 
-import type { AnalyticsConfig } from "./gotham/model";
-
 // Mock data copied verbatim from the Stitch screen "ISCC Main Command Dashboard - 3-Zone Redesign".
 
 export type Kpi = {
@@ -18,29 +16,9 @@ export const kpis: Kpi[] = [
 
 export type Camera = {
   id: string;
-  name?: string;
   label: string;
-  zone?: string;
-  sector?: string;
   online: boolean;
-  ip?: string;
-  model?: string;
-  firmware?: string;
-  resolution?: string;
-  fps?: number;
-  sensitivity?: number;
-  recording?: boolean;
-  uptime?: number;
-  mgrs?: string;
-  elevationM?: number;
-  dataset?: string;
-  aiWorkload?: string;
-  aiEnabled?: boolean;
-  videoUrl?: string;
   mjpegUrl?: string;
-  metadataUrl?: string;
-  precomputedUrl?: string;
-  analytics?: AnalyticsConfig;
 };
 
 
@@ -107,7 +85,7 @@ export const alerts: Alert[] = [
   {
     id: "a4",
     type: "PERSON",
-    camera: "CAM-03 · CHECKPOINT ALPHA",
+    camera: "CAM-03 · GROUND FLOOR",
     time: "13:58:04",
     severity: "LOW",
   },

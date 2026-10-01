@@ -5,15 +5,15 @@ export type NavEntry = {
   href?: string;
 };
 
-/** Single source of truth for the ISCC primary navigation. Add `href` when a screen is implemented. */
+/** Single source of truth for the ARGUS primary navigation. Add `href` when a screen is implemented. */
 export const navItems: NavEntry[] = [
   { label: "Dashboard", icon: "dashboard", href: "/dashboard" },
   { label: "Alerts", icon: "notifications", href: "/alerts" },
   { label: "Map", icon: "map", href: "/map" },
   { label: "Devices", icon: "hub", href: "/devices" },
   { label: "Cameras", icon: "videocam", href: "/cameras" },
-  { label: "ANPR", icon: "directions_car", href: "/vehicles" },
-  { label: "Reports", icon: "description", href: "/reports" },
+  { label: "Argus Agent", icon: "forum", href: "/argus" },
+  { label: "Reports", icon: "description" },
   { label: "Admin", icon: "vpn_key", href: "/admin" },
 ];
 

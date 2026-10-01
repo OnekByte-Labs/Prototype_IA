@@ -17,58 +17,47 @@ try:
     import lapx
     _HAVE_LAPX = True
 except ImportError:
-    try:
-        import lap as lapx
-        _HAVE_LAPX = True
-    except ImportError:
-        _HAVE_LAPX = False
+    _HAVE_LAPX = False
 
 logger = logging.getLogger(__name__)
 
 
 class KalmanBoxState:
-    """Simple Kalman-like state for a bounding box: [cx, cy, w, h, vx, vy]."""
+    """Simple Kalman-like state for a bounding box: [cx, cy, w, h, vx, vy, vw, vh]."""
 
     def __init__(self, bbox: Tuple[int, int, int, int]):
         x1, y1, x2, y2 = bbox
         cx = (x1 + x2) / 2.0
         cy = (y1 + y2) / 2.0
-        w = max(10.0, float(abs(x2 - x1)))
-        h = max(10.0, float(abs(y2 - y1)))
-        # [cx, cy, w, h, vx, vy]
-        self.state = np.array([cx, cy, w, h, 0.0, 0.0], dtype=np.float64)
+        w = x2 - x1
+        h = y2 - y1
+        self.state = np.array([cx, cy, w, h, 0.0, 0.0, 0.0, 0.0], dtype=np.float64)
 
-    def predict(self):
-        """Advance position by velocity. Size stays stable without runaway drift."""
-        self.state[0] += self.state[4]  # cx += vx
-        self.state[1] += self.state[5]  # cy += vy
-        self.state[4] *= 0.9  # velocity damping
-        self.state[5] *= 0.9
+    def predict(self, step: float = 1.0):
+        """Advance state by ``step`` update-intervals (constant velocity).
+
+        Velocity is learned per detector update; when the detector only runs
+        every N frames, each video frame advances 1/N of that.
+        """
+        self.state[:4] += self.state[4:] * step
 
     def update(self, bbox: Tuple[int, int, int, int]):
         """Update state with a new measurement."""
         x1, y1, x2, y2 = bbox
         cx = (x1 + x2) / 2.0
         cy = (y1 + y2) / 2.0
-        w = max(10.0, float(abs(x2 - x1)))
-        h = max(10.0, float(abs(y2 - y1)))
-
-        vx = cx - self.state[0]
-        vy = cy - self.state[1]
-
-        alpha = 0.7
-        self.state[0] = alpha * cx + (1.0 - alpha) * self.state[0]
-        self.state[1] = alpha * cy + (1.0 - alpha) * self.state[1]
-        self.state[2] = alpha * w + (1.0 - alpha) * self.state[2]
-        self.state[3] = alpha * h + (1.0 - alpha) * self.state[3]
-        self.state[4] = alpha * vx + (1.0 - alpha) * self.state[4]
-        self.state[5] = alpha * vy + (1.0 - alpha) * self.state[5]
+        w = x2 - x1
+        h = y2 - y1
+        measurement = np.array([cx, cy, w, h], dtype=np.float64)
+        # Simple exponential moving average update (α = 0.6)
+        alpha = 0.6
+        velocity = measurement - self.state[:4]
+        self.state[:4] = alpha * measurement + (1 - alpha) * self.state[:4]
+        self.state[4:] = alpha * velocity + (1 - alpha) * self.state[4:]
 
     @property
     def bbox(self) -> Tuple[int, int, int, int]:
         cx, cy, w, h = self.state[:4]
-        w = max(10.0, w)
-        h = max(10.0, h)
         return (
             int(cx - w / 2),
             int(cy - h / 2),
@@ -80,11 +69,8 @@ class KalmanBoxState:
 class Track:
     """A single tracked object."""
 
-    _next_id = 1
-
-    def __init__(self, bbox: Tuple[int, int, int, int], class_id: int, confidence: float):
-        self.track_id: int = Track._next_id
-        Track._next_id += 1
+    def __init__(self, track_id: int, bbox: Tuple[int, int, int, int], class_id: int, confidence: float):
+        self.track_id: int = track_id
         self.class_id: int = class_id
         self.confidence: float = confidence
         self.kalman = KalmanBoxState(bbox)
@@ -97,8 +83,8 @@ class Track:
     def bbox(self) -> Tuple[int, int, int, int]:
         return self.kalman.bbox
 
-    def predict(self):
-        self.kalman.predict()
+    def predict(self, step: float = 1.0):
+        self.kalman.predict(step)
         self.age += 1
         self.time_since_update += 1
 
@@ -147,11 +133,7 @@ def _linear_assignment(cost_matrix: np.ndarray, threshold: float):
     if _HAVE_LAPX:
         # lapx expects a cost matrix (lower is better), so use 1 - IOU
         cost = 1.0 - cost_matrix
-        lap_res = lapx.lapjv(cost, extend_cost=True, cost_limit=1.0 - threshold)
-        if len(lap_res) == 3:
-            _, row_ind, col_ind = lap_res
-        else:
-            row_ind, col_ind = lap_res
+        row_ind, col_ind = lapx.lapjv(cost, extend_cost=True, cost_limit=1.0 - threshold)
         matches = []
         unmatched_a = []
         for r, c in enumerate(row_ind):
@@ -220,12 +202,33 @@ class ByteTracker:
         self.iou_threshold = iou_threshold
         self.max_age = max_age
         self.tracks: List[Track] = []
+        # Fraction of a detector interval per video frame (1/detect_interval).
+        self.motion_step = 1.0
+        # Per-tracker (i.e. per-stream) id counter — a shared class-level
+        # counter let one stream's loop reset hand out ids still live elsewhere.
+        self._next_id = 1
+
+    def _visible(self) -> List[Track]:
+        """Confirmed tracks matched in the latest detector step (or the one
+        before, to ride out single-frame misses). Lost tracks keep coasting
+        internally for re-association but aren't reported: their extrapolated
+        boxes drift and grow and show up as ghost boxes."""
+        return [t for t in self.tracks if t.is_confirmed and t.time_since_update <= 1]
+
+    def predict_only(self) -> List[Track]:
+        """Advance tracks one video frame on a frame the detector skipped.
+
+        Tracks aren't aged here — ageing counts detector updates only.
+        """
+        for t in self.tracks:
+            t.kalman.predict(self.motion_step)
+        return self._visible()
 
     def reset_on_loop(self):
         """Clear all tracks when the video loops back to frame 0."""
         n = len(self.tracks)
         self.tracks.clear()
-        Track._next_id = 1
+        self._next_id = 1
         logger.info("[%s] Tracker reset on loop — cleared %d tracks", self.stream_id, n)
 
     def update(
@@ -242,11 +245,11 @@ class ByteTracker:
         """
         # Predict step
         for t in self.tracks:
-            t.predict()
+            t.predict(self.motion_step)
 
         if not detections:
             self.tracks = [t for t in self.tracks if t.time_since_update <= self.max_age]
-            return [t for t in self.tracks if t.is_confirmed]
+            return self._visible()
 
         det_array = np.array([d[0] for d in detections], dtype=np.float64)  # (N, 4)
         det_confs = np.array([d[1] for d in detections])
@@ -301,13 +304,15 @@ class ByteTracker:
         # ── Create new tracks for unmatched high-conf detections ──
         for d_idx in unmatched_high_dets:
             new_track = Track(
+                track_id=self._next_id,
                 bbox=tuple(det_array[d_idx].astype(int)),
                 class_id=int(det_classes[d_idx]),
                 confidence=float(det_confs[d_idx]),
             )
+            self._next_id += 1
             self.tracks.append(new_track)
 
         # ── Remove dead tracks ──
         self.tracks = [t for t in self.tracks if t.time_since_update <= self.max_age]
 
-        return [t for t in self.tracks if t.is_confirmed and t.time_since_update <= 1]
+        return self._visible()

@@ -1,28 +1,14 @@
 import type { Metadata } from "next";
-import { CameraPopover, MapControls, MapToolbar } from "@/components/map/MapOverlays";
-import { InspectionPanel, ZonesPanel } from "@/components/map/MapSidePanels";
-import { TacticalMapSvg } from "@/components/map/TacticalMapSvg";
+import { TacticalMapConsole } from "@/components/map/gis/TacticalMapConsole";
 
 export const metadata: Metadata = {
-  title: "AEGIS C2 // TAC-GIS - CANTONMENT SECTOR 04",
+  title: "Tactical map · ARGUS",
+  description: "Battalion → Company → Post → Camera tactical GIS with live status, FOV and coverage analysis.",
 };
 
-/** Split workspace: 70% tactical GIS map, 30% zones list and CAM-12 inspection HUD. */
-export default function MapPage() {
-  return (
-    <main className="flex-1 flex w-full overflow-hidden relative">
-      <section className="w-[70%] h-full relative cad-grid border-r border-outline-variant flex flex-col overflow-hidden">
-        <MapToolbar />
-        <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
-          <TacticalMapSvg />
-          <CameraPopover />
-          <MapControls />
-        </div>
-      </section>
-      <aside className="w-[30%] h-full bg-surface-container-low flex flex-col justify-between overflow-hidden">
-        <ZonesPanel />
-        <InspectionPanel />
-      </aside>
-    </main>
-  );
+/** Tactical GIS. `?camera=CAM-07` opens a camera, `?company=COY-01` a company (NVR / ingest health), `?alert=<id>&camera=<id>` focuses an alert's origin. */
+export default async function MapPage({ searchParams }: PageProps<"/map">) {
+  const sp = await searchParams;
+  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+  return <TacticalMapConsole initialCameraId={one(sp.camera)} initialAlertId={one(sp.alert)} initialCompanyId={one(sp.company)} />;
 }

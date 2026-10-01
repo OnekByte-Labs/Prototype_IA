@@ -1,0 +1,178 @@
+# Command-center cameras. Each camera is bound to a live NVR channel
+# (streams.yaml nvrs) and runs exactly ONE detection pipeline at a time. `default_mode` only seeds
+# the database on first start — afterwards the database (backend/data/
+# command_center.db) is the source of truth, changed at runtime through
+#   PATCH /api/v1/cameras/{camera_id}/detection-mode
+# Modes: none | intrusion | anpr | vehicle_counting | person_counting | anomaly
+#
+# Live binding: `nvr` (streams.yaml nvrs[].id) + `nvr_type` (that NVR's `type`: cpplus | hikvision —
+# required, checked against streams.yaml at start-up) + `channel` (1-based NVR channel)
+# + optional `subtype` (1 = sub stream, the default for tiles and AI; 0 = main
+# stream for high-resolution analysis). The main stream is always available on
+# demand for the focused view. Cameras without an NVR channel have no video
+# source (NO FEED) — there are no recorded/mock feeds.
+cameras:
+- id: CAM-01
+  name: CHECKPOST 1
+  default_mode: vehicle_counting
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 1
+- id: CAM-02
+  name: CHECKPOST 2
+  default_mode: vehicle_counting
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 2
+- id: CAM-03
+  name: GROUND FLOOR
+  default_mode: person_counting
+  nvr: HIK-01
+  nvr_type: hikvision
+  channel: 3
+- id: CAM-04
+  name: CHECKPOST 3
+  default_mode: person_counting
+  nvr: HIK-01
+  nvr_type: hikvision
+  channel: 4
+- id: CAM-05
+  name: SITTING AREA
+  default_mode: anomaly
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 5
+- id: CAM-06
+  name: PERIMETER E POST 2
+  default_mode: anpr
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 6
+- id: CAM-07
+  name: SHAMSHABARI WIRE-E
+  default_mode: anpr
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 7
+- id: CAM-08
+  name: GULLY APPROACH N-E
+  default_mode: person_counting
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 8
+- id: CAM-09
+  name: AMMUNITION DUMP SECTOR
+  default_mode: intrusion
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 9
+- id: CAM-10
+  name: FUEL RESERVE DEPOT
+  default_mode: person_counting
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 10
+- id: CAM-11
+  name: TACTICAL UAV DRONE 1
+  default_mode: vehicle_counting
+  nvr: HIK-01
+  nvr_type: hikvision
+  channel: 11
+- id: CAM-12
+  name: ARMOURY PERIMETER
+  default_mode: none
+- id: CAM-13
+  name: OFFICE AREA
+  default_mode: vehicle_counting
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 13
+- id: CAM-14
+  name: TERRACE
+  default_mode: vehicle_counting
+  nvr: HIK-01
+  nvr_type: hikvision
+  channel: 14
+- id: CAM-15
+  name: TERRACE 2
+  default_mode: person_counting
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 15
+- id: CAM-16
+  name: BARRACKS ACCESS ROAD
+  default_mode: intrusion
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 16
+- id: CAM-17
+  name: ROAD ENTRY ANPR-N
+  default_mode: anpr
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 17
+- id: CAM-18
+  name: CONVOY STAGING ANPR
+  default_mode: none
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 18
+- id: CAM-19
+  name: SUPPLY ROUTE 4B
+  default_mode: none
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 19
+- id: CAM-20
+  name: REPAIR HANGAR INT
+  default_mode: person_counting
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 20
+- id: CAM-21
+  name: MAIN LOBBY
+  default_mode: none
+  nvr: NVR-01
+  nvr_type: cpplus
+  channel: 3
+- id: CAM-22
+  name: MOTOR POOL EXIT ANPR
+  default_mode: anpr
+- id: CAM-23
+  name: HEAVY TANKER BAY
+  default_mode: none
+- id: CAM-24
+  name: TACTICAL UAV DRONE 2
+  default_mode: none
+- id: CAM-25
+  name: SHAMSHABARI RIDGE POST
+  default_mode: person_counting
+- id: CAM-26
+  name: VALLEY APPROACH POST
+  default_mode: person_counting
+- id: CAM-27
+  name: FORWARD POST BRAVO
+  default_mode: none
+- id: CAM-28
+  name: DEPOT PERIMETER N
+  default_mode: anomaly
+- id: CAM-29
+  name: OFFICERS MESS ACCESS
+  default_mode: person_counting
+- id: CAM-30
+  name: SIGNAL CORPS TOWER
+  default_mode: none
+- id: CAM-31
+  name: SOUTH HELIPAD POST
+  default_mode: person_counting
+- id: CAM-32
+  name: KERAN OUTPOST PERIMETER
+  default_mode: none
+# Local test video: a 4K road-traffic clip looped as a live stream (streams.yaml FILE-01).
+# It is registered like any other camera; it is not placed on the map until you add it there.
+- id: CAM-33
+  name: 4K TRAFFIC TEST FEED
+  default_mode: vehicle_counting
+  nvr: FILE-01
+  nvr_type: file
+  channel: 1

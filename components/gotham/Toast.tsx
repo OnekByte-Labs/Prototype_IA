@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { StatusDot } from "@/components/ds";
 
 export type ToastTone = "default" | "ok" | "warn" | "err";
 
@@ -19,12 +20,7 @@ const ToastCtx = createContext<(text: string, tone?: ToastTone) => void>(() => {
 /** Every operator action gets a receipt. No silent successes. */
 export const useToast = () => useContext(ToastCtx);
 
-const TONE: Record<ToastTone, string> = {
-  default: "border-g-border-strong text-g-text",
-  ok: "border-g-green/50 text-g-green",
-  warn: "border-g-amber/50 text-g-amber",
-  err: "border-g-red/50 text-g-red",
-};
+const DOT: Record<ToastTone, string> = { default: "idle", ok: "ok", warn: "warn", err: "crit" };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -52,14 +48,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         aria-live="polite"
         data-testid="toasts"
-        className="fixed bottom-3 right-3 z-[100] flex flex-col gap-1.5 items-end pointer-events-none"
+        className="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 items-end pointer-events-none"
       >
         {toasts.map((t) => (
           <div
             key={t.id}
             data-testid="toast"
-            className={`animate-g-toast bg-g-raised border rounded-[2px] px-2.5 py-1.5 text-data font-data ${TONE[t.tone]}`}
+            className="animate-toast bg-raised border border-line rounded-lg shadow-pop pl-3 pr-4 py-2.5 text-ui text-ink flex items-center gap-2.5 max-w-sm"
           >
+            <StatusDot tone={DOT[t.tone]} />
             {t.text}
           </div>
         ))}

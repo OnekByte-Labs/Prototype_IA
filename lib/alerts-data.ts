@@ -38,7 +38,7 @@ export const activeAlert: AlertRow = {
 export const alerts: AlertRow[] = [
   { time: "14:28:10", incidentId: "INC-8820", cameraId: "CAM-01", location: "MAIN GATE PERIMETER", classification: "VEHICLE", confidence: 94.1, confidenceTone: "tertiary", severity: "MED", status: "ACKNOWLEDGED", operator: "AV (Capt. Verma)", operatorStrong: true },
   { time: "14:15:22", incidentId: "INC-8819", cameraId: "CAM-07", location: "PERIMETER E - SECTOR 2", classification: "ANIMAL", confidence: 89.6, confidenceTone: "outline", severity: "LOW", status: "ACKNOWLEDGED", operator: "RS (Havildar Singh)" },
-  { time: "13:58:04", incidentId: "INC-8818", cameraId: "CAM-03", location: "CHECKPOINT ALPHA", classification: "PERSON", confidence: 99.1, confidenceTone: "primary", severity: "LOW", status: "ACKNOWLEDGED", operator: "AV" },
+  { time: "13:58:04", incidentId: "INC-8818", cameraId: "CAM-03", location: "GROUND FLOOR", classification: "PERSON", confidence: 99.1, confidenceTone: "primary", severity: "LOW", status: "ACKNOWLEDGED", operator: "AV" },
   { time: "13:42:19", incidentId: "INC-8817", cameraId: "CAM-14", location: "VEHICLE DEPOT NORTH", classification: "VEHICLE", confidence: 92.5, confidenceTone: "tertiary", severity: "MED", status: "DISPATCHED", operator: "AV" },
   { time: "13:21:05", incidentId: "INC-8816", cameraId: "CAM-09", location: "AMMUNITION DUMP B-1", classification: "PERSON", confidence: 97.2, confidenceTone: "error", severity: "HIGH", status: "DISPATCHED", operator: "MK (Subedar Kumar)" },
   { time: "12:45:30", incidentId: "INC-8815", cameraId: "CAM-05", location: "MOTOR POOL BAY 3", classification: "VEHICLE", confidence: 95.8, confidenceTone: "secondary", severity: "LOW", status: "ACKNOWLEDGED", operator: "RS" },

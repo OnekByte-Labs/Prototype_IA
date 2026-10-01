@@ -2,7 +2,12 @@
 opencv-python>=4.8.0
 numpy>=1.24.0
 pyyaml>=6.0
-onnxruntime-gpu>=1.16.0  # Upgraded for CUDA support
+# [cuda,cudnn] pulls the CUDA 13 / cuDNN 9 runtime as pip wheels (preloaded
+# in src/inference/gpu.py) so no system CUDA install is needed.
+onnxruntime-gpu[cuda,cudnn]>=1.30.0
+# Optional: TensorRT FP16 for the YOLO models (~2.5-3.5x faster than CUDA EP).
+# Linux/Windows NVIDIA only; remove this line on machines without an NVIDIA GPU.
+tensorrt-cu13-libs==10.16.1.11
 
 # Tracker (ByteTrack)
 lapx>=0.5.0
@@ -17,3 +22,4 @@ uvicorn>=0.23.0
 
 # Analytics
 shapely>=2.0.0
+websockets>=12  # /api/v1/ws (uvicorn WebSocket support)

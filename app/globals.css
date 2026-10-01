@@ -1,266 +1,105 @@
 @import "tailwindcss";
-
-/* Design tokens taken from the Stitch screen "ISCC Main Command Dashboard - 3-Zone Redesign". */
-@theme inline {
-  --color-brand-bg: #0e1116;
-  --color-brand-panel: #161b22;
-  --color-brand-border: #2a313b;
-  --color-brand-red: #d64545;
-  --color-brand-amber: #d9932b;
-  --color-brand-green: #2e9e63;
-  --color-brand-blue: #3b82c4;
-  --color-brand-purple: #8b5cf6;
-
-  --color-well: #0a0d12;
-  --color-hover: #1c2128;
-  --color-fg: #e1e4ea;
-  --color-fg-1: #c9d1d9;
-  --color-fg-2: #a0a6b2;
-  --color-fg-3: #8b949e;
-
-  /* Stitch: Inter, monospace, sans-serif. `font-mono` keeps the default system stack, as in Stitch. */
-  --font-sans: var(--font-inter), monospace, sans-serif;
-}
-
-body {
-  background-color: var(--color-brand-bg);
-  color: var(--color-fg);
-  font-family: var(--font-sans);
-}
-
-/* Tokens taken from the Stitch screen "ISCC Alert Console & Investigation Table" (Material-style names).
-   Purely additive: the dashboard keeps using the brand-* tokens above. */
-@theme inline {
-  --color-surface: #111319;
-  --color-surface-dim: #111319;
-  --color-surface-container-lowest: #0b0e13;
-  --color-surface-container-low: #191c21;
-  --color-surface-container: #1d2025;
-  --color-surface-container-high: #272a30;
-  --color-surface-container-highest: #32353a;
-  --color-on-surface: #e1e2e9;
-  --color-on-surface-variant: #c1c7d2;
-  --color-outline: #8b919b;
-  --color-outline-variant: #414750;
-  --color-primary: #9dcaff;
-  --color-primary-container: #5195d8;
-  --color-on-primary-container: #002b4c;
-  --color-secondary: #71db9a;
-  --color-tertiary: #ffb95b;
-  --color-tertiary-container: #c58319;
-  --color-on-tertiary-container: #3d2400;
-  --color-error: #ffb4ab;
-  --color-error-container: #93000a;
-
-  --spacing-space-xs: 4px;
-  --spacing-space-sm: 8px;
-  --spacing-space-md: 12px;
-
-  --text-headline-sm: 14px;
-  --text-headline-sm--line-height: 20px;
-  --text-headline-sm--font-weight: 600;
-  --text-label-sm: 10px;
-  --text-label-sm--line-height: 12px;
-  --text-label-sm--letter-spacing: 0.06em;
-  --text-label-sm--font-weight: 600;
-  --text-label-md: 11px;
-  --text-label-md--line-height: 14px;
-  --text-label-md--letter-spacing: 0.04em;
-  --text-label-md--font-weight: 500;
-  --text-code-sm: 11px;
-  --text-code-sm--line-height: 14px;
-  --text-code-sm--letter-spacing: 0.02em;
-  --text-code-sm--font-weight: 500;
-
-  --animate-tactical-pulse: tactical-pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  @keyframes tactical-pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.35;
-    }
-  }
-}
-
-/* Alert console scope: Stitch runs Tailwind v3 + the forms plugin, which we don't have, so the few
-   differences that show up in the design (button cursor, select chevron, thin scrollbars) live here. */
-.alerts-console button,
-.admin-console button,
-.devices-console button,
-.map-console button {
-  cursor: pointer;
-}
-
-.alerts-console ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-.alerts-console ::-webkit-scrollbar-track {
-  background: #0b0e13;
-}
-
-.alerts-console ::-webkit-scrollbar-thumb {
-  background: #414750;
-}
-
-.alerts-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.5rem center;
-  background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
-  print-color-adjust: exact;
-}
-
-/* Tokens and effects from the Stitch screen "ISCC Tactical GIS Cantonment Map". */
-@theme inline {
-  --color-on-primary: #003257;
-  --color-on-error: #690005;
-  --color-surface-bright: #36393f;
-  --color-surface-variant: #32353a;
-  --color-secondary-container: #00864e;
-
-  --animate-critical-pulse: pulse-critical 1.2s infinite ease-in-out;
-  @keyframes pulse-critical {
-    0%,
-    100% {
-      opacity: 1;
-      filter: drop-shadow(0 0 1px #d64545);
-    }
-    50% {
-      opacity: 0.35;
-      filter: drop-shadow(0 0 4px #d64545);
-    }
-  }
-}
-
-/* CAD grid: 20px minor / 100px major lines behind the tactical map. */
-.cad-grid {
-  background-color: #0b0e13;
-  background-image:
-    linear-gradient(#191c21 1px, transparent 1px),
-    linear-gradient(90deg, #191c21 1px, transparent 1px),
-    linear-gradient(#272a30 1px, transparent 1px),
-    linear-gradient(90deg, #272a30 1px, transparent 1px);
-  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
-  background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
-}
-
-/* Tokens and helpers from the Stitch screen "ISCC Device Health & Hardware Diagnostics". */
-@theme inline {
-  --color-background: #111319;
-
-  --text-body-sm: 12px;
-  --text-body-sm--line-height: 16px;
-  --text-body-sm--font-weight: 400;
-
-  /* Stitch pairs Inter with JetBrains Mono for IDs, IPs, versions and readouts (`font-code-sm`).
-     The variable is provided by the devices route layout via next/font. */
-  --font-code-sm: var(--font-jetbrains-mono), var(--font-inter), monospace, sans-serif;
-}
-
-.custom-scroll::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-.custom-scroll::-webkit-scrollbar-track {
-  background: #0b0e13;
-}
-
-.custom-scroll::-webkit-scrollbar-thumb {
-  background: #272a30;
-  border-radius: 2px;
-}
-
-.custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: #414750;
-}
-
-/* Stitch screen "ISCC System Administration & Configuration Console": thin scrollbars and forms-plugin checkboxes. */
-.admin-console ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-.admin-console ::-webkit-scrollbar-track {
-  background: #0b0e13;
-}
-
-.admin-console ::-webkit-scrollbar-thumb {
-  background: #2a2e37;
-}
-
-/* Base look of the Tailwind forms plugin checkbox; fill colour follows the element's text colour. */
-.admin-checkbox {
-  appearance: none;
-  border-width: 1px;
-  border-style: solid;
-  display: inline-block;
-  flex-shrink: 0;
-  vertical-align: middle;
-  print-color-adjust: exact;
-}
-
-.admin-checkbox:checked {
-  border-color: transparent;
-  background-color: currentColor;
-  background-size: 100% 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
-}
+@import "./tokens.css";
+@import "./glass.css";
+@import "../components/map/gis/gis-map.css";
 
 /* ============================================================================
-   GOTHAM OVERHAUL — operational design tokens.
-   Prefixed `g-` so the legacy Stitch/brand tokens above can be deleted screen
-   by screen as each one is reworked, without breaking the screens still on them.
+   Theme — exposes the raw tokens in tokens.css as Tailwind utilities.
+   Components never use hex values: they say `bg-surface`, `text-ink-2`,
+   `shadow-key`, `rounded-md`, `text-ui`, and inherit the design system.
    ========================================================================== */
 @theme inline {
-  --color-g-bg: #0a0d12;
-  --color-g-panel: #10141b;
-  --color-g-raised: #151a23;
-  --color-g-hover: #1a212c;
-  --color-g-border: #1e2530;
-  --color-g-border-strong: #2a3342;
+  /* A deliberately small palette: Tailwind's stock colours are switched off so
+     nothing outside the design system can creep back in. */
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-transparent: transparent;
+  --color-current: currentColor;
 
-  --color-g-text: #d6dbe4;
-  --color-g-text-2: #8a93a6;
-  --color-g-muted: #5a6478;
+  --color-canvas: var(--ds-canvas);
+  --color-surface: var(--ds-surface);
+  --color-raised: var(--ds-raised);
+  --color-sunken: var(--ds-sunken);
+  --color-hover: var(--ds-hover);
+  --color-line: var(--ds-line);
+  --color-line-strong: var(--ds-line-strong);
 
-  --color-g-red: #e5484d;
-  --color-g-amber: #f5a524;
-  --color-g-green: #30a46c;
-  --color-g-blue: #3e92cc;
-  --color-g-violet: #8b7bd8;
+  --color-ink: var(--ds-ink);
+  --color-ink-2: var(--ds-ink-2);
+  --color-ink-3: var(--ds-ink-3);
 
-  /* Data font: timestamps, IDs, IPs, counts. Always tabular. */
-  --font-data: var(--font-plex-mono), ui-monospace, monospace;
+  --color-accent: var(--ds-accent);
+  --color-accent-soft: var(--ds-accent-soft);
+  --color-accent-wash: var(--ds-accent-wash);
+  --color-accent-ink: var(--ds-accent-ink);
 
-  /* Micro label: panel headers, table headers, KPI labels. */
-  --text-micro: 10px;
-  --text-micro--line-height: 14px;
-  --text-micro--letter-spacing: 0.08em;
-  --text-micro--font-weight: 500;
+  --color-ok: var(--ds-ok);
+  --color-ok-wash: var(--ds-ok-wash);
+  --color-ok-ink: var(--ds-ok-ink);
+  --color-warn: var(--ds-warn);
+  --color-warn-wash: var(--ds-warn-wash);
+  --color-warn-ink: var(--ds-warn-ink);
+  --color-crit: var(--ds-crit);
+  --color-crit-wash: var(--ds-crit-wash);
+  --color-crit-ink: var(--ds-crit-ink);
 
-  --text-data: 12px;
-  --text-data--line-height: 16px;
+  --color-video: var(--ds-video);
+  --color-video-ink: var(--ds-video-ink);
+  --color-video-ok: var(--ds-video-ok);
+  --color-video-warn: var(--ds-video-warn);
+  --color-video-crit: var(--ds-video-crit);
 
+  --font-sans: var(--ds-font-sans);
+  --font-data: var(--ds-font-data);
+
+  --radius-*: initial;
+  --radius-sm: var(--ds-radius-sm);
+  --radius-md: var(--ds-radius-md);
+  --radius-lg: var(--ds-radius-lg);
+  --radius-xl: var(--ds-radius-xl);
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  --shadow-*: initial;
+  --shadow-card: var(--ds-shadow-card);
+  --shadow-key: var(--ds-shadow-key);
+  --shadow-key-sm: var(--ds-shadow-key-sm);
+  --shadow-inset: var(--ds-shadow-inset);
+  --shadow-inset-sm: var(--ds-shadow-inset-sm);
+  --shadow-pop: var(--ds-shadow-pop);
+  --shadow-tile: var(--ds-shadow-tile);
+
+  /* Type scale. Nothing below 12px. Sentence case; weight and size carry hierarchy. */
+  --text-title: 24px;
+  --text-title--line-height: 30px;
+  --text-title--font-weight: 600;
+  --text-title--letter-spacing: -0.015em;
+  --text-headline: 17px;
+  --text-headline--line-height: 22px;
+  --text-headline--font-weight: 600;
+  --text-headline--letter-spacing: -0.01em;
+  --text-section: 14px;
+  --text-section--line-height: 20px;
+  --text-section--font-weight: 600;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
   --text-ui: 13px;
   --text-ui--line-height: 18px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-data: 12px;
+  --text-data--line-height: 16px;
+  --text-stat: 22px;
+  --text-stat--line-height: 26px;
+  --text-stat--font-weight: 600;
+  --text-stat--letter-spacing: -0.01em;
 
-  --text-kpi: 24px;
-  --text-kpi--line-height: 28px;
-  --text-kpi--font-weight: 500;
-
-  --animate-g-in: g-in 200ms ease-out;
-  @keyframes g-in {
+  --animate-rise: rise 180ms ease-out;
+  @keyframes rise {
     from {
       opacity: 0;
-      transform: translateY(-6px);
+      transform: translateY(-4px);
     }
     to {
       opacity: 1;
@@ -268,73 +107,94 @@ body {
     }
   }
 
-  --animate-g-toast: g-toast 180ms ease-out;
-  @keyframes g-toast {
+  --animate-toast: toast 200ms ease-out;
+  @keyframes toast {
     from {
       opacity: 0;
-      transform: translateX(12px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
-      transform: translateX(0);
+      transform: translateY(0);
     }
   }
 
-  --animate-g-shake: g-shake 320ms ease-in-out;
-  @keyframes g-shake {
+  --animate-shake: shake 320ms ease-in-out;
+  @keyframes shake {
     0%,
     100% {
       transform: translateX(0);
     }
     20%,
     60% {
-      transform: translateX(-5px);
+      transform: translateX(-4px);
     }
     40%,
     80% {
-      transform: translateX(5px);
+      transform: translateX(4px);
     }
   }
 
-  --animate-g-skeleton: g-skeleton 1.4s ease-in-out infinite;
-  @keyframes g-skeleton {
+  --animate-skeleton: skeleton 1.6s ease-in-out infinite;
+  @keyframes skeleton {
     0%,
     100% {
-      opacity: 0.45;
+      opacity: 0.5;
     }
     50% {
-      opacity: 0.9;
+      opacity: 1;
+    }
+  }
+
+  /* Live / alerting indicator: a slow fade, never a flash. */
+  --animate-breathe: breathe 2s ease-in-out infinite;
+  @keyframes breathe {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
     }
   }
 }
 
-/* Operator console: dense, flat, keyboard-driven. */
-.gotham {
-  background-color: var(--color-g-bg);
-  color: var(--color-g-text);
+/* ── base ── */
+html,
+body {
+  background-color: var(--ds-canvas);
+  color: var(--ds-ink);
+  font-family: var(--ds-font-sans);
   font-size: 13px;
   line-height: 18px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.gotham button {
+button {
   cursor: pointer;
 }
 
-.gotham ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+button:disabled {
+  cursor: not-allowed;
 }
 
-.gotham ::-webkit-scrollbar-track {
-  background: var(--color-g-bg);
+::selection {
+  background: var(--ds-accent-wash);
+  color: var(--ds-ink);
 }
 
-.gotham ::-webkit-scrollbar-thumb {
-  background: var(--color-g-border-strong);
+/* Visible keyboard focus everywhere; mouse clicks stay quiet. */
+:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
+  border-radius: var(--ds-radius-sm);
 }
 
-.gotham ::-webkit-scrollbar-thumb:hover {
-  background: #3a465a;
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
 }
 
 /* Every number in the console lines up column-to-column. */
@@ -343,44 +203,109 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Flat square checkbox; no plugin, no rounded-full. */
-.g-check {
+/* ── scrollbars: thin, warm, out of the way ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ds-line-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ds-line-strong);
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #bdb29f;
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+/* ── form controls that need pseudo-elements (not expressible as utilities) ── */
+.ds-select {
   appearance: none;
-  width: 13px;
-  height: 13px;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236f6a62' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.4rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25em 1.25em;
+  padding-right: 1.75rem;
+  print-color-adjust: exact;
+}
+
+.ds-check {
+  appearance: none;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
-  border: 1px solid var(--color-g-border-strong);
-  background: var(--color-g-bg);
-  border-radius: 2px;
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-canvas);
+  box-shadow: var(--ds-shadow-inset-sm);
   vertical-align: middle;
   print-color-adjust: exact;
 }
 
-.g-check:checked {
-  border-color: var(--color-g-blue);
-  background-color: var(--color-g-blue);
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%230A0D12' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+.ds-check:checked {
+  background-color: var(--ds-accent);
+  box-shadow: var(--ds-shadow-key-sm);
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%23252525' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
   background-size: 100% 100%;
 }
 
-.g-check:focus-visible {
-  outline: 1px solid var(--color-g-blue);
-  outline-offset: 1px;
+.ds-check:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
 }
 
-/* Range input styled flat for the sensitivity slider. */
-.g-range {
-  appearance: none;
-  height: 2px;
-  background: var(--color-g-border-strong);
-  border-radius: 0;
+.ds-check:disabled {
+  opacity: 0.45;
 }
 
-.g-range::-webkit-slider-thumb {
+.ds-range {
   appearance: none;
-  width: 10px;
-  height: 14px;
-  border-radius: 1px;
-  background: var(--color-g-blue);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ds-sunken);
+  box-shadow: var(--ds-shadow-inset-sm);
+}
+
+.ds-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ds-raised);
+  border: 1px solid var(--ds-line-strong);
+  box-shadow: var(--ds-shadow-key-sm);
   cursor: grab;
+}
+
+.ds-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ds-raised);
+  border: 1px solid var(--ds-line-strong);
+  box-shadow: var(--ds-shadow-key-sm);
+  cursor: grab;
+}
+
+/* Respect the operator's motion preference: nothing animates for decoration. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
