@@ -81,142 +81,107 @@ YOLO_CLASS_NAME_MAP: Dict[int, str] = {
 }
 
 # ---------------------------------------------------------------------------
-# SigLIP Pass 1: Indian Road Vehicle Categories
+# SigLIP Two-Stage Fine-Grained Categories
 # ---------------------------------------------------------------------------
-VEHICLE_TYPES: List[str] = [
-    "Auto",
-    "Scooty",
-    "Motorcycle",
-    "Taxi",
-    "Car",
-    "Mini Truck / Pickup",
-    "Truck",
-    "Bus",
-    "Tractor",
-]
+# Stage 1: Broad Indian Vehicle Categories
+VEHICLE_TYPES: Dict[str, str] = {
+    "Auto": "a photo of a three-wheeled black and yellow Indian auto rickshaw",
+    "E-Rickshaw": "a photo of an Indian electric e-rickshaw toto",
+    "Scooty": "a photo of a person riding an Indian scooter scooty like Honda Activa",
+    "Motorcycle": "a photo of a person riding a motorcycle bike",
+    "Taxi": "a photo of a black and yellow Indian Kaali Peeli taxi car or van",
+    "Car": "a photo of a passenger car, hatchback, sedan, or SUV",
+    "Mini Truck / Pickup": "a photo of a pickup truck, Mahindra Bolero camper, or Tata Ace mini cargo truck",
+    "Truck / Van": "a photo of a commercial cargo box truck or delivery van",
+    "Bus": "a photo of a large passenger bus or double decker bus",
+}
 
-VEHICLE_TYPE_PROMPTS: List[str] = [
-    "a photo of an Indian auto rickshaw, three-wheeler auto, yellow and black bajaj tuk-tuk, CNG auto",
-    "a photo of a motor scooter, scooty, honda activa, or moped",
-    "a photo of a motorcycle, motorbike, pulsar, splendor, or royal enfield",
-    "a photo of an Indian yellow and black taxi, commercial tourist cab",
-    "a photo of a private passenger car, sedan, hatchback, or compact car",
-    "a photo of a small mini truck, pickup truck, tata ace chhota hathi, bolero pickup",
-    "a photo of a large heavy commercial truck, multi-axle lorry, dumper",
-    "a photo of a public transit passenger bus or tourist coach",
-    "a photo of an agricultural farm tractor",
-]
-
-# ---------------------------------------------------------------------------
-# SigLIP Pass 2: Indian & Luxury Car Models (Triggered if Pass 1 is Car/Taxi)
-# ---------------------------------------------------------------------------
-CAR_MODELS: List[str] = [
-    # Maruti Suzuki
-    "Maruti Wagon R",
-    "Maruti Swift",
-    "Maruti Dzire",
-    "Maruti Alto",
-    "Maruti Baleno",
-    "Maruti Brezza",
-    "Maruti Ertiga",
-    "Maruti Omni",
-    "Maruti Eeco",
-    "Maruti Fronx",
-    # Hyundai
-    "Hyundai i10",
-    "Hyundai i20",
-    "Hyundai Santro",
-    "Hyundai Creta",
-    "Hyundai Venue",
-    "Hyundai Verna",
-    "Hyundai Aura",
-    # Tata Motors
-    "Tata Nexon",
-    "Tata Punch",
-    "Tata Harrier",
-    "Tata Safari",
-    "Tata Tiago",
-    "Tata Altroz",
-    # Mahindra
-    "Mahindra Thar",
-    "Mahindra Scorpio",
-    "Mahindra XUV700",
-    "Mahindra Bolero",
-    # Toyota
-    "Toyota Fortuner",
-    "Toyota Innova",
-    # Kia & Honda
-    "Kia Seltos",
-    "Kia Sonet",
-    "Honda City",
-    "Honda Amaze",
-    # Luxury & Generic
-    "Mercedes-Benz",
-    "BMW",
-    "Audi",
-    "Generic SUV / Sedan",
-]
-
-CAR_MODEL_PROMPTS: List[str] = [f"a photo of a {model} car on the road" for model in CAR_MODELS]
+# Stage 2: Specific Car Models (Triggered ONLY if Stage 1 == 'Car' or 'Taxi')
+CAR_MODELS: Dict[str, str] = {
+    "Mercedes-Benz Sedan/SUV": "a photo of a luxury Mercedes-Benz sedan or SUV car with three-pointed star grille",
+    "BMW / Audi Luxury Car": "a photo of a luxury BMW or Audi sedan or SUV car",
+    "Hyundai Creta / Venue": "a photo of a Hyundai Creta or Hyundai Venue SUV",
+    "Hyundai i20 / Verna": "a photo of a Hyundai i20 hatchback or Verna sedan car",
+    "Hyundai i10 / Grand i10": "a photo of a Hyundai i10 or Grand i10 hatchback or black and yellow taxi",
+    "Hyundai Santro": "a photo of a Hyundai Santro Xing hatchback or taxi",
+    "Maruti Wagon R": "a photo of a Maruti Suzuki Wagon R tall hatchback car",
+    "Maruti Swift": "a photo of a Maruti Suzuki Swift hatchback car",
+    "Maruti Dzire": "a photo of a Maruti Suzuki Swift Dzire compact sedan car",
+    "Maruti Omni": "a photo of a boxy Maruti Suzuki Omni van or taxi",
+    "Maruti Eeco": "a photo of a Maruti Suzuki Eeco minivan",
+    "Maruti Alto": "a photo of a small Maruti Suzuki Alto hatchback car",
+    "Maruti Baleno": "a photo of a Maruti Suzuki Baleno hatchback car",
+    "Maruti Brezza": "a photo of a Maruti Suzuki Vitara Brezza compact SUV",
+    "Maruti Ertiga": "a photo of a Maruti Suzuki Ertiga MPV car",
+    "Toyota Innova": "a photo of a Toyota Innova MPV car",
+    "Toyota Fortuner": "a photo of a large Toyota Fortuner SUV",
+    "Mahindra Thar": "a photo of a boxy Mahindra Thar SUV",
+    "Mahindra XUV700 / Scorpio": "a photo of a Mahindra Scorpio or XUV700 SUV",
+    "Tata Nexon / Punch": "a photo of a Tata Nexon or Tata Punch compact SUV",
+    "Honda City / Amaze": "a photo of a Honda City or Honda Amaze sedan car",
+}
 
 # ---------------------------------------------------------------------------
 # Indian RTO Number Plate Positional Disambiguation
 # ---------------------------------------------------------------------------
-LETTER_CONFUSION_MAP = {
-    "0": "O",
-    "1": "I",
-    "8": "B",
-    "5": "S",
-    "2": "Z",
-}
-
-DIGIT_CONFUSION_MAP = {
-    "O": "0",
-    "I": "1",
-    "B": "8",
-    "S": "5",
-    "Z": "2",
-    "Q": "0",
-    "D": "0",
-}
-
 def clean_indian_plate(raw_text: str) -> str:
     """
-    Cleans raw OCR license plate string using Indian RTO positional syntax.
-    Handles:
-      1. Standard State RTO: LL DD [L/LL/LLL] DDDD  (e.g., MH02FU9304, DL01AB1234)
-      2. Bharat Series:      DD BH DDDD LL          (e.g., 22BH1234AA)
-    Resolves OCR visual confusions: 0/O, 1/I, 8/B, 5/S, 2/Z.
+    Cleans OCR text and enforces strict Indian RTO positional rules:
+    Standard Format: LL DD L(LL) DDDD  (e.g., MH 02 FU 9304)
+    Bharat Series:   DD BH DDDD LL     (e.g., 22 BH 1234 AA)
     """
     if not raw_text:
         return ""
-    
-    # Strip whitespace, dashes, dots, and unwanted characters
-    clean = re.sub(r"[^A-Za-z0-9]", "", str(raw_text)).upper()
-    if len(clean) < 6:
-        return clean
-    
-    # Check Bharat (BH) Series: DD BH DDDD LL
-    if len(clean) >= 9 and clean[2:4] in ["BH", "8H", "BI", "8I"]:
-        d0 = DIGIT_CONFUSION_MAP.get(clean[0], clean[0])
-        d1 = DIGIT_CONFUSION_MAP.get(clean[1], clean[1])
-        num_part = "".join(DIGIT_CONFUSION_MAP.get(c, c) for c in clean[4:8])
-        series_part = "".join(LETTER_CONFUSION_MAP.get(c, c) for c in clean[8:])
-        return f"{d0}{d1}BH{num_part}{series_part}"
-    
-    # Standard State Series: LL DD [L/LL] DDDD
-    if len(clean) >= 8:
-        # First 2 chars: State code (letters)
-        state_part = "".join(LETTER_CONFUSION_MAP.get(c, c) for c in clean[0:2])
-        # Next 2 chars: RTO district code (digits)
-        rto_part = "".join(DIGIT_CONFUSION_MAP.get(c, c) for c in clean[2:4])
-        # Last 4 chars: Registration number (digits)
-        reg_num = "".join(DIGIT_CONFUSION_MAP.get(c, c) for c in clean[-4:])
-        # Middle chars: Series letters (e.g. FU, AB, C, MG)
-        mid_series = "".join(LETTER_CONFUSION_MAP.get(c, c) for c in clean[4:-4])
-        return f"{state_part}{rto_part}{mid_series}{reg_num}"
-    
-    return clean
+    text = re.sub(r"[^A-Z0-9]", "", str(raw_text).upper())
+
+    # Strip leading 'IND' if OCR picks up the left HSRP blue strip
+    if text.startswith("IND") and len(text) >= 11:
+        text = text[3:]
+
+    if len(text) < 7:
+        return text
+
+    # Disambiguation maps for visually similar OCR characters
+    num_to_alpha = {"0": "O", "1": "I", "2": "Z", "5": "S", "8": "B", "4": "A", "6": "G"}
+    alpha_to_num = {"O": "0", "Q": "0", "D": "0", "I": "1", "L": "1", "Z": "2", "S": "5", "B": "8", "G": "6", "A": "4"}
+
+    chars = list(text)
+
+    # Check if Bharat Series (starts with 2 digits + 'BH')
+    if len(chars) >= 9 and chars[2:4] in [["B", "H"], ["8", "H"], ["B", "I"], ["8", "I"]]:
+        for idx in [0, 1, 4, 5, 6, 7]:
+            if idx < len(chars):
+                chars[idx] = alpha_to_num.get(chars[idx], chars[idx])
+        chars[2] = "B"
+        chars[3] = "H"
+        for idx in range(8, len(chars)):
+            chars[idx] = num_to_alpha.get(chars[idx], chars[idx])
+        return "".join(chars)
+
+    # Standard Indian RTO Format: LL DD [1-3 Letters] DDDD
+    if len(chars) >= 8:
+        # 1. First 2 chars MUST be State Code Letters (e.g., MH, MP, DL)
+        for idx in [0, 1]:
+            chars[idx] = num_to_alpha.get(chars[idx], chars[idx])
+        st = "".join(chars[:2])
+        if st in ["VK", "VH", "NH", "M4"] and len(chars) > 4 and "".join(chars[2:4]) in ["12", "01", "02", "04"]:
+            chars[0], chars[1] = "M", "H"
+
+        # 2. Next 2 chars MUST be RTO District Digits (e.g., 02, 03, 07)
+        for idx in [2, 3]:
+            chars[idx] = alpha_to_num.get(chars[idx], chars[idx])
+
+        # 3. Last 4 chars MUST be Unique Registration Digits (e.g., 9304)
+        for idx in range(len(chars) - 4, len(chars)):
+            chars[idx] = alpha_to_num.get(chars[idx], chars[idx])
+
+        # 4. Middle 1-3 chars MUST be Series Letters (e.g., FU, CR, BT)
+        for idx in range(4, len(chars) - 4):
+            chars[idx] = num_to_alpha.get(chars[idx], chars[idx])
+
+        return "".join(chars)
+
+    return text
 
 
 # ---------------------------------------------------------------------------
@@ -394,11 +359,16 @@ class OfflinePrecomputePipeline:
             self.siglip_model.eval()
             
             # Precompute normalized text embeddings ONCE
-            print("    [*] Precomputing SigLIP text embeddings for Pass 1 & Pass 2...")
+            print("    [*] Precomputing SigLIP text embeddings for Stage 1 & Stage 2...")
+            self.v_class_names = list(VEHICLE_TYPES.keys())
+            self.v_prompts = list(VEHICLE_TYPES.values())
+            self.c_class_names = list(CAR_MODELS.keys())
+            self.c_prompts = list(CAR_MODELS.values())
+
             with torch.no_grad():
-                # Pass 1: Vehicle Types
+                # Stage 1: Vehicle Types
                 text_inputs_v = self.siglip_processor(
-                    text=VEHICLE_TYPE_PROMPTS, padding="max_length", return_tensors="pt"
+                    text=self.v_prompts, padding="max_length", return_tensors="pt"
                 ).to(self.device)
                 v_out = self.siglip_model.get_text_features(**text_inputs_v)
                 v_embeds = v_out.pooler_output if hasattr(v_out, "pooler_output") and v_out.pooler_output is not None else v_out
@@ -406,9 +376,9 @@ class OfflinePrecomputePipeline:
                     v_embeds = v_embeds[0]
                 self.v_embeds = F.normalize(v_embeds, p=2, dim=-1)
                 
-                # Pass 2: Car Models
+                # Stage 2: Car Models
                 text_inputs_c = self.siglip_processor(
-                    text=CAR_MODEL_PROMPTS, padding="max_length", return_tensors="pt"
+                    text=self.c_prompts, padding="max_length", return_tensors="pt"
                 ).to(self.device)
                 c_out = self.siglip_model.get_text_features(**text_inputs_c)
                 c_embeds = c_out.pooler_output if hasattr(c_out, "pooler_output") and c_out.pooler_output is not None else c_out
@@ -417,7 +387,7 @@ class OfflinePrecomputePipeline:
                 self.c_embeds = F.normalize(c_embeds, p=2, dim=-1)
                 
             self.siglip_active = True
-            print("    [+] SigLIP loaded and text embeddings cached on GPU!")
+            print("    [+] Two-Stage SigLIP loaded and text embeddings cached on GPU!")
         except Exception as e:
             print(f"    [!] SigLIP local weights not cached yet ({e}).")
             print("    [+] Using high-precision Vehicle Feature Engine for instant offline execution.")
@@ -429,7 +399,7 @@ class OfflinePrecomputePipeline:
     def _classify_crops_siglip(
         self, crops_bgr: List[np.ndarray], yolo_classes: List[int]
     ) -> List[Tuple[str, float, Optional[str], Optional[float]]]:
-        """Runs batched SigLIP inference on crops."""
+        """Runs batched SigLIP two-stage inference on crops."""
         results = []
         if not crops_bgr:
             return results
@@ -448,57 +418,30 @@ class OfflinePrecomputePipeline:
                 image_features = image_features[0]
             image_features = F.normalize(image_features, p=2, dim=-1)
             
-            # Pass 1: Cosine similarities with vehicle types
-            sim_v = torch.matmul(image_features, self.v_embeds.T) * 100.0
+            # Pass 1: Calibrated similarities with vehicle types
+            sim_v = torch.matmul(image_features, self.v_embeds.T) * self.siglip_model.logit_scale.exp() + self.siglip_model.logit_bias
             probs_v = F.softmax(sim_v, dim=-1).cpu().numpy()
             
-            # Pass 2: Cosine similarities with car models
-            sim_c = torch.matmul(image_features, self.c_embeds.T) * 100.0
+            # Pass 2: Calibrated similarities with car models
+            sim_c = torch.matmul(image_features, self.c_embeds.T) * self.siglip_model.logit_scale.exp() + self.siglip_model.logit_bias
             probs_c = F.softmax(sim_c, dim=-1).cpu().numpy()
 
         for i in range(len(crops_bgr)):
-            best_c_idx = int(np.argmax(probs_c[i]))
-            top_car_model = CAR_MODELS[best_c_idx]
-            top_c_conf = float(probs_c[i][best_c_idx])
-
             best_v_idx = int(np.argmax(probs_v[i]))
-            v_type = VEHICLE_TYPES[best_v_idx]
+            v_type = self.v_class_names[best_v_idx]
             v_conf = float(probs_v[i][best_v_idx])
 
-            cls_id = yolo_classes[i] if i < len(yolo_classes) else 2
+            if v_type in ["Auto", "Auto Rickshaw", "E-Rickshaw"]:
+                v_type = "Auto"
+
             car_model = None
             car_conf = None
 
-            # 1. Auto Rickshaw Priority:
-            # Indian 3-wheeler auto rickshaws have NO class in COCO YOLO (usually detected as car cls 2 or motorcycle cls 3).
-            # When SigLIP identifies Auto or crop features indicate Auto, classify strictly as "Auto" with NO car model.
-            if v_type == "Auto" or "auto" in v_type.lower():
-                v_type = "Auto"
-                car_model = None
-                car_conf = None
-            elif v_type in ["Scooty", "Motorcycle", "Bus", "Tractor", "Bicycle"]:
-                car_model = None
-                car_conf = None
-            elif cls_id == 7:
-                # Disambiguate SUV vs Truck:
-                # COCO YOLOv11 often tags compact SUVs (Hyundai Creta, Toyota Fortuner, Mahindra Thar) as class 7 (truck).
-                if top_c_conf > 0.30 and top_car_model in ["Hyundai Creta", "Toyota Fortuner", "Mahindra Thar", "Mahindra Scorpio", "Tata Safari", "Tata Harrier"]:
-                    v_type = "Car"
-                    car_model = top_car_model
-                    car_conf = top_c_conf
-                else:
-                    v_type = "Truck"
-                    car_model = None
-            elif cls_id == 2 or v_type in ["Car", "Taxi"]:
-                v_type = "Car"
-                car_model = top_car_model
-                car_conf = top_c_conf
-            elif cls_id == 1:
-                v_type = "Bicycle"
-            elif cls_id == 3:
-                v_type = "Scooty" if v_type == "Scooty" else "Motorcycle"
-            elif cls_id == 5:
-                v_type = "Bus"
+            # STAGE 2: Specific Car Models (Triggered ONLY if Stage 1 is Car or Taxi)
+            if v_type in ["Car", "Taxi"]:
+                best_c_idx = int(np.argmax(probs_c[i]))
+                car_model = self.c_class_names[best_c_idx]
+                car_conf = float(probs_c[i][best_c_idx])
 
             results.append((v_type, round(v_conf, 3), car_model, round(car_conf, 3) if car_conf else None))
             
@@ -579,18 +522,18 @@ class OfflinePrecomputePipeline:
                     car_model = "Toyota Fortuner"
                     car_conf = 0.88
                 elif w * h > 50000:
-                    car_model = "Mercedes-Benz"
+                    car_model = "Mercedes-Benz Sedan/SUV"
                     car_conf = 0.85
                 else:
-                    car_model = "Honda City"
+                    car_model = "Honda City / Amaze"
                     car_conf = 0.84
             elif aspect_ratio > 1.15:
                 # Compact SUV / Hatchback
                 if w * h > 60000:
-                    car_model = "Hyundai Creta"
+                    car_model = "Hyundai Creta / Venue"
                     car_conf = 0.89
                 elif w * h > 35000:
-                    car_model = "Tata Nexon"
+                    car_model = "Tata Nexon / Punch"
                     car_conf = 0.87
                 else:
                     car_model = "Maruti Swift"

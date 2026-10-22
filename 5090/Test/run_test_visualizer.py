@@ -31,107 +31,109 @@ OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 # ---------------------------------------------------------------------------
 # Indian RTO Positional Plate Disambiguation
 # ---------------------------------------------------------------------------
-LETTER_MAP = {"0": "O", "1": "I", "8": "B", "5": "S", "2": "Z"}
-DIGIT_MAP = {"O": "0", "I": "1", "B": "8", "S": "5", "Z": "2", "Q": "0", "D": "0"}
-
+# ---------------------------------------------------------------------------
+# Indian RTO Positional Plate Disambiguation
+# ---------------------------------------------------------------------------
 def clean_indian_plate(raw_text: str) -> str:
+    """
+    Cleans OCR text and enforces strict Indian RTO positional rules:
+    Standard Format: LL DD L(LL) DDDD  (e.g., MH 02 FU 9304)
+    Bharat Series:   DD BH DDDD LL     (e.g., 22 BH 1234 AA)
+    """
     if not raw_text:
         return ""
-    clean = re.sub(r"[^A-Za-z0-9]", "", str(raw_text)).upper()
-    if len(clean) < 5:
-        return clean
-    
-    # Bharat Series: DD BH DDDD LL
-    if len(clean) >= 8 and clean[2:4] in ["BH", "8H", "BI", "8I"]:
-        d0 = DIGIT_MAP.get(clean[0], clean[0])
-        d1 = DIGIT_MAP.get(clean[1], clean[1])
-        num_part = "".join(DIGIT_MAP.get(c, c) for c in clean[4:8])
-        series_part = "".join(LETTER_MAP.get(c, c) for c in clean[8:])
-        return f"{d0}{d1}BH{num_part}{series_part}"
-    
-    # State code correction
-    st = "".join(LETTER_MAP.get(c, c) for c in clean[:2])
-    # Handle common OCR letter mergers: VK/VH/NH/M4 with 12/01/02 -> MH (Maharashtra)
-    if st in ["VK", "VH", "NH", "M4"] and len(clean) > 4 and clean[2:4] in ["12", "01", "02", "04"]:
-        st = "MH"
-        
-    rto = "".join(DIGIT_MAP.get(c, c) for c in clean[2:4])
-    
-    # Parse series (1-3 letters) and registration number (1-4 digits)
-    rest = clean[4:]
-    m = re.match(r"^([A-Za-z]{1,3})([0-9A-Za-z]{1,4})$", rest)
-    if m:
-        series = "".join(LETTER_MAP.get(c, c) for c in m.group(1))
-        reg_digits = "".join(DIGIT_MAP.get(c, c) for c in m.group(2))
-        return f"{st}{rto}{series}{reg_digits}"
-    
-    # Fallback standard
-    if len(clean) >= 8:
-        reg_num = "".join(DIGIT_MAP.get(c, c) for c in clean[-4:])
-        mid_series = "".join(LETTER_MAP.get(c, c) for c in clean[4:-4])
-        return f"{st}{rto}{mid_series}{reg_num}"
-    
-    return clean
+    text = re.sub(r"[^A-Z0-9]", "", str(raw_text).upper())
+
+    # Strip leading 'IND' if OCR picks up the left HSRP blue strip
+    if text.startswith("IND") and len(text) >= 11:
+        text = text[3:]
+
+    if len(text) < 7:
+        return text
+
+    # Disambiguation maps for visually similar OCR characters
+    num_to_alpha = {"0": "O", "1": "I", "2": "Z", "5": "S", "8": "B", "4": "A", "6": "G"}
+    alpha_to_num = {"O": "0", "Q": "0", "D": "0", "I": "1", "L": "1", "Z": "2", "S": "5", "B": "8", "G": "6", "A": "4"}
+
+    chars = list(text)
+
+    # Check if Bharat Series (starts with 2 digits + 'BH')
+    if len(chars) >= 9 and chars[2:4] in [["B", "H"], ["8", "H"], ["B", "I"], ["8", "I"]]:
+        for idx in [0, 1, 4, 5, 6, 7]:
+            if idx < len(chars):
+                chars[idx] = alpha_to_num.get(chars[idx], chars[idx])
+        chars[2] = "B"
+        chars[3] = "H"
+        for idx in range(8, len(chars)):
+            chars[idx] = num_to_alpha.get(chars[idx], chars[idx])
+        return "".join(chars)
+
+    # Standard Indian RTO Format: LL DD [1-3 Letters] DDDD
+    if len(chars) >= 8:
+        # 1. First 2 chars MUST be State Code Letters (e.g., MH, MP, DL)
+        for idx in [0, 1]:
+            chars[idx] = num_to_alpha.get(chars[idx], chars[idx])
+        st = "".join(chars[:2])
+        if st in ["VK", "VH", "NH", "M4"] and len(chars) > 4 and "".join(chars[2:4]) in ["12", "01", "02", "04"]:
+            chars[0], chars[1] = "M", "H"
+
+        # 2. Next 2 chars MUST be RTO District Digits (e.g., 02, 03, 07)
+        for idx in [2, 3]:
+            chars[idx] = alpha_to_num.get(chars[idx], chars[idx])
+
+        # 3. Last 4 chars MUST be Unique Registration Digits (e.g., 9304)
+        for idx in range(len(chars) - 4, len(chars)):
+            chars[idx] = alpha_to_num.get(chars[idx], chars[idx])
+
+        # 4. Middle 1-3 chars MUST be Series Letters (e.g., FU, CR, BT)
+        for idx in range(4, len(chars) - 4):
+            chars[idx] = num_to_alpha.get(chars[idx], chars[idx])
+
+        return "".join(chars)
+
+    return text
 
 
 # ---------------------------------------------------------------------------
-# SigLIP Categories & Classifiers
+# SigLIP Two-Stage Fine-Grained Categories
 # ---------------------------------------------------------------------------
-VEHICLE_TYPES = [
-    "Auto",
-    "Scooty",
-    "Motorcycle",
-    "Taxi",
-    "Car",
-    "Mini Truck / Pickup",
-    "Truck",
-    "Bus",
-    "Tractor",
-]
+# Stage 1: Broad Indian Vehicle Categories
+VEHICLE_TYPES = {
+    "Auto": "a photo of a three-wheeled black and yellow Indian auto rickshaw",
+    "E-Rickshaw": "a photo of an Indian electric e-rickshaw toto",
+    "Scooty": "a photo of a person riding an Indian scooter scooty like Honda Activa",
+    "Motorcycle": "a photo of a person riding a motorcycle bike",
+    "Taxi": "a photo of a black and yellow Indian Kaali Peeli taxi car or van",
+    "Car": "a photo of a passenger car, hatchback, sedan, or SUV",
+    "Mini Truck / Pickup": "a photo of a pickup truck, Mahindra Bolero camper, or Tata Ace mini cargo truck",
+    "Truck / Van": "a photo of a commercial cargo box truck or delivery van",
+    "Bus": "a photo of a large passenger bus or double decker bus",
+}
 
-VEHICLE_TYPE_PROMPTS = [
-    "a photo of an Indian auto rickshaw, three-wheeler auto, yellow and black bajaj tuk-tuk, CNG auto",
-    "a photo of a motor scooter, scooty, honda activa, or moped",
-    "a photo of a motorcycle or motorbike",
-    "a photo of a yellow and black taxi cab",
-    "a photo of a private passenger car, sedan, hatchback, or luxury car",
-    "a photo of a small pickup truck or tata ace",
-    "a photo of a large heavy commercial truck or lorry",
-    "a photo of a passenger transit bus",
-    "a photo of an agricultural farm tractor",
-]
-
-CAR_MODELS = [
-    "Mercedes-Benz",
-    "BMW",
-    "Audi",
-    "Maruti Wagon R",
-    "Maruti Swift",
-    "Maruti Dzire",
-    "Maruti Alto",
-    "Maruti Baleno",
-    "Maruti Brezza",
-    "Maruti Ertiga",
-    "Hyundai Creta",
-    "Hyundai i10",
-    "Hyundai i20",
-    "Hyundai Venue",
-    "Hyundai Verna",
-    "Tata Nexon",
-    "Tata Punch",
-    "Tata Harrier",
-    "Tata Safari",
-    "Toyota Fortuner",
-    "Toyota Innova",
-    "Mahindra Scorpio",
-    "Mahindra Thar",
-    "Mahindra XUV700",
-    "Mahindra Bolero",
-    "Honda City",
-    "Kia Seltos",
-]
-
-CAR_MODEL_PROMPTS = [f"a photo of a {model} car" for model in CAR_MODELS]
+# Stage 2: Specific Car Models (Triggered ONLY if Stage 1 == 'Car' or 'Taxi')
+CAR_MODELS = {
+    "Mercedes-Benz Sedan/SUV": "a photo of a luxury Mercedes-Benz sedan or SUV car with three-pointed star grille",
+    "BMW / Audi Luxury Car": "a photo of a luxury BMW or Audi sedan or SUV car",
+    "Hyundai Creta / Venue": "a photo of a Hyundai Creta or Hyundai Venue SUV",
+    "Hyundai i20 / Verna": "a photo of a Hyundai i20 hatchback or Verna sedan car",
+    "Hyundai i10 / Grand i10": "a photo of a Hyundai i10 or Grand i10 hatchback or black and yellow taxi",
+    "Hyundai Santro": "a photo of a Hyundai Santro Xing hatchback or taxi",
+    "Maruti Wagon R": "a photo of a Maruti Suzuki Wagon R tall hatchback car",
+    "Maruti Swift": "a photo of a Maruti Suzuki Swift hatchback car",
+    "Maruti Dzire": "a photo of a Maruti Suzuki Swift Dzire compact sedan car",
+    "Maruti Omni": "a photo of a boxy Maruti Suzuki Omni van or taxi",
+    "Maruti Eeco": "a photo of a Maruti Suzuki Eeco minivan",
+    "Maruti Alto": "a photo of a small Maruti Suzuki Alto hatchback car",
+    "Maruti Baleno": "a photo of a Maruti Suzuki Baleno hatchback car",
+    "Maruti Brezza": "a photo of a Maruti Suzuki Vitara Brezza compact SUV",
+    "Maruti Ertiga": "a photo of a Maruti Suzuki Ertiga MPV car",
+    "Toyota Innova": "a photo of a Toyota Innova MPV car",
+    "Toyota Fortuner": "a photo of a large Toyota Fortuner SUV",
+    "Mahindra Thar": "a photo of a boxy Mahindra Thar SUV",
+    "Mahindra XUV700 / Scorpio": "a photo of a Mahindra Scorpio or XUV700 SUV",
+    "Tata Nexon / Punch": "a photo of a Tata Nexon or Tata Punch compact SUV",
+    "Honda City / Amaze": "a photo of a Honda City or Honda Amaze sedan car",
+}
 
 
 class SiglipClassifier:
@@ -167,94 +169,64 @@ class SiglipClassifier:
                 ).to(self.device)
             self.model.eval()
 
-            # Precompute text embeddings
-            with torch.no_grad():
-                tin_v = self.processor(text=VEHICLE_TYPE_PROMPTS, padding=True, return_tensors="pt").to(self.device)
-                vout = self.model.get_text_features(**tin_v)
-                v_feat = vout.pooler_output if hasattr(vout, "pooler_output") and vout.pooler_output is not None else vout
-                if not isinstance(v_feat, torch.Tensor):
-                    v_feat = v_feat[0]
-                self.v_embeds = F.normalize(v_feat, p=2, dim=-1)
-
-                tin_c = self.processor(text=CAR_MODEL_PROMPTS, padding=True, return_tensors="pt").to(self.device)
-                cout = self.model.get_text_features(**tin_c)
-                c_feat = cout.pooler_output if hasattr(cout, "pooler_output") and cout.pooler_output is not None else cout
-                if not isinstance(c_feat, torch.Tensor):
-                    c_feat = c_feat[0]
-                self.c_embeds = F.normalize(c_feat, p=2, dim=-1)
+            self.v_class_names = list(VEHICLE_TYPES.keys())
+            self.v_prompts = list(VEHICLE_TYPES.values())
+            self.c_class_names = list(CAR_MODELS.keys())
+            self.c_prompts = list(CAR_MODELS.values())
 
             self.active = True
-            print("    [+] SigLIP Vision-Language Classifier successfully ready!\n")
+            print("    [+] Two-Stage SigLIP Vision-Language Classifier successfully ready!\n")
         except Exception as e:
             print(f"    [!] Could not initialize SigLIP: {e}. Falling back to heuristic classifier.")
             self.active = False
 
-    def classify_crop(self, crop_bgr: np.ndarray, yolo_cls_id: int):
-        if not self.active or crop_bgr.shape[0] < 20 or crop_bgr.shape[1] < 20:
-            return fallback_classify_vehicle(crop_bgr, yolo_cls_id)
+    def _classify_labels(self, pil_img: Image.Image, class_names: list, prompts: list):
+        """Runs zero-shot classification on PIL crop with SigLIP model forward logits."""
+        inputs = self.processor(
+            text=prompts,
+            images=pil_img,
+            padding="max_length",
+            return_tensors="pt"
+        ).to(self.device)
+
+        if self.device.type == "cuda":
+            inputs["pixel_values"] = inputs["pixel_values"].to(torch.float16)
+
+        with torch.no_grad():
+            outputs = self.model(**inputs)
+            probs = torch.softmax(outputs.logits_per_image, dim=-1)[0]
+
+        best_idx = probs.argmax().item()
+        return class_names[best_idx], float(probs[best_idx].item())
+
+    def classify_crop(self, crop_pil_or_bgr, yolo_cls_id: int = 2):
+        if isinstance(crop_pil_or_bgr, np.ndarray):
+            crop_rgb = cv2.cvtColor(crop_pil_or_bgr, cv2.COLOR_BGR2RGB)
+            pil_img = Image.fromarray(crop_rgb)
+        else:
+            pil_img = crop_pil_or_bgr
+
+        if not self.active:
+            return fallback_classify_vehicle(np.array(pil_img), yolo_cls_id)
 
         try:
-            crop_rgb = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2RGB)
-            im = Image.fromarray(crop_rgb)
-            iin = self.processor(images=[im], return_tensors="pt").to(self.device)
-            
-            with torch.no_grad():
-                iout = self.model.get_image_features(**iin)
-                i_feat = iout.pooler_output if hasattr(iout, "pooler_output") and iout.pooler_output is not None else iout
-                if not isinstance(i_feat, torch.Tensor):
-                    i_feat = i_feat[0]
-                i_norm = F.normalize(i_feat, p=2, dim=-1)
+            # ---- STAGE 1: Predict Vehicle Type ----
+            v_type, v_conf = self._classify_labels(pil_img, self.v_class_names, self.v_prompts)
+            if v_type in ["Auto", "Auto Rickshaw", "E-Rickshaw"]:
+                v_type = "Auto"
 
-                # Check car/SUV model probabilities first
-                sim_c = torch.matmul(i_norm, self.c_embeds.T) * 100.0
-                probs_c = F.softmax(sim_c, dim=-1).squeeze().cpu().numpy()
-                best_c_idx = int(np.argmax(probs_c))
-                top_car_model = CAR_MODELS[best_c_idx]
-                top_c_conf = float(probs_c[best_c_idx])
+            car_model = None
+            # ---- STAGE 2: Predict Car Model (Cars & Taxis ONLY) ----
+            if v_type in ["Car", "Taxi"]:
+                car_model, m_conf = self._classify_labels(pil_img, self.c_class_names, self.c_prompts)
+                print(f"      [Stage 1: {v_type} ({v_conf:.0%})] -> [Stage 2 Model: {car_model} ({m_conf:.0%})]")
+            else:
+                print(f"      [Stage 1 Category: {v_type} ({v_conf:.0%})] (Stage 2 Car Models Bypassed)")
 
-                # Check general vehicle categories
-                sim_v = torch.matmul(i_norm, self.v_embeds.T) * 100.0
-                probs_v = F.softmax(sim_v, dim=-1).squeeze().cpu().numpy()
-                best_v_idx = int(np.argmax(probs_v))
-                v_type = VEHICLE_TYPES[best_v_idx]
-
-                car_model = None
-
-                # AUTO RICKSHAW OVERRIDE:
-                # Indian Auto Rickshaws are 3-wheelers. They should ONLY be classified as "Auto", NEVER assigned a car model.
-                if v_type == "Auto" or "auto" in v_type.lower():
-                    v_type = "Auto"
-                    car_model = None
-                elif v_type in ["Scooty", "Motorcycle", "Bus", "Tractor", "Mini Truck / Pickup"]:
-                    car_model = None
-                elif yolo_cls_id == 7: # COCO Truck class
-                    # Check if it's an SUV misclassified by COCO as a truck:
-                    if top_c_conf > 0.30 and top_car_model in ["Hyundai Creta", "Toyota Fortuner", "Mahindra Thar", "Mahindra Scorpio", "Tata Safari", "Tata Harrier"]:
-                        v_type = "Car"
-                        car_model = top_car_model
-                    else:
-                        v_type = "Truck"
-                        car_model = None
-                elif v_type in ["Car", "Taxi"] or yolo_cls_id == 2:
-                    v_type = "Car"
-                    car_model = top_car_model
-                elif yolo_cls_id == 1:
-                    v_type, car_model = "Bicycle", None
-                elif yolo_cls_id == 3:
-                    v_type, car_model = ("Scooty" if v_type == "Scooty" else "Motorcycle"), None
-                elif yolo_cls_id == 5:
-                    v_type, car_model = "Bus", None
-
-                # Print top 3 predictions for audit
-                if car_model:
-                    top3_indices = np.argsort(probs_c)[::-1][:3]
-                    top3_str = ", ".join(f"{CAR_MODELS[idx]}: {probs_c[idx]*100:.1f}%" for idx in top3_indices)
-                    print(f"      [SigLIP Predictions] {top3_str}")
-
-                return v_type, car_model
+            return v_type, car_model
         except Exception as err:
             print(f"      [!] SigLIP inference warning: {err}")
-            return fallback_classify_vehicle(crop_bgr, yolo_cls_id)
+            return fallback_classify_vehicle(np.array(pil_img), yolo_cls_id)
 
 
 def fallback_classify_vehicle(crop: np.ndarray, yolo_cls_id: int):
@@ -278,9 +250,9 @@ def fallback_classify_vehicle(crop: np.ndarray, yolo_cls_id: int):
 
     # Check for Mercedes emblem or luxury grille proportions
     if aspect_ratio > 1.25 and w * h > 50000:
-        return "Car", "Mercedes-Benz"
+        return "Car", "Mercedes-Benz Sedan/SUV"
     elif aspect_ratio > 1.15:
-        return "Car", "Hyundai Creta"
+        return "Car", "Hyundai Creta / Venue"
     else:
         return "Car", "Maruti Wagon R"
 
@@ -462,17 +434,27 @@ def main():
             bw = bx2 - bx1
             bh = by2 - by1
 
-            if bw < 25 or bh < 25:
+            if bw < 35 or bh < 35:
                 continue
 
+            # Add 10% context padding around vehicle crop (crucial for full vehicle context & bumper plate visibility)
+            pad_x = int(bw * 0.10)
+            pad_y = int(bh * 0.10)
+            cx1 = max(0, bx1 - pad_x)
+            cy1 = max(0, by1 - pad_y)
+            cx2 = min(w, bx2 + pad_x)
+            cy2 = min(h, by2 + pad_y)
+
+            crop_bgr = img[cy1:cy2, cx1:cx2]
+            crop_pil = Image.fromarray(cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2RGB))
+
             # Classify Vehicle Type & Model via Neural SigLIP
-            crop = img[by1:by2, bx1:bx2]
             if cls_id == 1:
                 v_type, car_model = "Bicycle", None
             elif 15 <= cls_id <= 21:
                 v_type, car_model = "Animal", None
             else:
-                v_type, car_model = siglip.classify_crop(crop, cls_id)
+                v_type, car_model = siglip.classify_crop(crop_pil, cls_id)
 
             # Find any license plate that falls inside or near this vehicle box
             plate_text = None
@@ -491,19 +473,18 @@ def main():
                         plate_bbox = cand["bbox"]
                         cand["assigned"] = True
 
-            # Also run FastALPR directly on vehicle crop if no plate found yet
-            if not plate_text and crop.shape[0] >= 30 and crop.shape[1] >= 30:
+            # Also run FastALPR directly on padded vehicle crop (catches plates right on bumper edges)
+            if not plate_text and crop_bgr.shape[0] >= 30 and crop_bgr.shape[1] >= 30:
                 try:
-                    crop_alpr = alpr.predict(crop)
-                    for cr in crop_alpr:
-                        if cr.ocr and cr.ocr.text:
-                            c_clean = clean_indian_plate(cr.ocr.text)
-                            num_digits = sum(1 for c in c_clean if c.isdigit())
-                            if len(c_clean) >= 4 and num_digits >= 2:
+                    crop_alpr = alpr.predict(crop_bgr)
+                    if crop_alpr:
+                        best_p = max(crop_alpr, key=lambda r: np.mean(r.ocr.confidence) if (r.ocr and r.ocr.confidence is not None) else 0)
+                        if best_p.ocr and best_p.ocr.text:
+                            c_clean = clean_indian_plate(best_p.ocr.text)
+                            if len(c_clean) >= 6:
                                 plate_text = c_clean
-                                pb = cr.detection.bounding_box
-                                plate_bbox = [bx1 + pb.x1, by1 + pb.y1, bx1 + pb.x2, by1 + pb.y2]
-                                break
+                                pb = best_p.detection.bounding_box
+                                plate_bbox = [cx1 + int(pb.x1), cy1 + int(pb.y1), cx1 + int(pb.x2), cy1 + int(pb.y2)]
                 except Exception:
                     pass
 
