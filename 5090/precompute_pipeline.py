@@ -34,10 +34,12 @@ WORKSPACE_ROOT = Path(r"E:\MIlitary_Prototype_IA\5090")
 VIDEOS_DIR = WORKSPACE_ROOT / "vehical_TYPE-ANPR_DETECTION"
 MODELS_DIR = WORKSPACE_ROOT / "models"
 PRECOMPUTE_DIR = WORKSPACE_ROOT / "precompute"
+OUTPUTS_DIR = WORKSPACE_ROOT / "Test" / "Outputs"
 
 # Ensure all directories exist
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 PRECOMPUTE_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Point all external caches to local 5090/models so C:\ remains untouched
 os.environ["HF_HOME"] = str(MODELS_DIR / "huggingface")
@@ -928,6 +930,7 @@ class OfflinePrecomputePipeline:
         target_video: Optional[str] = None,
         max_frames: Optional[int] = None,
         skip_existing: bool = False,
+        export_video: bool = False,
     ):
         """Scans videos directory, routes modes, and saves precompute JSONs."""
         video_extensions = ("*.mp4", "*.avi", "*.mkv", "*.mov")
@@ -955,6 +958,10 @@ class OfflinePrecomputePipeline:
             out_json = PRECOMPUTE_DIR / f"{video_path.stem}_precompute.json"
             if skip_existing and out_json.is_file():
                 print(f"[*] Skipping {video_path.name} (already exists: {out_json.name})")
+                if export_video:
+                    from Test.render_annotated_video import render_from_precompute
+                    out_mp4 = OUTPUTS_DIR / f"{video_path.stem}_annotated.mp4"
+                    render_from_precompute(video_path, out_json, out_mp4, max_frames=max_frames)
                 continue
 
             # Route mode
@@ -970,6 +977,12 @@ class OfflinePrecomputePipeline:
             with open(out_json, "w", encoding="utf-8") as f:
                 json.dump(result_data, f, indent=2)
             print(f"    [+] Successfully saved {out_json.name} ({out_json.stat().st_size / 1024:.1f} KB)\n")
+
+            # Render full annotated video into Test/Outputs if requested
+            if export_video:
+                from Test.render_annotated_video import render_from_precompute
+                out_mp4 = OUTPUTS_DIR / f"{video_path.stem}_annotated.mp4"
+                render_from_precompute(video_path, out_json, out_mp4, max_frames=max_frames)
 
         print("=" * 80)
         print("  ALL REQUESTED PRECOMPUTE TASKS COMPLETED SUCCESSFULLY!")
@@ -1013,6 +1026,11 @@ def main():
         help="Skip videos if their precompute JSON already exists.",
     )
     parser.add_argument(
+        "--export-video",
+        action="store_true",
+        help="Render and export full annotated MP4 videos into Test/Outputs folder.",
+    )
+    parser.add_argument(
         "--no-siglip",
         action="store_true",
         help="Disable heavy SigLIP and use fast attribute classifier.",
@@ -1030,6 +1048,7 @@ def main():
         target_video=args.video,
         max_frames=args.max_frames,
         skip_existing=args.skip_existing,
+        export_video=args.export_video,
     )
 
 
