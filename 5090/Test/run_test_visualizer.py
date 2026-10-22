@@ -78,7 +78,7 @@ def clean_indian_plate(raw_text: str) -> str:
 # SigLIP Categories & Classifiers
 # ---------------------------------------------------------------------------
 VEHICLE_TYPES = [
-    "Auto Rickshaw",
+    "Auto",
     "Scooty",
     "Motorcycle",
     "Taxi",
@@ -90,7 +90,7 @@ VEHICLE_TYPES = [
 ]
 
 VEHICLE_TYPE_PROMPTS = [
-    "a photo of an Indian auto rickshaw tuk-tuk",
+    "a photo of an Indian auto rickshaw, three-wheeler auto, yellow and black bajaj tuk-tuk, CNG auto",
     "a photo of a motor scooter, scooty, honda activa, or moped",
     "a photo of a motorcycle or motorbike",
     "a photo of a yellow and black taxi cab",
@@ -220,30 +220,30 @@ class SiglipClassifier:
 
                 car_model = None
 
-                # Disambiguate YOLO classes
-                # In COCO, YOLOv11 frequently misclassifies compact SUVs (like Hyundai Creta, Fortuner) as class 7 (truck).
-                # If YOLO detected class 2 (car) or class 7 (truck):
-                if yolo_cls_id in [2, 7]:
-                    # If SigLIP recognizes it as a known car/SUV model with strong confidence (>15% among 27 models):
-                    if top_c_conf > 0.15:
+                # AUTO RICKSHAW OVERRIDE:
+                # Indian Auto Rickshaws are 3-wheelers. They should ONLY be classified as "Auto", NEVER assigned a car model.
+                if v_type == "Auto" or "auto" in v_type.lower():
+                    v_type = "Auto"
+                    car_model = None
+                elif v_type in ["Scooty", "Motorcycle", "Bus", "Tractor", "Mini Truck / Pickup"]:
+                    car_model = None
+                elif yolo_cls_id == 7: # COCO Truck class
+                    # Check if it's an SUV misclassified by COCO as a truck:
+                    if top_c_conf > 0.30 and top_car_model in ["Hyundai Creta", "Toyota Fortuner", "Mahindra Thar", "Mahindra Scorpio", "Tata Safari", "Tata Harrier"]:
                         v_type = "Car"
                         car_model = top_car_model
-                    elif yolo_cls_id == 7:
+                    else:
                         v_type = "Truck"
                         car_model = None
-                    else:
-                        v_type = "Car"
-                        car_model = top_car_model
+                elif v_type in ["Car", "Taxi"] or yolo_cls_id == 2:
+                    v_type = "Car"
+                    car_model = top_car_model
                 elif yolo_cls_id == 1:
                     v_type, car_model = "Bicycle", None
                 elif yolo_cls_id == 3:
-                    v_type = "Scooty" if v_type == "Scooty" else "Motorcycle"
-                    car_model = None
+                    v_type, car_model = ("Scooty" if v_type == "Scooty" else "Motorcycle"), None
                 elif yolo_cls_id == 5:
                     v_type, car_model = "Bus", None
-                else:
-                    if v_type in ["Car", "Taxi"]:
-                        car_model = top_car_model
 
                 # Print top 3 predictions for audit
                 if car_model:
@@ -261,6 +261,14 @@ def fallback_classify_vehicle(crop: np.ndarray, yolo_cls_id: int):
     h, w = crop.shape[:2]
     aspect_ratio = w / max(h, 1)
     
+    # Auto Rickshaw color heuristic (yellow/black or green/yellow CNG)
+    hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
+    yellow_ratio = np.count_nonzero(cv2.inRange(hsv, (15, 60, 60), (35, 255, 255))) / float(w * h)
+    green_ratio = np.count_nonzero(cv2.inRange(hsv, (35, 50, 50), (85, 255, 255))) / float(w * h)
+    if yellow_ratio > 0.10 or (yellow_ratio > 0.05 and green_ratio > 0.05):
+        if aspect_ratio < 1.15:
+            return "Auto", None
+
     if yolo_cls_id == 3:
         return ("Scooty" if aspect_ratio < 0.65 else "Motorcycle"), None
     if yolo_cls_id == 5:
@@ -289,8 +297,11 @@ def draw_detection_badge(img: np.ndarray, bbox, vehicle_type: str, car_model: st
     text_color = (255, 255, 255)    # White
     accent_plate = (0, 215, 255)    # Amber/Gold for plate badge
     
-    if vehicle_type in ["Auto Rickshaw", "Taxi"]:
+    if vehicle_type in ["Auto", "Auto Rickshaw", "Taxi"]:
         box_color = (0, 230, 255)   # Amber
+        if "Auto" in vehicle_type:
+            car_model = None
+            vehicle_type = "Auto"
     elif vehicle_type in ["Motorcycle", "Scooty"]:
         box_color = (255, 150, 0)   # Orange
     elif vehicle_type in ["Truck", "Bus"]:
@@ -310,7 +321,7 @@ def draw_detection_badge(img: np.ndarray, bbox, vehicle_type: str, car_model: st
         cv2.line(img, (x2, y2), (x2, y2 - corner_len), box_color, 4)
 
     # 2. Build badge label: "Vehicle type : Model | [Plate]"
-    if car_model:
+    if car_model and vehicle_type != "Auto":
         v_label = f"{vehicle_type} : {car_model}"
     else:
         v_label = f"{vehicle_type}"

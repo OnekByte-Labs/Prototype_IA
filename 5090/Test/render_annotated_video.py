@@ -73,14 +73,21 @@ def draw_vehicle_badge(img: np.ndarray, bbox, vehicle_type: str, car_model: str 
     # Category color selection
     v_upper = vehicle_type.upper() if vehicle_type else "VEHICLE"
     color = COLORS["car"]
-    if "AUTO" in v_upper or "TAXI" in v_upper:
+    if "AUTO" in v_upper:
+        color = COLORS["auto"]
+        vehicle_type = "Auto"
+        car_model = None  # Auto rickshaws are never assigned a car model!
+    elif "TAXI" in v_upper:
         color = COLORS["taxi"]
     elif "BIKE" in v_upper or "SCOOT" in v_upper or "MOTORCYCLE" in v_upper:
         color = COLORS["bike"]
+        car_model = None
     elif "TRUCK" in v_upper:
         color = COLORS["truck"]
+        car_model = None
     elif "BUS" in v_upper:
         color = COLORS["bus"]
+        car_model = None
 
     # 1. Draw tactical bounding box
     draw_tactical_box(img, bbox, color)

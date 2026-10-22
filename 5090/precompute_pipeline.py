@@ -84,8 +84,7 @@ YOLO_CLASS_NAME_MAP: Dict[int, str] = {
 # SigLIP Pass 1: Indian Road Vehicle Categories
 # ---------------------------------------------------------------------------
 VEHICLE_TYPES: List[str] = [
-    "Auto Rickshaw",
-    "E-Rickshaw",
+    "Auto",
     "Scooty",
     "Motorcycle",
     "Taxi",
@@ -97,8 +96,7 @@ VEHICLE_TYPES: List[str] = [
 ]
 
 VEHICLE_TYPE_PROMPTS: List[str] = [
-    "a photo of an Indian auto rickshaw, three-wheeler tuk-tuk bajaj",
-    "a photo of an Indian electric e-rickshaw or battery toto rickshaw",
+    "a photo of an Indian auto rickshaw, three-wheeler auto, yellow and black bajaj tuk-tuk, CNG auto",
     "a photo of a motor scooter, scooty, honda activa, or moped",
     "a photo of a motorcycle, motorbike, pulsar, splendor, or royal enfield",
     "a photo of an Indian yellow and black taxi, commercial tourist cab",
@@ -471,21 +469,30 @@ class OfflinePrecomputePipeline:
             car_model = None
             car_conf = None
 
-            # Disambiguate SUV vs Truck:
-            # COCO YOLOv11 often tags compact SUVs (Hyundai Creta, Toyota Fortuner, Mahindra Thar) as class 7 (truck).
-            # If SigLIP recognises a known car/SUV model with strong confidence, reclassify as Car / SUV.
-            if cls_id in [2, 7] or v_type in ["Car", "Taxi"]:
-                if top_c_conf > 0.15:
+            # 1. Auto Rickshaw Priority:
+            # Indian 3-wheeler auto rickshaws have NO class in COCO YOLO (usually detected as car cls 2 or motorcycle cls 3).
+            # When SigLIP identifies Auto or crop features indicate Auto, classify strictly as "Auto" with NO car model.
+            if v_type == "Auto" or "auto" in v_type.lower():
+                v_type = "Auto"
+                car_model = None
+                car_conf = None
+            elif v_type in ["Scooty", "Motorcycle", "Bus", "Tractor", "Bicycle"]:
+                car_model = None
+                car_conf = None
+            elif cls_id == 7:
+                # Disambiguate SUV vs Truck:
+                # COCO YOLOv11 often tags compact SUVs (Hyundai Creta, Toyota Fortuner, Mahindra Thar) as class 7 (truck).
+                if top_c_conf > 0.30 and top_car_model in ["Hyundai Creta", "Toyota Fortuner", "Mahindra Thar", "Mahindra Scorpio", "Tata Safari", "Tata Harrier"]:
                     v_type = "Car"
                     car_model = top_car_model
                     car_conf = top_c_conf
-                elif cls_id == 7:
+                else:
                     v_type = "Truck"
                     car_model = None
-                else:
-                    v_type = "Car"
-                    car_model = top_car_model
-                    car_conf = top_c_conf
+            elif cls_id == 2 or v_type in ["Car", "Taxi"]:
+                v_type = "Car"
+                car_model = top_car_model
+                car_conf = top_c_conf
             elif cls_id == 1:
                 v_type = "Bicycle"
             elif cls_id == 3:
@@ -546,11 +553,11 @@ class OfflinePrecomputePipeline:
                 results.append((v_type, v_conf, None, None))
                 continue
 
-            # Class 2: Car (or Auto Rickshaw / Taxi)
-            if yellow_ratio > 0.15 or (yellow_ratio > 0.08 and green_ratio > 0.08):
-                if aspect_ratio < 1.1:
-                    v_type = "Auto Rickshaw"
-                    v_conf = round(0.85 + yellow_ratio * 0.1, 2)
+            # Class 2: Car (or Auto / Taxi)
+            if yellow_ratio > 0.10 or (yellow_ratio > 0.05 and green_ratio > 0.05):
+                if aspect_ratio < 1.15:
+                    v_type = "Auto"
+                    v_conf = round(0.88 + yellow_ratio * 0.1, 2)
                     results.append((v_type, v_conf, None, None))
                     continue
                 else:
