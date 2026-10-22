@@ -71,17 +71,18 @@ function useLiveMetadata(url?: string): LiveSnapshot | null {
  * camera used until the backend reports which camera is bound to the channel.
  */
 const WALL_FEEDS: { nvr: string; channel: number; id: string }[] = [
-  { nvr: "NVR-01", channel: 1, id: "CAM-01" },
-  { nvr: "NVR-01", channel: 2, id: "CAM-02" },
-  { nvr: "NVR-01", channel: 3, id: "CAM-21" },
-  { nvr: "HIK-01", channel: 3, id: "CAM-03" },
-  { nvr: "HIK-01", channel: 4, id: "CAM-04" },
-  { nvr: "NVR-01", channel: 5, id: "CAM-05" },
-  { nvr: "NVR-01", channel: 13, id: "CAM-13" },
-  { nvr: "HIK-01", channel: 14, id: "CAM-14" },
-  { nvr: "NVR-01", channel: 15, id: "CAM-15" },
-  // Looped 4K traffic clip (backend file source FILE-01), analysed like any live channel
-  { nvr: "FILE-01", channel: 1, id: "CAM-33" },
+  { nvr: "FILE-01", channel: 1, id: "CAM-01" },
+  { nvr: "FILE-01", channel: 2, id: "CAM-02" },
+  { nvr: "FILE-01", channel: 3, id: "CAM-03" },
+  { nvr: "FILE-01", channel: 4, id: "CAM-04" },
+  { nvr: "FILE-01", channel: 5, id: "CAM-05" },
+  { nvr: "FILE-01", channel: 6, id: "CAM-06" },
+  { nvr: "FILE-01", channel: 7, id: "CAM-07" },
+  { nvr: "FILE-01", channel: 8, id: "CAM-08" },
+  { nvr: "FILE-01", channel: 9, id: "CAM-09" },
+  { nvr: "FILE-01", channel: 10, id: "CAM-10" },
+  { nvr: "FILE-01", channel: 11, id: "CAM-11" },
+  { nvr: "FILE-01", channel: 12, id: "CAM-12" },
 ];
 
 interface CameraWallProps {
@@ -460,11 +461,12 @@ export function CameraWall({
               gridTemplateRows: `repeat(${grid.rows}, minmax(0, 1fr))`,
             }}
           >
-            {displayedCameras.map((cam) => {
-              const stream = liveStreams[cam.id];
-              const health = streamHealth[cam.id];
-              const alerting = alertingCameraIds.includes(cam.id);
-              const down = !stream || health?.status === "ERROR" || health?.status === "DISCONNECTED";
+            {displayedCameras.map((cam, idx) => {
+              const isUnique = idx < 5;
+              const stream = isUnique ? liveStreams[cam.id] : undefined;
+              const health = isUnique ? streamHealth[cam.id] : undefined;
+              const alerting = isUnique && alertingCameraIds.includes(cam.id);
+              const down = isUnique && (!stream || health?.status === "ERROR" || health?.status === "DISCONNECTED");
               return (
                 <div
                   key={cam.id}
@@ -474,24 +476,59 @@ export function CameraWall({
                     "glass-viewport rounded-xl relative overflow-hidden transition min-h-0 min-w-0",
                     alerting
                       ? "!border-warn/50 ring-1 ring-warn/20 bg-warn/5"
-                      : down
-                        ? "!border-crit/30 bg-crit/5"
-                        : "hover:!border-accent/40",
+                      : !isUnique
+                        ? "!border-white/[0.08] bg-black/40 hover:!border-white/20"
+                        : down
+                          ? "!border-crit/30 bg-crit/5"
+                          : "hover:!border-accent/40",
                   )}
                 >
-                  <TacticalVideoFeed
-                    camera={cam}
-                    liveMjpegUrl={stream?.mjpegUrl}
-                    pipeline={pipelines[cam.id]}
-                    stream={stream}
-                    health={health}
-                    feedLink={feedLink}
-                    focused={false}
-                    glass
-                    showAiBoxes={showAiBoxes}
-                    isBreached={alerting}
-                    onClick={() => setInternalFocusId(cam.id)}
-                  />
+                  {isUnique ? (
+                    <TacticalVideoFeed
+                      camera={cam}
+                      liveMjpegUrl={stream?.mjpegUrl}
+                      pipeline={pipelines[cam.id]}
+                      stream={stream}
+                      health={health}
+                      feedLink={feedLink}
+                      focused={false}
+                      glass
+                      showAiBoxes={showAiBoxes}
+                      isBreached={alerting}
+                      onClick={() => setInternalFocusId(cam.id)}
+                    />
+                  ) : (
+                    <div
+                      className="relative w-full h-full select-none overflow-hidden flex flex-col justify-between p-2 cursor-pointer hover:bg-white/[0.02] transition"
+                      onClick={() => setInternalFocusId(cam.id)}
+                    >
+                      {/* Camera label */}
+                      <div className="z-10 pointer-events-none">
+                        <span className="inline-flex max-w-full items-center gap-1.5 px-1.5 py-0.5 rounded bg-black/65 border border-white/10 text-[10px] font-data">
+                          <span className="font-semibold text-accent-ink shrink-0">{cam.id.replace("-", " ")}</span>
+                          <span className="text-white/25 shrink-0">·</span>
+                          <span className="font-medium text-white/90 truncate uppercase">{cam.name}</span>
+                        </span>
+                      </div>
+
+                      {/* Loading state indicator */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-warn/80 pointer-events-none">
+                        <div className="w-7 h-7 rounded-full bg-warn/10 border border-warn/20 flex items-center justify-center">
+                          <Icon name="sync" size={15} className="animate-spin text-warn" />
+                        </div>
+                        <span className="text-[10px] font-data tracking-wider uppercase text-white/70">Connecting…</span>
+                      </div>
+
+                      {/* Bottom status badge */}
+                      <div className="z-10 flex items-center justify-between pointer-events-none">
+                        <span className="text-[9px] font-data text-white/30 truncate">{cam.zone}</span>
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/50 text-[9px] font-data text-warn">
+                          <span className="w-1.5 h-1.5 rounded-full bg-warn animate-pulse" />
+                          LOADING
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -29,6 +29,7 @@ import json
 import logging
 import signal
 import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -66,6 +67,10 @@ class LiveRTSPSource(threading.Thread):
         self.degraded_fps_ratio = float(spec.get("degraded_fps_ratio", 0.6))
         self.max_backoff_s = float(spec.get("max_backoff_s", 15.0))
         self.use_nvdec = bool(spec.get("nvdec", True))
+        if sys.platform.startswith("win"):
+            import ctypes.util
+            if not ctypes.util.find_library("nvcuvid"):
+                self.use_nvdec = False
         self._stop_event = threading.Event()
         self._proc: Optional[subprocess.Popen] = None
         self._lock = threading.Lock()
@@ -187,7 +192,7 @@ class LiveRTSPSource(threading.Thread):
         self._stderr.clear()
         self._proc = proc = subprocess.Popen(
             self._command(up["codec"], nvdec), stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0,
-            preexec_fn=lambda: die_with_parent(signal.SIGKILL),
+            preexec_fn=(lambda: die_with_parent(signal.SIGKILL)) if not sys.platform.startswith("win") else None,
         )
         started = time.monotonic()
         err_reader = threading.Thread(target=self._read_stderr, args=(proc,), daemon=True)
@@ -275,7 +280,7 @@ class LiveRTSPSource(threading.Thread):
                 emitted = self._session(up, nvdec)
                 if self._stop_event.is_set():
                     break
-                if emitted == 0 and nvdec and any(k in (self.last_error or "") for k in ("cuvid", "CUDA", "cuda", "NVDEC")):
+                if emitted == 0 and nvdec:
                     self._nvdec_failures += 1
                     if self._nvdec_failures >= 2:
                         logger.warning("[%s] NVDEC unavailable (%s) — falling back to CPU decoding",

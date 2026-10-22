@@ -33,3 +33,19 @@ def sigterm_as_keyboard_interrupt() -> None:
             os._exit(1)  # already shutting down and asked again — don't hang
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, _handler)
+
+
+def is_parent_alive(parent_pid: int) -> bool:
+    """Returns True if the parent process with parent_pid is still alive."""
+    if not sys.platform.startswith("win"):
+        return os.getppid() == parent_pid
+    PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, parent_pid)
+    if not handle:
+        return False
+    exit_code = ctypes.c_ulong()
+    still_active = kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code)) and exit_code.value == 259
+    kernel32.CloseHandle(handle)
+    return bool(still_active)
+

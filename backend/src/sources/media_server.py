@@ -34,6 +34,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -75,8 +76,11 @@ class MediaServer:
         self.ice_udp_port = int(cfg.get("webrtc_ice_udp_port", 8189))
         self.transcode = cfg.get("browser_transcode", "h264_nvenc")   # h264_nvenc | off
         self.binary = (os.environ.get("MEDIAMTX_BIN") or cfg.get("binary") or str(BACKEND / "bin" / "mediamtx"))
+        if sys.platform.startswith("win") and not self.binary.endswith(".exe"):
+            if Path(self.binary + ".exe").is_file():
+                self.binary = self.binary + ".exe"
         if not Path(self.binary).is_file():
-            self.binary = shutil.which("mediamtx") or self.binary
+            self.binary = shutil.which("mediamtx") or shutil.which("mediamtx.exe") or self.binary
         self.config_path = BACKEND / "data" / "mediamtx.yml"
         self.paths: Dict[str, dict] = {}          # path → {nvr_id, channel, subtype, role, on_demand}
         for b in bindings:
@@ -147,10 +151,12 @@ class MediaServer:
         out.parent.mkdir(parents=True, exist_ok=True)
         tmp = out.with_suffix(".part.mp4")
         logger.info("File source: preparing a %dpx H.264 copy of %s (one-time, cached in %s)", max_w, src.name, out.parent)
-        cmd = ["nice", "-n", "10", "ffmpeg", "-hide_banner", "-nostdin", "-y", "-loglevel", "error", "-i", str(src), "-an",
+        cmd = ["ffmpeg", "-hide_banner", "-nostdin", "-y", "-loglevel", "error", "-i", str(src), "-an",
                "-vf", f"scale={max_w}:-2", "-c:v", "libx264", "-preset", "medium", "-crf", "23",
                "-maxrate", "4M", "-bufsize", "8M", "-g", "25", "-keyint_min", "25", "-sc_threshold", "0", "-bf", "0",
                "-profile:v", "main", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-f", "mp4", str(tmp)]
+        if not sys.platform.startswith("win") and shutil.which("nice"):
+            cmd = ["nice", "-n", "10"] + cmd
         try:
             subprocess.run(cmd, check=True, timeout=3600)
         except (OSError, subprocess.SubprocessError) as e:
@@ -159,16 +165,18 @@ class MediaServer:
         tmp.replace(out)
         return out
 
-    def _file_cmd(self, file: str) -> str:
+    def _file_cmd(self, file: str, path: str = "") -> str:
         """ffmpeg job that loops a video file into MediaMTX as a live stream (stream copy, paced to real time)."""
+        clean_file = file.replace("\\", "/")
+        target = f"rtsp://127.0.0.1:{self.rtsp_port}/{path}" if path else f"rtsp://127.0.0.1:{self.rtsp_port}/$MTX_PATH"
         return ('ffmpeg -hide_banner -nostdin -loglevel error -re -stream_loop -1 '
-                f'-i "{file}" -an -c:v copy -f rtsp -rtsp_transport tcp rtsp://127.0.0.1:{self.rtsp_port}/$MTX_PATH')
+                f'-i "{clean_file}" -an -c:v copy -f rtsp -rtsp_transport tcp {target}')
 
     def _write_config(self) -> None:
         paths = {}
         for name, p in self.paths.items():
             if "file" in p:
-                cmd = self._file_cmd(p["file"])
+                cmd = self._file_cmd(p["file"], name)
                 if p["on_demand"]:
                     paths[name] = {"runOnDemand": cmd, "runOnDemandRestart": True,
                                    "runOnDemandStartTimeout": "20s", "runOnDemandCloseAfter": "10s"}
@@ -205,8 +213,10 @@ class MediaServer:
                                     + yaml.safe_dump(conf, sort_keys=False))
 
     def _child_env(self) -> dict:
-        keep = ("PATH", "HOME", "LANG", "LC_ALL", "TZ", "LD_LIBRARY_PATH", "CUDA_VISIBLE_DEVICES")
-        env = {k: os.environ[k] for k in keep if k in os.environ}
+        keep = ("PATH", "HOME", "LANG", "LC_ALL", "TZ", "LD_LIBRARY_PATH", "CUDA_VISIBLE_DEVICES",
+                "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "LOCALAPPDATA",
+                "APPDATA", "USERPROFILE", "PROGRAMDATA", "PROGRAMFILES", "PROGRAMFILES(X86)")
+        env = {k: v for k, v in os.environ.items() if k.upper() in keep}
         for name, p in self.paths.items():
             if "transcode_of" in p or "file" in p:
                 continue
@@ -229,10 +239,11 @@ class MediaServer:
                     ", H.264 NVENC fallback on demand" if self.transcode == "h264_nvenc" else "")
 
     def _spawn(self) -> None:
+        preexec = (lambda: die_with_parent(signal.SIGTERM)) if not sys.platform.startswith("win") else None
         self._proc = subprocess.Popen(
             [self.binary, str(self.config_path)], env=self._child_env(),
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1,
-            preexec_fn=lambda: die_with_parent(signal.SIGTERM),
+            preexec_fn=preexec,
         )
         self.started_at = time.time()
         threading.Thread(target=self._read_log, args=(self._proc,), daemon=True, name="mediamtx-log").start()

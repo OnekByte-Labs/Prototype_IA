@@ -98,20 +98,24 @@ class PlateOCR:
                     chars.append(c)
         return "".join(chars)
 
-    def recognize(self, plate_crop: np.ndarray) -> Optional[str]:
+    def release(self) -> None:
+        if hasattr(self.session, "release"):
+            self.session.release()
+
+    def recognize(self, plate_crop: np.ndarray):
         """
         Run OCR on a plate crop (BGR numpy array).
-        Returns the recognized plate string, or None if the crop is invalid.
+        Returns (text, conf) tuple.
         """
         if plate_crop is None or plate_crop.size == 0:
-            return None
+            return "", 0.0
 
         # Minimum size sanity check
         h, w = plate_crop.shape[:2]
         if h < 8 or w < 16:
-            return None
+            return "", 0.0
 
         blob = self._preprocess(plate_crop)
         outputs = self.session.run([self.output_name], {self.input_name: blob})
         text = self._decode(outputs[0])
-        return text if text else None
+        return (text or "", 0.85 if text else 0.0)

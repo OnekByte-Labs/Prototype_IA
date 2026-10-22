@@ -130,6 +130,10 @@ class PlateDetector:
                 )
         return detections
 
+    def release(self) -> None:
+        if hasattr(self.session, "release"):
+            self.session.release()
+
     def detect(self, vehicle_crop: np.ndarray) -> List[Detection]:
         """
         Run plate detection on a vehicle crop (BGR).

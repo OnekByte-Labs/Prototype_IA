@@ -38,7 +38,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "backend"))
 
-from src.procutil import die_with_parent, sigterm_as_keyboard_interrupt
+from src.procutil import die_with_parent, sigterm_as_keyboard_interrupt, is_parent_alive
 from src.sources import create_source
 from src.output.server import FrameStore, EventStore, AlertStore, run_server
 
@@ -151,7 +151,7 @@ def run_worker(worker_idx: int, sources: List[dict], cameras: List[dict], out_q,
     threading.Thread(target=health_loop, daemon=True, name=f"health-{worker_idx}").start()
 
     try:
-        while not stop_evt.is_set() and os.getppid() == parent_pid:
+        while not stop_evt.is_set() and is_parent_alive(parent_pid):
             time.sleep(0.5)
     except KeyboardInterrupt:
         pass
