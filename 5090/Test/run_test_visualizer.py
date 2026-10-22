@@ -145,15 +145,26 @@ class SiglipClassifier:
             from transformers import AutoProcessor, AutoModel
             cache = MODELS_DIR / "siglip"
             print(f"[*] Initializing SigLIP Vision Classifier from {cache} on {device}...")
-            self.processor = AutoProcessor.from_pretrained(
-                "google/siglip-so400m-patch14-384", cache_dir=str(cache), local_files_only=True
-            )
-            self.model = AutoModel.from_pretrained(
-                "google/siglip-so400m-patch14-384",
-                cache_dir=str(cache),
-                local_files_only=True,
-                torch_dtype=torch.float16 if device.type == "cuda" else torch.float32,
-            ).to(self.device)
+            try:
+                self.processor = AutoProcessor.from_pretrained(
+                    "google/siglip-so400m-patch14-384", cache_dir=str(cache), local_files_only=True
+                )
+                self.model = AutoModel.from_pretrained(
+                    "google/siglip-so400m-patch14-384",
+                    cache_dir=str(cache),
+                    local_files_only=True,
+                    torch_dtype=torch.float16 if device.type == "cuda" else torch.float32,
+                ).to(self.device)
+            except Exception:
+                print("    [*] Fetching SigLIP weights from HuggingFace Hub into cache...")
+                self.processor = AutoProcessor.from_pretrained(
+                    "google/siglip-so400m-patch14-384", cache_dir=str(cache)
+                )
+                self.model = AutoModel.from_pretrained(
+                    "google/siglip-so400m-patch14-384",
+                    cache_dir=str(cache),
+                    torch_dtype=torch.float16 if device.type == "cuda" else torch.float32,
+                ).to(self.device)
             self.model.eval()
 
             # Precompute text embeddings
