@@ -91,34 +91,42 @@ VEHICLE_TYPES: Dict[str, str] = {
     "Motorcycle": "a photo of a person riding a motorcycle bike",
     "Taxi": "a photo of a black and yellow Indian Kaali Peeli taxi car or van",
     "Car": "a photo of a passenger car, hatchback, sedan, or SUV",
-    "Mini Truck / Pickup": "a photo of a pickup truck, Mahindra Bolero camper, or Tata Ace mini cargo truck",
-    "Truck / Van": "a photo of a commercial cargo box truck or delivery van",
+    "Mini Truck": "a photo of a pickup truck, Mahindra Bolero camper, or Tata Ace mini cargo truck",
+    "Truck": "a photo of a commercial cargo box truck or delivery van",
     "Bus": "a photo of a large passenger bus or double decker bus",
 }
 
 # Stage 2: Specific Car Models (Triggered ONLY if Stage 1 == 'Car' or 'Taxi')
 CAR_MODELS: Dict[str, str] = {
-    "Mercedes-Benz Sedan/SUV": "a photo of a luxury Mercedes-Benz sedan or SUV car with three-pointed star grille",
-    "BMW / Audi Luxury Car": "a photo of a luxury BMW or Audi sedan or SUV car",
-    "Hyundai Creta / Venue": "a photo of a Hyundai Creta or Hyundai Venue SUV",
-    "Hyundai i20 / Verna": "a photo of a Hyundai i20 hatchback or Verna sedan car",
-    "Hyundai i10 / Grand i10": "a photo of a Hyundai i10 or Grand i10 hatchback or black and yellow taxi",
-    "Hyundai Santro": "a photo of a Hyundai Santro Xing hatchback or taxi",
+    "Mercedes-Benz": "a photo of a luxury Mercedes-Benz car with three-pointed star emblem",
+    "BMW": "a photo of a luxury BMW car with twin kidney grille",
+    "Audi": "a photo of a luxury Audi car with four interlocking rings emblem",
+    "Hyundai Creta": "a photo of a Hyundai Creta compact SUV car",
+    "Hyundai Venue": "a photo of a Hyundai Venue compact crossover SUV car",
+    "Hyundai i20": "a photo of a Hyundai i20 premium hatchback car",
+    "Hyundai Verna": "a photo of a Hyundai Verna sedan car",
+    "Hyundai i10": "a photo of a Hyundai i10 or Grand i10 hatchback car",
+    "Hyundai Santro": "a photo of a Hyundai Santro tall hatchback car",
     "Maruti Wagon R": "a photo of a Maruti Suzuki Wagon R tall hatchback car",
-    "Maruti Swift": "a photo of a Maruti Suzuki Swift hatchback car",
-    "Maruti Dzire": "a photo of a Maruti Suzuki Swift Dzire compact sedan car",
-    "Maruti Omni": "a photo of a boxy Maruti Suzuki Omni van or taxi",
+    "Maruti Swift": "a photo of a Maruti Suzuki Swift sporty hatchback car",
+    "Maruti Dzire": "a photo of a Maruti Suzuki Dzire compact sedan car",
+    "Maruti Omni": "a photo of a boxy Maruti Suzuki Omni van",
     "Maruti Eeco": "a photo of a Maruti Suzuki Eeco minivan",
     "Maruti Alto": "a photo of a small Maruti Suzuki Alto hatchback car",
-    "Maruti Baleno": "a photo of a Maruti Suzuki Baleno hatchback car",
-    "Maruti Brezza": "a photo of a Maruti Suzuki Vitara Brezza compact SUV",
+    "Maruti Baleno": "a photo of a Maruti Suzuki Baleno premium hatchback car",
+    "Maruti Brezza": "a photo of a Maruti Suzuki Vitara Brezza compact SUV car",
     "Maruti Ertiga": "a photo of a Maruti Suzuki Ertiga MPV car",
-    "Toyota Innova": "a photo of a Toyota Innova MPV car",
-    "Toyota Fortuner": "a photo of a large Toyota Fortuner SUV",
-    "Mahindra Thar": "a photo of a boxy Mahindra Thar SUV",
-    "Mahindra XUV700 / Scorpio": "a photo of a Mahindra Scorpio or XUV700 SUV",
-    "Tata Nexon / Punch": "a photo of a Tata Nexon or Tata Punch compact SUV",
-    "Honda City / Amaze": "a photo of a Honda City or Honda Amaze sedan car",
+    "Toyota Innova": "a photo of a Toyota Innova MPV family car",
+    "Toyota Fortuner": "a photo of a large Toyota Fortuner luxury SUV car",
+    "Mahindra Thar": "a photo of a boxy rugged Mahindra Thar 4x4 SUV",
+    "Mahindra Scorpio": "a photo of a rugged Mahindra Scorpio SUV car",
+    "Mahindra XUV700": "a photo of a modern Mahindra XUV700 luxury SUV car",
+    "Tata Nexon": "a photo of a Tata Nexon compact crossover SUV car",
+    "Tata Punch": "a photo of a small Tata Punch micro-SUV car",
+    "Tata Harrier": "a photo of a large Tata Harrier premium SUV car",
+    "Tata Safari": "a photo of a large Tata Safari three-row SUV car",
+    "Honda City": "a photo of a Honda City midsize sedan car",
+    "Honda Amaze": "a photo of a Honda Amaze compact sedan car",
 }
 
 # ---------------------------------------------------------------------------
@@ -488,7 +496,7 @@ class OfflinePrecomputePipeline:
             # Class 7: Truck
             if cls_id == 7:
                 if w * h < 45000:
-                    v_type = "Mini Truck / Pickup"
+                    v_type = "Mini Truck"
                     v_conf = 0.86
                 else:
                     v_type = "Truck"
@@ -522,18 +530,18 @@ class OfflinePrecomputePipeline:
                     car_model = "Toyota Fortuner"
                     car_conf = 0.88
                 elif w * h > 50000:
-                    car_model = "Mercedes-Benz Sedan/SUV"
+                    car_model = "Mercedes-Benz"
                     car_conf = 0.85
                 else:
-                    car_model = "Honda City / Amaze"
+                    car_model = "Honda City"
                     car_conf = 0.84
             elif aspect_ratio > 1.15:
                 # Compact SUV / Hatchback
                 if w * h > 60000:
-                    car_model = "Hyundai Creta / Venue"
+                    car_model = "Hyundai Creta"
                     car_conf = 0.89
                 elif w * h > 35000:
-                    car_model = "Tata Nexon / Punch"
+                    car_model = "Tata Nexon"
                     car_conf = 0.87
                 else:
                     car_model = "Maruti Swift"
