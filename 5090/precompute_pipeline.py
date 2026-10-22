@@ -246,13 +246,10 @@ class OfflinePrecomputePipeline:
             
         self.is_cuda = (self.device.type == "cuda")
         
-        # Native bfloat16 Tensor Core selection for RTX 5090 Blackwell (sm_120)
-        if self.is_cuda and torch.cuda.is_bf16_supported():
-            self.torch_dtype = torch.bfloat16
-            self.precision_name = "bfloat16 (RTX 5090 Blackwell Tensor Cores)"
-        elif self.is_cuda:
+        # Precision selection for RTX 5090 / CUDA Tensor Cores
+        if self.is_cuda:
             self.torch_dtype = torch.float16
-            self.precision_name = "float16 (CUDA)"
+            self.precision_name = "float16 (RTX 5090 Tensor Cores)"
         else:
             self.torch_dtype = torch.float32
             self.precision_name = "float32 (CPU)"
