@@ -366,20 +366,31 @@ class OfflinePrecomputePipeline:
         siglip_cache = MODELS_DIR / "siglip"
         siglip_name = "google/siglip-so400m-patch14-384"
         
-        # Check if local snapshot / model weights exist to avoid network stall
+        # Check if local snapshot / model weights exist, or fetch from Hub
         try:
             print(f"[*] Checking local SigLIP weights ({siglip_name}) in {siglip_cache}...")
-            # Try loading processor and model strictly locally first
-            self.siglip_processor = AutoProcessor.from_pretrained(
-                siglip_name, cache_dir=str(siglip_cache), local_files_only=True
-            )
-            self.siglip_model = AutoModel.from_pretrained(
-                siglip_name,
-                cache_dir=str(siglip_cache),
-                dtype=self.torch_dtype,
-                low_cpu_mem_usage=True,
-                local_files_only=True,
-            ).to(self.device)
+            try:
+                self.siglip_processor = AutoProcessor.from_pretrained(
+                    siglip_name, cache_dir=str(siglip_cache), local_files_only=True
+                )
+                self.siglip_model = AutoModel.from_pretrained(
+                    siglip_name,
+                    cache_dir=str(siglip_cache),
+                    dtype=self.torch_dtype,
+                    low_cpu_mem_usage=True,
+                    local_files_only=True,
+                ).to(self.device)
+            except Exception:
+                print(f"    [*] Fetching SigLIP weights ({siglip_name}) into {siglip_cache}...")
+                self.siglip_processor = AutoProcessor.from_pretrained(
+                    siglip_name, cache_dir=str(siglip_cache)
+                )
+                self.siglip_model = AutoModel.from_pretrained(
+                    siglip_name,
+                    cache_dir=str(siglip_cache),
+                    dtype=self.torch_dtype,
+                    low_cpu_mem_usage=True,
+                ).to(self.device)
             self.siglip_model.eval()
             
             # Precompute normalized text embeddings ONCE
