@@ -20,8 +20,8 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-# Directory Paths
-WORKSPACE_ROOT = Path(r"E:\MIlitary_Prototype_IA\5090")
+# Directory Paths dynamically resolved
+WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 VIDEOS_DIR = WORKSPACE_ROOT / "vehical_TYPE-ANPR_DETECTION"
 PRECOMPUTE_DIR = WORKSPACE_ROOT / "precompute"
 OUTPUTS_DIR = WORKSPACE_ROOT / "Test" / "Outputs"

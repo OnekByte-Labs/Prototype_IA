@@ -30,7 +30,7 @@ from typing import Dict, List, Tuple, Optional, Any
 # ---------------------------------------------------------------------------
 # Strict Local Paths & Cache Redirection
 # ---------------------------------------------------------------------------
-WORKSPACE_ROOT = Path(r"E:\MIlitary_Prototype_IA\5090")
+WORKSPACE_ROOT = Path(__file__).resolve().parent
 VIDEOS_DIR = WORKSPACE_ROOT / "vehical_TYPE-ANPR_DETECTION"
 MODELS_DIR = WORKSPACE_ROOT / "models"
 PRECOMPUTE_DIR = WORKSPACE_ROOT / "precompute"

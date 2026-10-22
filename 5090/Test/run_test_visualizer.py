@@ -20,11 +20,11 @@ from PIL import Image
 import torch
 import torch.nn.functional as F
 
-# Set local directory context
-TEST_DIR = Path(r"E:\MIlitary_Prototype_IA\5090\Test")
+# Set local directory context dynamically
+TEST_DIR = Path(__file__).resolve().parent
 SCREENSHOT_DIR = TEST_DIR / "ScreenShot"
 OUTPUTS_DIR = TEST_DIR / "Outputs"
-MODELS_DIR = Path(r"E:\MIlitary_Prototype_IA\5090\models")
+MODELS_DIR = TEST_DIR.parent / "models"
 
 OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 

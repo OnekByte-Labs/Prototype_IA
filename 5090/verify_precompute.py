@@ -16,7 +16,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-WORKSPACE_ROOT = Path(r"E:\MIlitary_Prototype_IA\5090")
+WORKSPACE_ROOT = Path(__file__).resolve().parent
 VIDEOS_DIR = WORKSPACE_ROOT / "vehical_TYPE-ANPR_DETECTION"
 PRECOMPUTE_DIR = WORKSPACE_ROOT / "precompute"
 
