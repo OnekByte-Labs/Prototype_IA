@@ -49,12 +49,17 @@ nvrs:
 # WebRTC, health, detection modes and alerts as an NVR channel. Paths are
 # relative to the project root. No host, no credentials.
   - id: FILE-01
-    name: TEST VIDEO (4K TRAFFIC)
+    name: VEHICLE ANPR DATASET
     type: file
     vendor: file
-    channels: 1
+    channels: 5
     files:
-      1: "Dataset/Test/4K Road traffic video for object detection and tracking_h264.mp4"
+      1: "Dataset/vehical_TYPE-ANPR_DETECTION/anpr_footage1.mp4"
+      2: "Dataset/vehical_TYPE-ANPR_DETECTION/anpr_footage2.mp4"
+      3: "Dataset/vehical_TYPE-ANPR_DETECTION/indain_road_footage3.mp4"
+      4: "Dataset/vehical_TYPE-ANPR_DETECTION/indian_road_footage2.mp4"
+      5: "Dataset/vehical_TYPE-ANPR_DETECTION/indian_road_footages1.mp4"
+
 
 # ── Media server (MediaMTX, supervised by the backend) ─────────────
 # One upstream RTSP connection per NVR channel, shared by AI ingest and browsers.
@@ -68,6 +73,6 @@ media_server:
   # Browsers that cannot decode H.265 get the focused camera's main stream as
   # H.264 transcoded on the GPU (NVDEC→NVENC), on demand, one camera at a time.
   # `off` = no transcoding (such browsers use the AI stream's MJPEG instead).
-  browser_transcode: h264_nvenc
+  browser_transcode: "off"
   transcode_max_width: 1920
   transcode_bitrate: 3M

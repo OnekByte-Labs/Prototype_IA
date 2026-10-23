@@ -163,7 +163,7 @@ export function CameraConsole({ initialInspectId }: { initialInspectId?: string 
             { id: "2x2", label: "2×2" },
             { id: "3x3", label: "3×3" },
             { id: "4x4", label: "4×4" },
-            { id: "all", label: "All 32" },
+            { id: "all", label: `All ${TACTICAL_CAMERAS.length}` },
             { id: "table", label: "Table" },
           ]}
         />
@@ -376,7 +376,7 @@ export function CameraConsole({ initialInspectId }: { initialInspectId?: string 
                 <dl className="flex flex-col gap-1.5">
                   <KeyValue label="Dataset">{inspectedCamera.dataset}</KeyValue>
                   <KeyValue label="Inference model">
-                    {DATASET_CATALOG[inspectedCamera.dataset]?.inferenceModel || "YOLOv11-OpticalEdge"}
+                    {DATASET_CATALOG[inspectedCamera.dataset]?.inferenceModel || "Neural-OpticalEdge"}
                   </KeyValue>
                   <KeyValue label="Workload">{inspectedCamera.aiWorkload}</KeyValue>
                   <KeyValue label="Latency" mono>

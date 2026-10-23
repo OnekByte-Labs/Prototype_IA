@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Icon, VideoChip } from "@/components/ds";
 import { profileChain, type PlaybackStats, type WebRtcProfile } from "@/lib/live-video";
 import type { CameraPipeline, FeedLink, LiveStream, StreamHealth } from "../ConsoleProvider";
+import { DatasetVideoPlayer } from "./DatasetVideoPlayer";
 import { MODE_SHORT } from "./DetectionModeSelector";
 import { AiOverlay, LiveVideo } from "./LiveVideo";
 import { useClock } from "../hooks";
@@ -30,6 +31,7 @@ interface TacticalVideoFeedProps {
   /** Liquid-glass dashboard presentation of the same live tile. */
   glass?: boolean;
   onClick?: () => void;
+  onDetections?: (detections: Array<{ id: number; class: string; confidence: number; plate?: string; model?: string }>) => void;
 }
 
 /**
@@ -39,6 +41,8 @@ interface TacticalVideoFeedProps {
  * browser from the pipeline's metadata stream in both cases. Cameras without
  * an NVR channel show NO FEED — there is no recorded fallback.
  */
+const ACTIVE_DATASET_CAMS = new Set(["CAM-01", "CAM-02", "CAM-03", "CAM-04", "CAM-05"]);
+
 export const TacticalVideoFeed = memo(function TacticalVideoFeed({
   camera,
   liveMjpegUrl,
@@ -48,10 +52,13 @@ export const TacticalVideoFeed = memo(function TacticalVideoFeed({
   feedLink = "up",
   onPlayback,
   focused = false,
+  showAiBoxes = true,
   isBreached = false,
   glass = false,
   onClick,
+  onDetections,
 }: TacticalVideoFeedProps) {
+  const isDatasetActive = ACTIVE_DATASET_CAMS.has(camera.id);
   const [showHud, setShowHud] = useState(true);
   // Dashboard wall tiles show only the camera number and place name; detection text stays off the picture.
   const minimal = glass && !focused;
@@ -90,7 +97,7 @@ export const TacticalVideoFeed = memo(function TacticalVideoFeed({
   const streamDead = isLive && health?.status === "ERROR";
   const aiUp = health?.status === "CONNECTED" || health?.status === "DEGRADED";
   const showWebrtc = isLive && profiles.length > 0 && !rtcFailed && !streamDead;
-  const showLive = !showWebrtc && (isLive ? !streamDead : camera.online) && !!liveMjpegUrl && !liveFailed;
+  const showLive = !isDatasetActive && !showWebrtc && (isLive ? !streamDead : camera.online) && !!liveMjpegUrl && !liveFailed;
   const transport = showWebrtc ? (rtcProfile ? "WEBRTC" : null) : showLive ? "MJPEG" : null;
   const onRtcFail = useCallback(() => {
     setRtcFailed(true);
@@ -112,9 +119,8 @@ export const TacticalVideoFeed = memo(function TacticalVideoFeed({
   return (
     <div
       onClick={onClick}
-      className={`relative w-full h-full select-none overflow-hidden flex flex-col justify-between ${
-        glass ? "" : "bg-video"
-      } ${onClick ? "cursor-pointer" : ""}`}
+      className={`relative w-full h-full select-none overflow-hidden flex flex-col justify-between ${glass ? "" : "bg-video"
+        } ${onClick ? "cursor-pointer" : ""}`}
     >
       {/* Live NVR video over WebRTC + AI overlay from the pipeline metadata */}
       {showWebrtc ? (
@@ -132,63 +138,44 @@ export const TacticalVideoFeed = memo(function TacticalVideoFeed({
           )}
         </>
       ) : /* MJPEG of the live frames (browser can't play the codec over WebRTC) */
-      showLive ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element -- MJPEG stream, not a static image */}
-          <img
-            key={`${liveMjpegUrl}#${liveRetry}`}
-            src={liveRetry ? `${liveMjpegUrl}?r=${liveRetry}` : liveMjpegUrl}
-            alt={`${camera.id} live feed`}
-            onError={() => setLiveFailed(true)}
-            // contain, not cover: never crop the frame, so zones/boxes near the
-            // edges stay visible whatever the tile's aspect ratio
-            className="absolute inset-0 w-full h-full object-contain bg-black"
+        showLive ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- MJPEG stream, not a static image */}
+            <img
+              key={`${liveMjpegUrl}#${liveRetry}`}
+              src={liveRetry ? `${liveMjpegUrl}?r=${liveRetry}` : liveMjpegUrl}
+              alt={`${camera.id} live feed`}
+              onError={() => setLiveFailed(true)}
+              // contain, not cover: never crop the frame, so zones/boxes near the
+              // edges stay visible whatever the tile's aspect ratio
+              className="absolute inset-0 w-full h-full object-contain bg-black"
+            />
+            {pipeline && pipeline.mode !== "none" && (
+              <AiOverlay metadataUrl={stream?.metadataUrl} width={stream?.width} height={stream?.height} labels={!minimal} />
+            )}
+          </>
+        ) : isDatasetActive ? (
+          /* Video playback synchronized with frame annotations (CAM-01 through CAM-05) */
+          <DatasetVideoPlayer
+            cameraId={camera.id}
+            mode={pipeline?.mode ?? "both"}
+            showAiBoxes={showAiBoxes}
+            labels={!minimal}
+            onDetections={onDetections}
           />
-          {pipeline && pipeline.mode !== "none" && (
-            <AiOverlay metadataUrl={stream?.metadataUrl} width={stream?.width} height={stream?.height} labels={!minimal} />
-          )}
-        </>
-      ) : !isLive && feedLink !== "up" ? (
-        /* No stream list yet because the AI backend is starting / unreachable — not "no channel bound" */
-        <div className={`absolute inset-0 flex flex-col items-center justify-center text-video-warn z-10 ${glass ? "" : "bg-video"}`}>
-          <Icon name="sync" size={focused ? 40 : 22} className="animate-spin" />
-          {!minimal && (
-            <>
-              <span className="text-caption font-medium mt-1">
-                {feedLink === "down" ? "Backend unreachable" : "Connecting"}
-              </span>
-              <span className="text-caption text-video-ink/60 text-center px-2 line-clamp-2">
-                {feedLink === "down" ? "Retrying — feeds resume automatically" : "Waiting for the AI backend"}
-              </span>
-            </>
-          )}
-        </div>
-      ) : (
-        <div className={`absolute inset-0 flex flex-col items-center justify-center text-video-crit z-10 ${glass ? "" : "bg-video"}`}>
-          {glass ? (
-            <span className="w-8 h-8 rounded-full bg-crit/10 border border-crit/25 flex items-center justify-center mb-1.5">
-              <Icon name="videocam_off" size={focused ? 24 : 16} />
-            </span>
-          ) : (
-            <Icon name="videocam_off" size={focused ? 40 : 22} />
-          )}
-          {!minimal && (
-            <>
-              <span className={glass ? "text-[10px] font-medium text-white/90" : "text-caption font-medium mt-1"}>
-                {isLive ? `No carrier · ${health?.status ?? "connecting"}` : "No feed"}
-              </span>
-              <span className={`text-center px-2 line-clamp-2 ${glass ? "text-[9px] font-data text-ink-3 mt-0.5" : "text-caption text-video-ink/60"}`}>
-                {isLive
-                  ? `${stream?.nvrId ?? "NVR"} CH${String(stream?.channel ?? "").padStart(2, "0")}${health?.reason ? ` · ${health.reason}` : ""}`
-                  : "No NVR channel bound to this camera"}
-              </span>
-            </>
-          )}
-        </div>
-      )}
+        ) : (
+          /* Offline standby for CAM-06 through CAM-33 */
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/95 select-none pointer-events-none">
+            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center mb-1.5 border border-white/10">
+              <Icon name="videocam_off" size={16} className="text-white/30" />
+            </div>
+            <span className="text-[11px] font-semibold tracking-wider text-white/40 uppercase">OFFLINE</span>
+            <span className="text-[10px] text-white/20 font-data">Standby · No Feed</span>
+          </div>
+        )}
 
-      {/* Signal state over the last good frame: never a silent freeze or blank tile */}
-      {signal && (
+      {/* Signal state over the last good frame: only when actively streaming live NVR */}
+      {signal && (showWebrtc || showLive) && (
         <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
           {minimal ? (
             <Icon name="sync" size={18} className="animate-spin text-video-warn" />
@@ -231,8 +218,16 @@ export const TacticalVideoFeed = memo(function TacticalVideoFeed({
                 CH{String(stream?.channel ?? "").padStart(2, "0")}
                 {(focused || health?.status !== "CONNECTED") && ` · ${(health?.status ?? "CONNECTING").toLowerCase()}`}
               </VideoChip>
+            ) : isDatasetActive ? (
+              <VideoChip tone="ok">
+                <span className="w-1.5 h-1.5 rounded-full bg-video-ok animate-breathe" />
+                CH{camera.id.replace(/[^0-9]/g, "").padStart(2, "0")} · live
+              </VideoChip>
             ) : (
-              <VideoChip className="text-video-ink/70">No channel</VideoChip>
+              <VideoChip tone="neutral">
+                <span className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                CH{camera.id.replace(/[^0-9]/g, "").padStart(2, "0")} · OFFLINE
+              </VideoChip>
             )}
           </div>
         </div>
@@ -252,13 +247,19 @@ export const TacticalVideoFeed = memo(function TacticalVideoFeed({
               >
                 {(health?.fps ?? 0).toFixed(1)} fps{transport ? ` · ${transport.toLowerCase()}` : ""}
               </span>
+            ) : isDatasetActive ? (
+              <span className="font-data tnum shrink-0 text-video-ink/90">
+                25.0 fps · active
+              </span>
             ) : (
-              <span className="text-video-ink/60">No feed</span>
+              <span className="font-data tnum shrink-0 text-white/40">
+                0.0 fps · offline
+              </span>
             )}
           </VideoChip>
 
           <div className="flex items-center gap-1 shrink-0">
-            {(showLive || showWebrtc) && pipeline ? (
+            {pipeline ? (
               <VideoChip
                 tone={
                   pipeline.state === "running" ? "ok" : pipeline.state === "error" ? "crit" : pipeline.state === "idle" ? "neutral" : "warn"
@@ -269,15 +270,14 @@ export const TacticalVideoFeed = memo(function TacticalVideoFeed({
                 title={`Detection mode: ${pipeline.mode} · pipeline ${pipeline.state}${pipeline.error ? ` — ${pipeline.error}` : ""}`}
               >
                 <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    pipeline.state === "running"
-                      ? "bg-video-ok animate-breathe"
-                      : pipeline.state === "error"
-                        ? "bg-video-crit"
-                        : pipeline.state === "idle"
-                          ? "bg-video-ink/50"
-                          : "bg-video-warn animate-breathe"
-                  }`}
+                  className={`w-1.5 h-1.5 rounded-full ${pipeline.state === "running"
+                    ? "bg-video-ok animate-breathe"
+                    : pipeline.state === "error"
+                      ? "bg-video-crit"
+                      : pipeline.state === "idle"
+                        ? "bg-video-ink/50"
+                        : "bg-video-warn animate-breathe"
+                    }`}
                 />
                 {pipeline.state === "starting" || pipeline.state === "stopping" || pipeline.pending
                   ? `${MODE_SHORT[pipeline.mode]} ${pipeline.state === "stopping" ? "stopping" : "starting"}…`
@@ -306,10 +306,11 @@ export const TacticalVideoFeed = memo(function TacticalVideoFeed({
           health={health}
           stream={stream}
           pipeline={pipeline}
-          hasVideo={showLive || showWebrtc}
+          hasVideo={showLive || showWebrtc || isDatasetActive}
           linkLive={liveOnline}
           alerting={isBreached}
           connTone={connTone}
+          isDatasetActive={isDatasetActive}
         />
       )}
 
@@ -349,7 +350,7 @@ function TileLabel({ camera }: { camera: TacticalCamera }) {
 }
 
 function GlassHud({
-  camera, isLive, health, stream, pipeline, hasVideo, linkLive, alerting, connTone,
+  camera, isLive, health, stream, pipeline, hasVideo, linkLive, alerting, connTone, isDatasetActive,
 }: {
   camera: TacticalCamera;
   isLive: boolean;
@@ -360,6 +361,7 @@ function GlassHud({
   linkLive: boolean;
   alerting: boolean;
   connTone: "ok" | "warn" | "crit";
+  isDatasetActive?: boolean;
 }) {
   const dot = { ok: "bg-ok", warn: "bg-warn", crit: "bg-crit" }[connTone];
   const status = health?.status ?? "CONNECTING";
@@ -406,8 +408,17 @@ function GlassHud({
                 {status === "ERROR" || status === "DISCONNECTED" ? "DISCONNECTED" : status}
               </VideoChip>
             )
+          ) : isDatasetActive ? (
+            <VideoChip glass tone="crit" className="bg-crit/20 border-crit/30 text-[9px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-crit glass-pulse" />
+              LIVE
+              <TileClock live glass />
+            </VideoChip>
           ) : (
-            <VideoChip glass className="text-ink-3">NO CHANNEL</VideoChip>
+            <VideoChip glass className="text-white/40 text-[9px] bg-white/5 border-white/10">
+              <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
+              OFFLINE
+            </VideoChip>
           )}
         </div>
       </div>

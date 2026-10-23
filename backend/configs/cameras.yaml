@@ -13,73 +13,55 @@
 # source (NO FEED) — there are no recorded/mock feeds.
 cameras:
 - id: CAM-01
-  name: CHECKPOST 1
-  default_mode: vehicle_counting
-  nvr: NVR-01
-  nvr_type: cpplus
+  name: ANPR CHECKPOST 1
+  default_mode: none
+  nvr: FILE-01
+  nvr_type: file
   channel: 1
 - id: CAM-02
-  name: CHECKPOST 2
-  default_mode: vehicle_counting
-  nvr: NVR-01
-  nvr_type: cpplus
+  name: ANPR HIGHWAY 2
+  default_mode: none
+  nvr: FILE-01
+  nvr_type: file
   channel: 2
 - id: CAM-03
-  name: GROUND FLOOR
-  default_mode: person_counting
-  nvr: HIK-01
-  nvr_type: hikvision
+  name: INDIAN ROADWAY N-3
+  default_mode: none
+  nvr: FILE-01
+  nvr_type: file
   channel: 3
 - id: CAM-04
-  name: CHECKPOST 3
-  default_mode: person_counting
-  nvr: HIK-01
-  nvr_type: hikvision
+  name: INDIAN ROADWAY S-2
+  default_mode: none
+  nvr: FILE-01
+  nvr_type: file
   channel: 4
 - id: CAM-05
-  name: SITTING AREA
-  default_mode: anomaly
-  nvr: NVR-01
-  nvr_type: cpplus
+  name: INDIAN ROADWAY W-1
+  default_mode: none
+  nvr: FILE-01
+  nvr_type: file
   channel: 5
 - id: CAM-06
-  name: PERIMETER E POST 2
-  default_mode: anpr
-  nvr: NVR-01
-  nvr_type: cpplus
-  channel: 6
+  name: ANPR PERIMETER GATE
+  default_mode: none
 - id: CAM-07
-  name: SHAMSHABARI WIRE-E
-  default_mode: anpr
-  nvr: NVR-01
-  nvr_type: cpplus
-  channel: 7
+  name: ANPR SHAMSHABARI
+  default_mode: none
 - id: CAM-08
-  name: GULLY APPROACH N-E
-  default_mode: person_counting
-  nvr: NVR-01
-  nvr_type: cpplus
-  channel: 8
+  name: ANPR APPROACH N-E
+  default_mode: none
 - id: CAM-09
-  name: AMMUNITION DUMP SECTOR
-  default_mode: intrusion
-  nvr: NVR-01
-  nvr_type: cpplus
-  channel: 9
+  name: ANPR TOLL PLAZA
+  default_mode: none
 - id: CAM-10
-  name: FUEL RESERVE DEPOT
-  default_mode: person_counting
-  nvr: NVR-01
-  nvr_type: cpplus
-  channel: 10
+  name: ANPR SECURITY DEPOT
+  default_mode: none
 - id: CAM-11
-  name: TACTICAL UAV DRONE 1
-  default_mode: vehicle_counting
-  nvr: HIK-01
-  nvr_type: hikvision
-  channel: 11
+  name: ANPR FAST-TAG 1
+  default_mode: none
 - id: CAM-12
-  name: ARMOURY PERIMETER
+  name: ANPR FAST-TAG 2
   default_mode: none
 - id: CAM-13
   name: OFFICE AREA

@@ -1,0 +1,5034 @@
+[
+  {
+    "id": "ANPR-VLD-00001",
+    "eventId": 1,
+    "timestamp": "2026-10-23T05:34:45+00:00",
+    "plate": "ZA 22 N172",
+    "rawPlate": "ZA22N172",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 5,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      243,
+      369,
+      209,
+      152
+    ],
+    "frameIdx": 5,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00001.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #5 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:33:45+00:00",
+        "frameIdx": 5,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00001.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00002",
+    "eventId": 2,
+    "timestamp": "2026-10-23T05:34:15+00:00",
+    "plate": "BL 7C N170",
+    "rawPlate": "BL7CN170",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 35,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      253,
+      363,
+      217,
+      159
+    ],
+    "frameIdx": 16,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00002.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #16 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:33:00+00:00",
+        "frameIdx": 16,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00002.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00003",
+    "eventId": 3,
+    "timestamp": "2026-10-23T05:33:45+00:00",
+    "plate": "CL 7C M 1702",
+    "rawPlate": "CL7CM1702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 84,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      251,
+      353,
+      245,
+      172
+    ],
+    "frameIdx": 44,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00003.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #44 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:32:15+00:00",
+        "frameIdx": 44,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00003.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00004",
+    "eventId": 4,
+    "timestamp": "2026-10-23T05:33:15+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 111,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      244,
+      348,
+      259,
+      183
+    ],
+    "frameIdx": 60,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00005.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #60 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00005",
+    "eventId": 5,
+    "timestamp": "2026-10-23T05:32:45+00:00",
+    "plate": "AJ1X399",
+    "rawPlate": "AJ1X399",
+    "vehicleType": "Motorcycle",
+    "model": "Honda Activa",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 0.996,
+    "plateConfidence": 0.996,
+    "trackId": 8,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      1165,
+      401,
+      115,
+      240
+    ],
+    "frameIdx": 237,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00006.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #237 (99.6%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:00+00:00",
+        "frameIdx": 237,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00006.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00006",
+    "eventId": 6,
+    "timestamp": "2026-10-23T05:32:15+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 147,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      241,
+      337,
+      289,
+      203
+    ],
+    "frameIdx": 85,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00007.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #85 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00007",
+    "eventId": 7,
+    "timestamp": "2026-10-23T05:31:45+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 156,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      225,
+      331,
+      328,
+      214
+    ],
+    "frameIdx": 96,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00008.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #96 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00008",
+    "eventId": 8,
+    "timestamp": "2026-10-23T05:31:15+00:00",
+    "plate": "BA77T11",
+    "rawPlate": "BA77T11",
+    "vehicleType": "Car",
+    "model": "Maruti Ertiga",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 0.982,
+    "plateConfidence": 0.982,
+    "trackId": 125,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      964,
+      452,
+      104,
+      82
+    ],
+    "frameIdx": 138,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00009.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #138 (98.2%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:45+00:00",
+        "frameIdx": 138,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00009.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00009",
+    "eventId": 9,
+    "timestamp": "2026-10-23T05:30:45+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 177,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      247,
+      323,
+      333,
+      227
+    ],
+    "frameIdx": 110,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00010.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #110 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00010",
+    "eventId": 10,
+    "timestamp": "2026-10-23T05:30:15+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 180,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      252,
+      322,
+      337,
+      230
+    ],
+    "frameIdx": 113,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00011.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #113 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00011",
+    "eventId": 11,
+    "timestamp": "2026-10-23T05:29:45+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 210,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      216,
+      293,
+      469,
+      301
+    ],
+    "frameIdx": 164,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00013.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #164 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00012",
+    "eventId": 12,
+    "timestamp": "2026-10-23T05:29:15+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 213,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      215,
+      287,
+      480,
+      310
+    ],
+    "frameIdx": 169,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00014.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #169 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00013",
+    "eventId": 13,
+    "timestamp": "2026-10-23T05:28:45+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 214,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      203,
+      280,
+      500,
+      319
+    ],
+    "frameIdx": 174,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00015.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #174 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00014",
+    "eventId": 14,
+    "timestamp": "2026-10-23T05:28:15+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 216,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      179,
+      271,
+      527,
+      334
+    ],
+    "frameIdx": 182,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00016.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #182 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00015",
+    "eventId": 15,
+    "timestamp": "2026-10-23T05:27:45+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 218,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      167,
+      267,
+      546,
+      341
+    ],
+    "frameIdx": 186,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00018.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #186 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00016",
+    "eventId": 16,
+    "timestamp": "2026-10-23T05:27:15+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 229,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      73,
+      228,
+      666,
+      394
+    ],
+    "frameIdx": 208,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00019.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #208 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00017",
+    "eventId": 17,
+    "timestamp": "2026-10-23T05:26:45+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 231,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      14,
+      209,
+      745,
+      419
+    ],
+    "frameIdx": 216,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00020.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #216 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00018",
+    "eventId": 18,
+    "timestamp": "2026-10-23T05:26:15+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 232,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      2,
+      203,
+      764,
+      428
+    ],
+    "frameIdx": 219,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00021.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #219 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00019",
+    "eventId": 19,
+    "timestamp": "2026-10-23T05:25:45+00:00",
+    "plate": "DL 7C M 3702",
+    "rawPlate": "DL7CM3702",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 233,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 14,
+    "bbox": [
+      0,
+      190,
+      788,
+      449
+    ],
+    "frameIdx": 225,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00022.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #225 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:30:45+00:00",
+        "frameIdx": 60,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00005.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:29:15+00:00",
+        "frameIdx": 85,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00007.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:28:30+00:00",
+        "frameIdx": 96,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00008.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:27:00+00:00",
+        "frameIdx": 110,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00010.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:26:15+00:00",
+        "frameIdx": 113,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00011.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:45+00:00",
+        "frameIdx": 164,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00013.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:24:00+00:00",
+        "frameIdx": 169,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00014.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:23:15+00:00",
+        "frameIdx": 174,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00015.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:22:30+00:00",
+        "frameIdx": 182,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00016.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:21:00+00:00",
+        "frameIdx": 186,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00018.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:20:15+00:00",
+        "frameIdx": 208,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00019.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:19:30+00:00",
+        "frameIdx": 216,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00020.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:45+00:00",
+        "frameIdx": 219,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00021.jpg"
+      },
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:18:00+00:00",
+        "frameIdx": 225,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00022.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00020",
+    "eventId": 20,
+    "timestamp": "2026-10-23T05:25:15+00:00",
+    "plate": "DL 1U CG 602E",
+    "rawPlate": "DL1UCG602E",
+    "vehicleType": "Car",
+    "model": "Maruti Dzire",
+    "cameraId": "CAM-01",
+    "cameraName": "CHECKPOST 1",
+    "sector": "SECTOR-1 HQ",
+    "zone": "HQ COMPLEX",
+    "mgrs": "43R WQ 1842 8112",
+    "confidence": 0.998,
+    "plateConfidence": 0.998,
+    "trackId": 248,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      157,
+      226,
+      478,
+      288
+    ],
+    "frameIdx": 305,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00026.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #305 (99.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-01",
+        "cameraName": "CHECKPOST 1",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:15:00+00:00",
+        "frameIdx": 305,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00026.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00021",
+    "eventId": 21,
+    "timestamp": "2026-10-23T05:24:45+00:00",
+    "plate": "MH 12 NP 6480",
+    "rawPlate": "MH12NP6480",
+    "vehicleType": "Car",
+    "model": "Toyota Innova",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.989,
+    "plateConfidence": 0.989,
+    "trackId": 285,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 2,
+    "bbox": [
+      2643,
+      1164,
+      837,
+      812
+    ],
+    "frameIdx": 1,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00030.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1 (98.9%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:12:00+00:00",
+        "frameIdx": 1,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00030.jpg"
+      },
+      {
+        "cameraId": "CAM-03",
+        "cameraName": "CONVOY CORRIDOR 3",
+        "sector": "SECTOR-2 LOGISTICS",
+        "timestamp": "2026-10-23T04:17:15+00:00",
+        "frameIdx": 7,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00103.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00022",
+    "eventId": 22,
+    "timestamp": "2026-10-23T05:24:15+00:00",
+    "plate": "MH 01 C W078",
+    "rawPlate": "MH01CW078",
+    "vehicleType": "Truck",
+    "model": "Tata 407",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.439,
+    "plateConfidence": 0.439,
+    "trackId": 286,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      0,
+      0,
+      1361,
+      2126
+    ],
+    "frameIdx": 1,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00031.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1 (43.9%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:11:15+00:00",
+        "frameIdx": 1,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00031.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00023",
+    "eventId": 23,
+    "timestamp": "2026-10-23T05:23:45+00:00",
+    "plate": "NM 71 4477",
+    "rawPlate": "NM714477",
+    "vehicleType": "Motorcycle",
+    "model": "Honda Activa",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.68,
+    "plateConfidence": 0.68,
+    "trackId": 405,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2670,
+      1319,
+      220,
+      238
+    ],
+    "frameIdx": 117,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00038.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #117 (68.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:06:00+00:00",
+        "frameIdx": 117,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00038.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00024",
+    "eventId": 24,
+    "timestamp": "2026-10-23T05:23:15+00:00",
+    "plate": "HI 00 1133",
+    "rawPlate": "HI001133",
+    "vehicleType": "Taxi",
+    "model": "Maruti Omni",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.988,
+    "plateConfidence": 0.988,
+    "trackId": 554,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      1864,
+      1254,
+      338,
+      333
+    ],
+    "frameIdx": 257,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00045.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #257 (98.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T05:00:45+00:00",
+        "frameIdx": 257,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00045.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00025",
+    "eventId": 25,
+    "timestamp": "2026-10-23T05:22:45+00:00",
+    "plate": "MW01CWG",
+    "rawPlate": "MW01CWG",
+    "vehicleType": "Taxi",
+    "model": "Maruti Alto",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.926,
+    "plateConfidence": 0.926,
+    "trackId": 586,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2645,
+      1329,
+      271,
+      278
+    ],
+    "frameIdx": 309,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00050.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #309 (92.6%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:57:00+00:00",
+        "frameIdx": 309,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00050.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00026",
+    "eventId": 26,
+    "timestamp": "2026-10-23T05:22:15+00:00",
+    "plate": "MH 02 E R413",
+    "rawPlate": "MH02ER413",
+    "vehicleType": "Taxi",
+    "model": "Tata Safari",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.916,
+    "plateConfidence": 0.916,
+    "trackId": 674,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      3134,
+      1409,
+      674,
+      528
+    ],
+    "frameIdx": 372,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00051.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #372 (91.6%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:56:15+00:00",
+        "frameIdx": 372,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00051.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00027",
+    "eventId": 27,
+    "timestamp": "2026-10-23T05:21:45+00:00",
+    "plate": "MHO1CR6",
+    "rawPlate": "MHO1CR6",
+    "vehicleType": "Taxi",
+    "model": "Maruti Dzire",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.728,
+    "plateConfidence": 0.728,
+    "trackId": 726,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2957,
+      1382,
+      295,
+      392
+    ],
+    "frameIdx": 386,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00054.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #386 (72.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:54:00+00:00",
+        "frameIdx": 386,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00054.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00028",
+    "eventId": 28,
+    "timestamp": "2026-10-23T05:21:15+00:00",
+    "plate": "HO10880",
+    "rawPlate": "HO10880",
+    "vehicleType": "Taxi",
+    "model": "Maruti Alto",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.928,
+    "plateConfidence": 0.928,
+    "trackId": 756,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      1011,
+      1420,
+      971,
+      728
+    ],
+    "frameIdx": 411,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00057.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #411 (92.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:51:45+00:00",
+        "frameIdx": 411,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00057.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00029",
+    "eventId": 29,
+    "timestamp": "2026-10-23T05:20:45+00:00",
+    "plate": "MH 03 CP 4833",
+    "rawPlate": "MH03CP4833",
+    "vehicleType": "Taxi",
+    "model": "Maruti Eeco",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.999,
+    "plateConfidence": 0.999,
+    "trackId": 800,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 3,
+    "bbox": [
+      1905,
+      1166,
+      797,
+      867
+    ],
+    "frameIdx": 425,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00059.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #425 (99.9%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:50:15+00:00",
+        "frameIdx": 425,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00059.jpg"
+      },
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:48:45+00:00",
+        "frameIdx": 430,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00061.jpg"
+      },
+      {
+        "cameraId": "CAM-03",
+        "cameraName": "CONVOY CORRIDOR 3",
+        "sector": "SECTOR-2 LOGISTICS",
+        "timestamp": "2026-10-23T04:22:30+00:00",
+        "frameIdx": 1,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00096.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00030",
+    "eventId": 30,
+    "timestamp": "2026-10-23T05:20:15+00:00",
+    "plate": "MH 03 CP 4833",
+    "rawPlate": "MH03CP4833",
+    "vehicleType": "Taxi",
+    "model": "Maruti Eeco",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 1.0,
+    "plateConfidence": 1.0,
+    "trackId": 807,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 3,
+    "bbox": [
+      1820,
+      1167,
+      830,
+      895
+    ],
+    "frameIdx": 430,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00061.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #430 (100.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:50:15+00:00",
+        "frameIdx": 425,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00059.jpg"
+      },
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:48:45+00:00",
+        "frameIdx": 430,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00061.jpg"
+      },
+      {
+        "cameraId": "CAM-03",
+        "cameraName": "CONVOY CORRIDOR 3",
+        "sector": "SECTOR-2 LOGISTICS",
+        "timestamp": "2026-10-23T04:22:30+00:00",
+        "frameIdx": 1,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00096.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00031",
+    "eventId": 31,
+    "timestamp": "2026-10-23T05:19:45+00:00",
+    "plate": "MH H0 3C P483",
+    "rawPlate": "MHH03CP483",
+    "vehicleType": "Taxi",
+    "model": "Maruti Eeco",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.999,
+    "plateConfidence": 0.999,
+    "trackId": 833,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      1588,
+      1177,
+      952,
+      947
+    ],
+    "frameIdx": 442,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00062.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #442 (99.9%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:48:00+00:00",
+        "frameIdx": 442,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00062.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00032",
+    "eventId": 32,
+    "timestamp": "2026-10-23T05:19:15+00:00",
+    "plate": "KAX8113",
+    "rawPlate": "KAX8113",
+    "vehicleType": "Taxi",
+    "model": "Maruti Omni",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.375,
+    "plateConfidence": 0.375,
+    "trackId": 824,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2401,
+      1087,
+      578,
+      462
+    ],
+    "frameIdx": 456,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00063.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #456 (37.5%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:47:15+00:00",
+        "frameIdx": 456,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00063.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00033",
+    "eventId": 33,
+    "timestamp": "2026-10-23T05:18:45+00:00",
+    "plate": "IH 03 CP 4833",
+    "rawPlate": "IH03CP4833",
+    "vehicleType": "Taxi",
+    "model": "Maruti Eeco",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.997,
+    "plateConfidence": 0.997,
+    "trackId": 863,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      874,
+      1166,
+      1090,
+      988
+    ],
+    "frameIdx": 472,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00064.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #472 (99.7%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:46:30+00:00",
+        "frameIdx": 472,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00064.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00034",
+    "eventId": 34,
+    "timestamp": "2026-10-23T05:18:15+00:00",
+    "plate": "CB9E633",
+    "rawPlate": "CB9E633",
+    "vehicleType": "Taxi",
+    "model": "Maruti Omni",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.988,
+    "plateConfidence": 0.988,
+    "trackId": 952,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      0,
+      1232,
+      706,
+      916
+    ],
+    "frameIdx": 519,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00067.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #519 (98.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:44:15+00:00",
+        "frameIdx": 519,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00067.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00035",
+    "eventId": 35,
+    "timestamp": "2026-10-23T05:17:45+00:00",
+    "plate": "IH 01 0P2H",
+    "rawPlate": "IH010P2H",
+    "vehicleType": "Taxi",
+    "model": "Tata Safari",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.915,
+    "plateConfidence": 0.915,
+    "trackId": 965,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2560,
+      1277,
+      519,
+      395
+    ],
+    "frameIdx": 570,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00068.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #570 (91.5%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:43:30+00:00",
+        "frameIdx": 570,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00068.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00036",
+    "eventId": 36,
+    "timestamp": "2026-10-23T05:17:15+00:00",
+    "plate": "LM00KND",
+    "rawPlate": "LM00KND",
+    "vehicleType": "Motorcycle",
+    "model": "Honda Activa",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.804,
+    "plateConfidence": 0.804,
+    "trackId": 1130,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2119,
+      1231,
+      256,
+      329
+    ],
+    "frameIdx": 607,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00071.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #607 (80.4%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:41:15+00:00",
+        "frameIdx": 607,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00071.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00037",
+    "eventId": 37,
+    "timestamp": "2026-10-23T05:16:45+00:00",
+    "plate": "MH013R3",
+    "rawPlate": "MH013R3",
+    "vehicleType": "Auto",
+    "model": "Auto",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.353,
+    "plateConfidence": 0.353,
+    "trackId": 1205,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2736,
+      984,
+      783,
+      604
+    ],
+    "frameIdx": 633,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00076.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #633 (35.3%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:37:30+00:00",
+        "frameIdx": 633,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00076.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00038",
+    "eventId": 38,
+    "timestamp": "2026-10-23T05:16:15+00:00",
+    "plate": "NLLAT92",
+    "rawPlate": "NLLAT92",
+    "vehicleType": "Taxi",
+    "model": "Tata Punch",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.754,
+    "plateConfidence": 0.754,
+    "trackId": 1354,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2536,
+      1231,
+      835,
+      472
+    ],
+    "frameIdx": 761,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00080.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #761 (75.4%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:34:30+00:00",
+        "frameIdx": 761,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00080.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00039",
+    "eventId": 39,
+    "timestamp": "2026-10-23T05:15:45+00:00",
+    "plate": "UA9LTS3",
+    "rawPlate": "UA9LTS3",
+    "vehicleType": "Taxi",
+    "model": "Maruti Alto",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.582,
+    "plateConfidence": 0.582,
+    "trackId": 1359,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      3106,
+      1258,
+      357,
+      463
+    ],
+    "frameIdx": 765,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00081.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #765 (58.2%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:33:45+00:00",
+        "frameIdx": 765,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00081.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00040",
+    "eventId": 40,
+    "timestamp": "2026-10-23T05:15:15+00:00",
+    "plate": "MH4404M",
+    "rawPlate": "MH4404M",
+    "vehicleType": "Motorcycle",
+    "model": "Honda Activa",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.83,
+    "plateConfidence": 0.83,
+    "trackId": 1370,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      452,
+      1517,
+      553,
+      637
+    ],
+    "frameIdx": 768,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00082.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #768 (83.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:33:00+00:00",
+        "frameIdx": 768,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00082.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00041",
+    "eventId": 41,
+    "timestamp": "2026-10-23T05:14:45+00:00",
+    "plate": "MH 10 4110",
+    "rawPlate": "MH104110",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.93,
+    "plateConfidence": 0.93,
+    "trackId": 1301,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      1906,
+      1222,
+      1026,
+      731
+    ],
+    "frameIdx": 795,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00084.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #795 (93.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:31:30+00:00",
+        "frameIdx": 795,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00084.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00042",
+    "eventId": 42,
+    "timestamp": "2026-10-23T05:14:15+00:00",
+    "plate": "WI 11 Y 8833",
+    "rawPlate": "WI11Y8833",
+    "vehicleType": "Motorcycle",
+    "model": "Honda Activa",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.932,
+    "plateConfidence": 0.932,
+    "trackId": 1052,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      1304,
+      1233,
+      1446,
+      852
+    ],
+    "frameIdx": 824,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00085.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #824 (93.2%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:30:45+00:00",
+        "frameIdx": 824,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00085.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00043",
+    "eventId": 43,
+    "timestamp": "2026-10-23T05:13:45+00:00",
+    "plate": "XH 02 G E975",
+    "rawPlate": "XH02GE975",
+    "vehicleType": "Motorcycle",
+    "model": "Honda Activa",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.756,
+    "plateConfidence": 0.756,
+    "trackId": 1458,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2295,
+      1517,
+      824,
+      637
+    ],
+    "frameIdx": 823,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00086.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #823 (75.6%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:30:00+00:00",
+        "frameIdx": 823,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00086.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00044",
+    "eventId": 44,
+    "timestamp": "2026-10-23T05:13:15+00:00",
+    "plate": "IO 1R M 4077",
+    "rawPlate": "IO1RM4077",
+    "vehicleType": "Taxi",
+    "model": "Tata Safari",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.844,
+    "plateConfidence": 0.844,
+    "trackId": 1538,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2714,
+      1189,
+      648,
+      485
+    ],
+    "frameIdx": 854,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00087.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #854 (84.4%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:29:15+00:00",
+        "frameIdx": 854,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00087.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00045",
+    "eventId": 45,
+    "timestamp": "2026-10-23T05:12:45+00:00",
+    "plate": "MH 02 GE 9750",
+    "rawPlate": "MH02GE9750",
+    "vehicleType": "Car",
+    "model": "Mahindra XUV700",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.996,
+    "plateConfidence": 0.996,
+    "trackId": 1549,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 4,
+    "bbox": [
+      2133,
+      1216,
+      1021,
+      747
+    ],
+    "frameIdx": 861,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00088.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #861 (99.6%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:28:30+00:00",
+        "frameIdx": 861,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00088.jpg"
+      },
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:27:00+00:00",
+        "frameIdx": 867,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00090.jpg"
+      },
+      {
+        "cameraId": "CAM-03",
+        "cameraName": "CONVOY CORRIDOR 3",
+        "sector": "SECTOR-2 LOGISTICS",
+        "timestamp": "2026-10-23T04:21:45+00:00",
+        "frameIdx": 1,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00097.jpg"
+      },
+      {
+        "cameraId": "CAM-03",
+        "cameraName": "CONVOY CORRIDOR 3",
+        "sector": "SECTOR-2 LOGISTICS",
+        "timestamp": "2026-10-23T04:19:30+00:00",
+        "frameIdx": 1,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00100.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00046",
+    "eventId": 46,
+    "timestamp": "2026-10-23T05:12:15+00:00",
+    "plate": "MH 02 GE 9750",
+    "rawPlate": "MH02GE9750",
+    "vehicleType": "Car",
+    "model": "Mahindra XUV700",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.997,
+    "plateConfidence": 0.997,
+    "trackId": 1556,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 4,
+    "bbox": [
+      2045,
+      1223,
+      1098,
+      758
+    ],
+    "frameIdx": 867,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00090.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #867 (99.7%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:28:30+00:00",
+        "frameIdx": 861,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00088.jpg"
+      },
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:27:00+00:00",
+        "frameIdx": 867,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00090.jpg"
+      },
+      {
+        "cameraId": "CAM-03",
+        "cameraName": "CONVOY CORRIDOR 3",
+        "sector": "SECTOR-2 LOGISTICS",
+        "timestamp": "2026-10-23T04:21:45+00:00",
+        "frameIdx": 1,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00097.jpg"
+      },
+      {
+        "cameraId": "CAM-03",
+        "cameraName": "CONVOY CORRIDOR 3",
+        "sector": "SECTOR-2 LOGISTICS",
+        "timestamp": "2026-10-23T04:19:30+00:00",
+        "frameIdx": 1,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00100.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00047",
+    "eventId": 47,
+    "timestamp": "2026-10-23T05:11:45+00:00",
+    "plate": "KO 18 0408",
+    "rawPlate": "KO180408",
+    "vehicleType": "Car",
+    "model": "Hyundai Creta",
+    "cameraId": "CAM-02",
+    "cameraName": "MAIN GATEWAY ALPHA",
+    "sector": "SECTOR-1 HQ",
+    "zone": "PERIMETER ACCESS",
+    "mgrs": "43R WQ 1845 8120",
+    "confidence": 0.718,
+    "plateConfidence": 0.718,
+    "trackId": 1563,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2852,
+      1221,
+      408,
+      525
+    ],
+    "frameIdx": 888,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00091.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #888 (71.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-02",
+        "cameraName": "MAIN GATEWAY ALPHA",
+        "sector": "SECTOR-1 HQ",
+        "timestamp": "2026-10-23T04:26:15+00:00",
+        "frameIdx": 888,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00091.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00048",
+    "eventId": 48,
+    "timestamp": "2026-10-23T05:11:15+00:00",
+    "plate": "NA13NRU",
+    "rawPlate": "NA13NRU",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.868,
+    "plateConfidence": 0.868,
+    "trackId": 74,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      644,
+      1565,
+      730,
+      590
+    ],
+    "frameIdx": 29,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00212.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #29 (86.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:55:30+00:00",
+        "frameIdx": 29,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00212.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00049",
+    "eventId": 49,
+    "timestamp": "2026-10-23T05:10:45+00:00",
+    "plate": "GX15OGJ",
+    "rawPlate": "GX15OGJ",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.894,
+    "plateConfidence": 0.894,
+    "trackId": 77,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      914,
+      1490,
+      735,
+      593
+    ],
+    "frameIdx": 114,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00213.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #114 (89.4%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:54:45+00:00",
+        "frameIdx": 114,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00213.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00050",
+    "eventId": 50,
+    "timestamp": "2026-10-23T05:10:15+00:00",
+    "plate": "MW51VSU",
+    "rawPlate": "MW51VSU",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.858,
+    "plateConfidence": 0.858,
+    "trackId": 78,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2219,
+      1286,
+      622,
+      641
+    ],
+    "frameIdx": 29,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00214.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #29 (85.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:54:00+00:00",
+        "frameIdx": 29,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00214.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00051",
+    "eventId": 51,
+    "timestamp": "2026-10-23T05:09:45+00:00",
+    "plate": "AP05JEO",
+    "rawPlate": "AP05JEO",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.907,
+    "plateConfidence": 0.907,
+    "trackId": 79,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2068,
+      1430,
+      677,
+      572
+    ],
+    "frameIdx": 183,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00215.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #183 (90.7%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:53:15+00:00",
+        "frameIdx": 183,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00215.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00052",
+    "eventId": 52,
+    "timestamp": "2026-10-23T05:09:15+00:00",
+    "plate": "LH13VCV",
+    "rawPlate": "LH13VCV",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.901,
+    "plateConfidence": 0.901,
+    "trackId": 86,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2261,
+      1690,
+      733,
+      465
+    ],
+    "frameIdx": 138,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00216.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #138 (90.1%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:52:30+00:00",
+        "frameIdx": 138,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00216.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00053",
+    "eventId": 53,
+    "timestamp": "2026-10-23T05:08:45+00:00",
+    "plate": "FJ14ZHY",
+    "rawPlate": "FJ14ZHY",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.887,
+    "plateConfidence": 0.887,
+    "trackId": 83,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      842,
+      1601,
+      679,
+      543
+    ],
+    "frameIdx": 291,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00217.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #291 (88.7%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:51:45+00:00",
+        "frameIdx": 291,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00217.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00054",
+    "eventId": 54,
+    "timestamp": "2026-10-23T05:08:15+00:00",
+    "plate": "KM05ZZK",
+    "rawPlate": "KM05ZZK",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.874,
+    "plateConfidence": 0.874,
+    "trackId": 81,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      910,
+      1408,
+      609,
+      533
+    ],
+    "frameIdx": 205,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00218.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #205 (87.4%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:51:00+00:00",
+        "frameIdx": 205,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00218.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00055",
+    "eventId": 55,
+    "timestamp": "2026-10-23T05:07:45+00:00",
+    "plate": "WR02FKD",
+    "rawPlate": "WR02FKD",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.862,
+    "plateConfidence": 0.862,
+    "trackId": 87,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2327,
+      1692,
+      703,
+      464
+    ],
+    "frameIdx": 283,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00219.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #283 (86.2%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:50:15+00:00",
+        "frameIdx": 283,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00219.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00056",
+    "eventId": 56,
+    "timestamp": "2026-10-23T05:07:15+00:00",
+    "plate": "EY61NBG",
+    "rawPlate": "EY61NBG",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.895,
+    "plateConfidence": 0.895,
+    "trackId": 89,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2391,
+      1449,
+      672,
+      623
+    ],
+    "frameIdx": 326,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00220.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #326 (89.5%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:49:30+00:00",
+        "frameIdx": 326,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00220.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00057",
+    "eventId": 57,
+    "timestamp": "2026-10-23T05:06:45+00:00",
+    "plate": "AV08HVF",
+    "rawPlate": "AV08HVF",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.908,
+    "plateConfidence": 0.908,
+    "trackId": 96,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      851,
+      1439,
+      634,
+      586
+    ],
+    "frameIdx": 377,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00221.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #377 (90.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:48:45+00:00",
+        "frameIdx": 377,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00221.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00058",
+    "eventId": 58,
+    "timestamp": "2026-10-23T05:06:15+00:00",
+    "plate": "HN11CDV",
+    "rawPlate": "HN11CDV",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.877,
+    "plateConfidence": 0.877,
+    "trackId": 94,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2232,
+      1685,
+      743,
+      467
+    ],
+    "frameIdx": 407,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00222.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #407 (87.7%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:48:00+00:00",
+        "frameIdx": 407,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00222.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00059",
+    "eventId": 59,
+    "timestamp": "2026-10-23T05:05:45+00:00",
+    "plate": "NA54KGJ",
+    "rawPlate": "NA54KGJ",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.91,
+    "plateConfidence": 0.91,
+    "trackId": 101,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      893,
+      1391,
+      557,
+      419
+    ],
+    "frameIdx": 458,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00223.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #458 (91.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:47:15+00:00",
+        "frameIdx": 458,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00223.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00060",
+    "eventId": 60,
+    "timestamp": "2026-10-23T05:05:15+00:00",
+    "plate": "BG65USJ",
+    "rawPlate": "BG65USJ",
+    "vehicleType": "Truck",
+    "model": "Tata 407",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.781,
+    "plateConfidence": 0.781,
+    "trackId": 85,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2303,
+      1085,
+      850,
+      1057
+    ],
+    "frameIdx": 455,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00224.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #455 (78.1%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:46:30+00:00",
+        "frameIdx": 455,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00224.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00061",
+    "eventId": 61,
+    "timestamp": "2026-10-23T05:04:45+00:00",
+    "plate": "AK64DMV",
+    "rawPlate": "AK64DMV",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.888,
+    "plateConfidence": 0.888,
+    "trackId": 92,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      822,
+      1473,
+      708,
+      660
+    ],
+    "frameIdx": 576,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00225.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #576 (88.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:45:45+00:00",
+        "frameIdx": 576,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00225.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00062",
+    "eventId": 62,
+    "timestamp": "2026-10-23T05:04:15+00:00",
+    "plate": "MV08HVY",
+    "rawPlate": "MV08HVY",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.531,
+    "plateConfidence": 0.531,
+    "trackId": 97,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      762,
+      2089,
+      578,
+      91
+    ],
+    "frameIdx": 407,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00226.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #407 (53.1%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:45:00+00:00",
+        "frameIdx": 407,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00226.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00063",
+    "eventId": 63,
+    "timestamp": "2026-10-23T05:03:45+00:00",
+    "plate": "BR AN A00E",
+    "rawPlate": "BRANA00E",
+    "vehicleType": "Bus",
+    "model": "Bus",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.36,
+    "plateConfidence": 0.36,
+    "trackId": 106,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      1294,
+      589,
+      451,
+      551
+    ],
+    "frameIdx": 699,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00227.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #699 (36.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:44:15+00:00",
+        "frameIdx": 699,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00227.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00064",
+    "eventId": 64,
+    "timestamp": "2026-10-23T05:03:15+00:00",
+    "plate": "OU62HYJ",
+    "rawPlate": "OU62HYJ",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.828,
+    "plateConfidence": 0.828,
+    "trackId": 99,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      3208,
+      1227,
+      603,
+      482
+    ],
+    "frameIdx": 614,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00228.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #614 (82.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:43:30+00:00",
+        "frameIdx": 614,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00228.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00065",
+    "eventId": 65,
+    "timestamp": "2026-10-23T05:02:45+00:00",
+    "plate": "EF10DZT",
+    "rawPlate": "EF10DZT",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.886,
+    "plateConfidence": 0.886,
+    "trackId": 112,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2337,
+      1534,
+      662,
+      573
+    ],
+    "frameIdx": 609,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00229.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #609 (88.6%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:42:45+00:00",
+        "frameIdx": 609,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00229.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00066",
+    "eventId": 66,
+    "timestamp": "2026-10-23T05:02:15+00:00",
+    "plate": "GJ06EPD",
+    "rawPlate": "GJ06EPD",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.923,
+    "plateConfidence": 0.923,
+    "trackId": 103,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2292,
+      1477,
+      619,
+      566
+    ],
+    "frameIdx": 809,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00230.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #809 (92.3%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:42:00+00:00",
+        "frameIdx": 809,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00230.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00067",
+    "eventId": 67,
+    "timestamp": "2026-10-23T05:01:45+00:00",
+    "plate": "DA07CLX",
+    "rawPlate": "DA07CLX",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.931,
+    "plateConfidence": 0.931,
+    "trackId": 115,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2337,
+      1576,
+      703,
+      572
+    ],
+    "frameIdx": 918,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00231.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #918 (93.1%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:41:15+00:00",
+        "frameIdx": 918,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00231.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00068",
+    "eventId": 68,
+    "timestamp": "2026-10-23T05:01:15+00:00",
+    "plate": "AF65JKV",
+    "rawPlate": "AF65JKV",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.898,
+    "plateConfidence": 0.898,
+    "trackId": 100,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2284,
+      1576,
+      690,
+      577
+    ],
+    "frameIdx": 693,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00232.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #693 (89.8%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:40:30+00:00",
+        "frameIdx": 693,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00232.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00069",
+    "eventId": 69,
+    "timestamp": "2026-10-23T05:00:45+00:00",
+    "plate": "EY09VWS",
+    "rawPlate": "EY09VWS",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.807,
+    "plateConfidence": 0.807,
+    "trackId": 113,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2123,
+      968,
+      591,
+      609
+    ],
+    "frameIdx": 915,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00233.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #915 (80.7%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:39:45+00:00",
+        "frameIdx": 915,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00233.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00070",
+    "eventId": 70,
+    "timestamp": "2026-10-23T05:00:15+00:00",
+    "plate": "LN15ZZC",
+    "rawPlate": "LN15ZZC",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.909,
+    "plateConfidence": 0.909,
+    "trackId": 111,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      693,
+      1579,
+      705,
+      569
+    ],
+    "frameIdx": 851,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00234.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #851 (90.9%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:39:00+00:00",
+        "frameIdx": 851,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00234.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00071",
+    "eventId": 71,
+    "timestamp": "2026-10-23T04:59:45+00:00",
+    "plate": "MH06MSU",
+    "rawPlate": "MH06MSU",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.883,
+    "plateConfidence": 0.883,
+    "trackId": 105,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      779,
+      1618,
+      715,
+      535
+    ],
+    "frameIdx": 762,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00235.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #762 (88.3%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:38:15+00:00",
+        "frameIdx": 762,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00235.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00072",
+    "eventId": 72,
+    "timestamp": "2026-10-23T04:59:15+00:00",
+    "plate": "EY09VMS",
+    "rawPlate": "EY09VMS",
+    "vehicleType": "Bus",
+    "model": "Bus",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.264,
+    "plateConfidence": 0.264,
+    "trackId": 129,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      0,
+      561,
+      -694,
+      1055
+    ],
+    "frameIdx": 947,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00237.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #947 (26.4%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:36:45+00:00",
+        "frameIdx": 947,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00237.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00073",
+    "eventId": 73,
+    "timestamp": "2026-10-23T04:58:45+00:00",
+    "plate": "BP63LYH",
+    "rawPlate": "BP63LYH",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.723,
+    "plateConfidence": 0.723,
+    "trackId": 126,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2205,
+      1457,
+      813,
+      672
+    ],
+    "frameIdx": 1181,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00239.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1181 (72.3%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:35:15+00:00",
+        "frameIdx": 1181,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00239.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00074",
+    "eventId": 74,
+    "timestamp": "2026-10-23T04:58:15+00:00",
+    "plate": "WG65ZFX",
+    "rawPlate": "WG65ZFX",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.919,
+    "plateConfidence": 0.919,
+    "trackId": 147,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2114,
+      1519,
+      730,
+      594
+    ],
+    "frameIdx": 1282,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00240.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1282 (91.9%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:34:30+00:00",
+        "frameIdx": 1282,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00240.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00075",
+    "eventId": 75,
+    "timestamp": "2026-10-23T04:57:45+00:00",
+    "plate": "LL61PZS",
+    "rawPlate": "LL61PZS",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.859,
+    "plateConfidence": 0.859,
+    "trackId": 146,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 2,
+    "bbox": [
+      676,
+      1699,
+      753,
+      458
+    ],
+    "frameIdx": 1348,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00241.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1348 (85.9%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:33:45+00:00",
+        "frameIdx": 1348,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00241.jpg"
+      },
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:30:00+00:00",
+        "frameIdx": 1344,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00246.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00076",
+    "eventId": 76,
+    "timestamp": "2026-10-23T04:57:15+00:00",
+    "plate": "NL64OGX",
+    "rawPlate": "NL64OGX",
+    "vehicleType": "Truck",
+    "model": "Tata 407",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.725,
+    "plateConfidence": 0.725,
+    "trackId": 154,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      826,
+      1244,
+      719,
+      742
+    ],
+    "frameIdx": 1381,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00242.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1381 (72.5%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:33:00+00:00",
+        "frameIdx": 1381,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00242.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00077",
+    "eventId": 77,
+    "timestamp": "2026-10-23T04:56:45+00:00",
+    "plate": "NL64DGX",
+    "rawPlate": "NL64DGX",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.802,
+    "plateConfidence": 0.802,
+    "trackId": 151,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      717,
+      1277,
+      737,
+      853
+    ],
+    "frameIdx": 1293,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00243.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1293 (80.2%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:32:15+00:00",
+        "frameIdx": 1293,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00243.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00078",
+    "eventId": 78,
+    "timestamp": "2026-10-23T04:56:15+00:00",
+    "plate": "LP14LJA",
+    "rawPlate": "LP14LJA",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.883,
+    "plateConfidence": 0.883,
+    "trackId": 131,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 2,
+    "bbox": [
+      2281,
+      1473,
+      670,
+      637
+    ],
+    "frameIdx": 1422,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00244.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1422 (88.3%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:31:30+00:00",
+        "frameIdx": 1422,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00244.jpg"
+      },
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:29:15+00:00",
+        "frameIdx": 1394,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00247.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00079",
+    "eventId": 79,
+    "timestamp": "2026-10-23T04:55:45+00:00",
+    "plate": "OF05VKJ",
+    "rawPlate": "OF05VKJ",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.854,
+    "plateConfidence": 0.854,
+    "trackId": 142,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2448,
+      1689,
+      669,
+      466
+    ],
+    "frameIdx": 1371,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00245.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1371 (85.4%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:30:45+00:00",
+        "frameIdx": 1371,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00245.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00080",
+    "eventId": 80,
+    "timestamp": "2026-10-23T04:55:15+00:00",
+    "plate": "LL61PZS",
+    "rawPlate": "LL61PZS",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.415,
+    "plateConfidence": 0.415,
+    "trackId": 136,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 2,
+    "bbox": [
+      666,
+      2091,
+      516,
+      75
+    ],
+    "frameIdx": 1344,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00246.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1344 (41.5%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:33:45+00:00",
+        "frameIdx": 1348,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00241.jpg"
+      },
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:30:00+00:00",
+        "frameIdx": 1344,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00246.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00081",
+    "eventId": 81,
+    "timestamp": "2026-10-23T04:54:45+00:00",
+    "plate": "LP14LJA",
+    "rawPlate": "LP14LJA",
+    "vehicleType": "Truck",
+    "model": "Tata 407",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.547,
+    "plateConfidence": 0.547,
+    "trackId": 164,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 2,
+    "bbox": [
+      2069,
+      1053,
+      653,
+      778
+    ],
+    "frameIdx": 1394,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00247.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1394 (54.7%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:31:30+00:00",
+        "frameIdx": 1422,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00244.jpg"
+      },
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:29:15+00:00",
+        "frameIdx": 1394,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00247.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00082",
+    "eventId": 82,
+    "timestamp": "2026-10-23T04:54:15+00:00",
+    "plate": "HX52BPF",
+    "rawPlate": "HX52BPF",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.864,
+    "plateConfidence": 0.864,
+    "trackId": 162,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      876,
+      1619,
+      737,
+      532
+    ],
+    "frameIdx": 1568,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00249.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1568 (86.4%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:27:45+00:00",
+        "frameIdx": 1568,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00249.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00083",
+    "eventId": 83,
+    "timestamp": "2026-10-23T04:53:45+00:00",
+    "plate": "CE61WYL",
+    "rawPlate": "CE61WYL",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.87,
+    "plateConfidence": 0.87,
+    "trackId": 166,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 2,
+    "bbox": [
+      985,
+      1122,
+      559,
+      548
+    ],
+    "frameIdx": 1636,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00250.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1636 (87.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:27:00+00:00",
+        "frameIdx": 1636,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00250.jpg"
+      },
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:24:00+00:00",
+        "frameIdx": 1747,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00254.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00084",
+    "eventId": 84,
+    "timestamp": "2026-10-23T04:53:15+00:00",
+    "plate": "SC56DYP",
+    "rawPlate": "SC56DYP",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.863,
+    "plateConfidence": 0.863,
+    "trackId": 170,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      2257,
+      1062,
+      476,
+      384
+    ],
+    "frameIdx": 1763,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00251.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1763 (86.3%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:26:15+00:00",
+        "frameIdx": 1763,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00251.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00085",
+    "eventId": 85,
+    "timestamp": "2026-10-23T04:52:45+00:00",
+    "plate": "OU06XRD",
+    "rawPlate": "OU06XRD",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.871,
+    "plateConfidence": 0.871,
+    "trackId": 168,
+    "speedKmh": 42.0,
+    "status": "VERIFIED",
+    "sightingsCount": 1,
+    "bbox": [
+      627,
+      1656,
+      765,
+      495
+    ],
+    "frameIdx": 1637,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00252.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1637 (87.1%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:25:30+00:00",
+        "frameIdx": 1637,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00252.jpg"
+      }
+    ]
+  },
+  {
+    "id": "ANPR-VLD-00086",
+    "eventId": 86,
+    "timestamp": "2026-10-23T04:52:15+00:00",
+    "plate": "CE61WYL",
+    "rawPlate": "CE61WYL",
+    "vehicleType": "Car",
+    "model": "Car",
+    "cameraId": "CAM-06",
+    "cameraName": "OUTPOST FOXTROT",
+    "sector": "SECTOR-4 FORWARD",
+    "zone": "FORWARD VALLEY",
+    "mgrs": "43R WQ 1872 8165",
+    "confidence": 0.28,
+    "plateConfidence": 0.28,
+    "trackId": 186,
+    "speedKmh": 42.0,
+    "status": "MULTI_SIGHTING",
+    "sightingsCount": 2,
+    "bbox": [
+      20,
+      -724,
+      1784,
+      682
+    ],
+    "frameIdx": 1747,
+    "carCropUrl": "/crops/anpr/ANPR-VLD-00254.jpg",
+    "valid": true,
+    "verificationNote": "Peak confidence match at Frame #1747 (28.0%)",
+    "sightingsHistory": [
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:27:00+00:00",
+        "frameIdx": 1636,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00250.jpg"
+      },
+      {
+        "cameraId": "CAM-06",
+        "cameraName": "OUTPOST FOXTROT",
+        "sector": "SECTOR-4 FORWARD",
+        "timestamp": "2026-10-23T02:24:00+00:00",
+        "frameIdx": 1747,
+        "cropUrl": "/crops/anpr/ANPR-VLD-00254.jpg"
+      }
+    ]
+  }
+]

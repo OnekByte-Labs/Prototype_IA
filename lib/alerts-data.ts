@@ -123,7 +123,7 @@ export const incidentDetail = {
     { label: "PRE-EVENT BUFFER:", value: "15 SEC PRE-ROLL VERIFIED", tone: "default" },
     { label: "CORRELATED SENSORS:", value: "SEISMIC S-08 · IR-44", tone: "secondary" },
     { label: "RFID QUERY:", value: "NO BEACON DETECTED", tone: "error", strong: true },
-    { label: "CLASSIFICATION CV:", value: "YOLO-V9 MIL-SPEC [PERSON]", tone: "default" },
+    { label: "CLASSIFICATION CV:", value: "NEURAL-CV MIL-SPEC [PERSON]", tone: "default" },
   ] as { label: string; value: string; tone: "default" | "error" | "secondary"; strong?: boolean }[],
   confidenceLabel: "BIOMETRIC / SILHOUETTE CONFIDENCE",
   confidenceNote: "CRITICAL THRESHOLD REACHED",

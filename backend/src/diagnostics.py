@@ -13,13 +13,16 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
-HZ = os.sysconf("SC_CLK_TCK")
-PAGE = os.sysconf("SC_PAGE_SIZE")
+HZ = os.sysconf("SC_CLK_TCK") if hasattr(os, "sysconf") else 100
+PAGE = os.sysconf("SC_PAGE_SIZE") if hasattr(os, "sysconf") else 4096
 
 
 def _proc_table() -> Dict[int, dict]:
     out = {}
-    for d in Path("/proc").iterdir():
+    proc_dir = Path("/proc")
+    if not proc_dir.exists():
+        return out
+    for d in proc_dir.iterdir():
         if not d.name.isdigit():
             continue
         try:
@@ -132,7 +135,7 @@ class Diagnostics:
                 mem[k] = int(v.split()[0]) * 1024
         except OSError:
             pass
-        load = os.getloadavg()
+        load = os.getloadavg() if hasattr(os, "getloadavg") else None
         return {
             "at": time.time(),
             "mock_feeds": {"configured": 0, "decoders_reading_non_live_input": comp["decoder_inputs_other"],
@@ -165,7 +168,7 @@ class Diagnostics:
                                for k, v in comp["components"].items()},
                 "gpu": {k: (g or {}).get(k) for k in ("name", "util_pct", "mem_used_mib", "mem_total_mib", "temp_c")},
                 "ram": {"total_mib": round(mem.get("MemTotal", 0) / 2 ** 20), "available_mib": round(mem.get("MemAvailable", 0) / 2 ** 20)},
-                "load_avg": [round(x, 2) for x in load], "cpus": os.cpu_count(),
+                "load_avg": [round(x, 2) for x in load] if load else None, "cpus": os.cpu_count(),
             },
             "note": "cpu_pct_of_one_core is measured between consecutive calls of this endpoint",
         }

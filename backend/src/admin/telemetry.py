@@ -5,6 +5,7 @@ GPU (nvidia-smi), CPU / memory / uptime (/proc), network links
 """
 
 import os
+import platform
 import shutil
 import subprocess
 import threading
@@ -78,10 +79,15 @@ class Telemetry:
 
     @staticmethod
     def host() -> dict:
-        out: dict = {"hostname": os.uname().nodename, "kernel": os.uname().release, "cpus": os.cpu_count()}
+        nodename = os.uname().nodename if hasattr(os, "uname") else platform.node()
+        release = os.uname().release if hasattr(os, "uname") else platform.release()
+        out: dict = {"hostname": nodename, "kernel": release, "cpus": os.cpu_count()}
         try:
-            l1, l5, l15 = os.getloadavg()
-            out["load"] = [round(l1, 2), round(l5, 2), round(l15, 2)]
+            if hasattr(os, "getloadavg"):
+                l1, l5, l15 = os.getloadavg()
+                out["load"] = [round(l1, 2), round(l5, 2), round(l15, 2)]
+            else:
+                out["load"] = None
         except OSError:
             out["load"] = None
         try:

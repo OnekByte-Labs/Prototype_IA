@@ -20,17 +20,16 @@ export async function GET(
   }
 
   try {
-    const fileStream = fs.createReadStream(filePath);
-    const webStream = Readable.toWeb(fileStream) as unknown as ReadableStream;
-    return new NextResponse(webStream, {
+    const content = fs.readFileSync(filePath, "utf-8");
+    return new NextResponse(content, {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=86400, immutable",
+        "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
       },
     });
   } catch (err) {
-    console.error(`[precomputed] Error streaming ${filePath}:`, err);
+    console.error(`[precomputed] Error reading ${filePath}:`, err);
     return new NextResponse(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

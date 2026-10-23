@@ -9,7 +9,7 @@ warning if the fallback is used.
 
 import logging
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Set, Tuple
 
 import cv2
 import numpy as np
@@ -198,13 +198,23 @@ class YOLODetector:
 
         return detections
 
+    def release(self) -> None:
+        if hasattr(self.session, "release"):
+            self.session.release()
+
     # ── public API ──────────────────────────────────────────────────
 
-    def detect(self, img: np.ndarray) -> List[Detection]:
+    def detect(self, img: np.ndarray, classes: Optional[Set[int]] = None,
+               conf: Optional[float] = None) -> List[Detection]:
         """
         Run detection on a BGR image (numpy array from cv2).
         Returns a list of Detection objects in original image coordinates.
         """
         blob, scale, pad = self._preprocess(img)
         outputs = self.session.run([self.output_name], {self.input_name: blob})
-        return self._postprocess(outputs[0], scale, pad, img.shape[:2])
+        dets = self._postprocess(outputs[0], scale, pad, img.shape[:2])
+        if conf is not None:
+            dets = [d for d in dets if d.confidence >= conf]
+        if classes is not None:
+            dets = [d for d in dets if d.class_id in classes]
+        return dets

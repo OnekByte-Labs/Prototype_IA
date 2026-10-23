@@ -18,7 +18,7 @@ export function Dashboard() {
   const liveNvrs = useMemo(() => {
     const by: Record<string, LiveNvr> = {};
     for (const [camId, s] of Object.entries(liveStreams)) {
-      if (s.sourceType !== "rtsp" || !s.nvrId) continue;
+      if (!s.nvrId) continue;
       const n = (by[s.nvrId] ??= { id: s.nvrId, bound: 0, up: 0, kbps: 0, down: [] });
       const h = streamHealth[camId];
       n.bound += 1;
@@ -42,7 +42,7 @@ export function Dashboard() {
   // Wall state
   const [density, setDensity] = useState<GridDensity>(12);
   const [alertFirst, setAlertFirst] = useState(false);
-  const [showAiBoxes] = useState(false);
+  const [showAiBoxes, setShowAiBoxes] = useState(true);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 
   const alertingCameraIds = useMemo(
@@ -86,7 +86,7 @@ export function Dashboard() {
           unit={`/ ${cameras.length}`}
           chip={liveAiCount ? `${((liveAiCount / Math.max(1, cameras.length)) * 100).toFixed(1)}%` : "AI OFFLINE"}
           note={liveNote}
-          tone={!liveAiCount ? "crit" : degraded.length || offlineCams.length ? "warn" : "ok"}
+          tone={!liveAiCount ? "crit" : degraded.length ? "warn" : "ok"}
         />
         <KpiCard
           icon="dns"

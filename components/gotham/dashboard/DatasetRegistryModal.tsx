@@ -169,7 +169,7 @@ export function DatasetRegistryModal({ isOpen, onClose }: DatasetRegistryModalPr
               <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-center">
                 {[
                   ["Stage 1", "MediaMTX", "RTSP loop server (:8554)"],
-                  ["Stage 2", "DeepStream", "YOLOv11x + ByteTrack"],
+                  ["Stage 2", "DeepStream", "NeuralEdge + ByteTrack"],
                   ["Stage 3", "MQTT daemon", "JSON event engine"],
                   ["Stage 4", "Backend API", "Express.js + PostgreSQL"],
                   ["Stage 5", "Tactical UI", "Next.js WebRTC / sockets"],

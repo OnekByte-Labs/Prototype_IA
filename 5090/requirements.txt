@@ -1,0 +1,27 @@
+# ==============================================================================
+# Argus Matrix - RTX 5090 Offline Precompute Pipeline Dependencies
+# ==============================================================================
+
+# 1. PyTorch with CUDA for RTX 5090
+--extra-index-url https://download.pytorch.org/whl/cu124
+torch>=2.4.0
+torchvision>=0.19.0
+
+# 2. YOLOv11 & ByteTrack Tracking
+ultralytics>=8.3.0
+lapx>=0.5.5
+
+# 3. FastALPR & License Plate Recognition
+fast-alpr>=0.1.4
+open-image-models>=0.1.2
+onnxruntime-gpu>=1.19.0
+
+# 4. SigLIP Neural Vehicle Model Classification
+transformers>=4.45.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+
+# 5. Core Computer Vision & Image Processing
+opencv-python>=4.10.0
+pillow>=10.4.0
+numpy>=1.26.0

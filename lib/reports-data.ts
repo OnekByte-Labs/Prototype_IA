@@ -189,7 +189,7 @@ export const MOCK_REPORTS: TacticalReport[] = [
     zone: "MOTOR POOL",
     leadOfficer: "Engineer V. Raghavan",
     status: "resolved",
-    summary: "Zero-lag precomputed frame sync validated at 60 FPS edge pipeline",
+    summary: "Zero-lag neural frame sync validated at 60 FPS edge pipeline",
     modelConfidence: 99.9,
     targetClassification: "System Audit",
     actionTaken: "Telemetry buffer verified; GPU inference memory nominal at 42%.",

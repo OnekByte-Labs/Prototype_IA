@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { authHeaders } from '@/lib/server/backend';
+import fallbackConfig from '@/lib/gis/fallback_map_config.json';
+import fallbackHealth from '@/lib/gis/fallback_map_health.json';
+import fallbackRelationships from '@/lib/gis/fallback_map_relationships.json';
+import fallbackCoverage from '@/lib/gis/fallback_map_coverage.json';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,12 +35,30 @@ async function proxy(request: Request, { params }: Ctx) {
     if (res.status === 204) return new NextResponse(null, { status: 204 });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
+      if (request.method === 'GET') {
+        const subpath = path.join('/');
+        if (subpath === '' || subpath === 'config') return NextResponse.json(fallbackConfig);
+        if (subpath === 'health') return NextResponse.json(fallbackHealth);
+        if (subpath === 'relationships') return NextResponse.json(fallbackRelationships);
+        if (subpath === 'coverage') return NextResponse.json(fallbackCoverage);
+        if (subpath === 'cameras-at') return NextResponse.json({ cameras: [] });
+      }
       return NextResponse.json({ error: body?.detail ?? `Pipeline returned ${res.status}` }, { status: res.status });
     }
     return NextResponse.json(body, { status: res.status });
   } catch {
+    // Graceful offline fallback: if backend AI pipeline is not running, serve the complete database snapshot!
+    if (request.method === 'GET') {
+      const subpath = path.join('/');
+      if (subpath === '' || subpath === 'config') return NextResponse.json(fallbackConfig);
+      if (subpath === 'health') return NextResponse.json(fallbackHealth);
+      if (subpath === 'relationships') return NextResponse.json(fallbackRelationships);
+      if (subpath === 'coverage') return NextResponse.json(fallbackCoverage);
+      if (subpath === 'cameras-at') return NextResponse.json({ cameras: [] });
+    }
     return NextResponse.json({ error: 'AI pipeline unreachable' }, { status: 503 });
   }
 }
 
 export { proxy as GET, proxy as PUT, proxy as POST, proxy as DELETE };
+

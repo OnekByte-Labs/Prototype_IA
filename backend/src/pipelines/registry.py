@@ -21,43 +21,59 @@ MODELS = PROJECT_ROOT / "models"
 
 
 def _yolo26n():
-    from src.inference.yolo_e2e import Yolo26Detector
-    return Yolo26Detector(str(MODELS / "yolo26n.onnx"), conf_threshold=0.35)
+    p = MODELS / "yolo26n.onnx"
+    if p.is_file():
+        from src.inference.yolo_e2e import Yolo26Detector
+        return Yolo26Detector(str(p), conf_threshold=0.35)
+    from src.inference.detector import YOLODetector
+    return YOLODetector(str(MODELS / "yolo11n.onnx"), conf_threshold=0.25)
 
 
 def _trafficcamnet():
-    from src.inference.tao import DetectNetV2Detector
-    return DetectNetV2Detector(
-        str(MODELS / "tao/trafficcamnet_resnet18_pruned.onnx"),
-        classes=["car", "bicycle", "person", "road_sign"],
-        tag="TrafficCamNet", pre_cluster_threshold=0.2, nms_iou=0.3,
-    )
+    p = MODELS / "tao/trafficcamnet_resnet18_pruned.onnx"
+    if p.is_file():
+        from src.inference.tao import DetectNetV2Detector
+        return DetectNetV2Detector(
+            str(p),
+            classes=["car", "bicycle", "person", "road_sign"],
+            tag="TrafficCamNet", pre_cluster_threshold=0.2, nms_iou=0.3,
+        )
+    return _yolo26n()
 
 
 def _peoplenet():
-    from src.inference.tao import DetectNetV2Detector
-    return DetectNetV2Detector(
-        str(MODELS / "tao/peoplenet_resnet34.onnx"),
-        classes=["person", "bag", "face"],
-        tag="PeopleNet", pre_cluster_threshold=0.4, nms_iou=0.4,
-    )
+    p = MODELS / "tao/peoplenet_resnet34.onnx"
+    if p.is_file():
+        from src.inference.tao import DetectNetV2Detector
+        return DetectNetV2Detector(
+            str(p),
+            classes=["person", "bag", "face"],
+            tag="PeopleNet", pre_cluster_threshold=0.4, nms_iou=0.4,
+        )
+    return _yolo26n()
 
 
 def _lpdnet():
-    from src.inference.tao import DetectNetV2Detector
-    return DetectNetV2Detector(
-        str(MODELS / "tao/lpdnet_usa_pruned.onnx"),
-        classes=["license_plate"],
-        tag="LPDNet", pre_cluster_threshold=0.3, nms_iou=0.3, min_box=4,
-    )
+    p = MODELS / "tao/lpdnet_usa_pruned.onnx"
+    if p.is_file():
+        from src.inference.tao import DetectNetV2Detector
+        return DetectNetV2Detector(
+            str(p),
+            classes=["license_plate"],
+            tag="LPDNet", pre_cluster_threshold=0.3, nms_iou=0.3, min_box=4,
+        )
+    from src.inference.plate_detector import PlateDetector
+    return PlateDetector(str(MODELS / "yolov8n_plate.onnx"), conf_threshold=0.3)
 
 
 def _lprnet():
-    from src.inference.tao import LPRNetRecognizer
-    return LPRNetRecognizer(
-        str(MODELS / "tao/lprnet_us_baseline18.onnx"),
-        str(MODELS / "tao/lprnet_dict_us.txt"),
-    )
+    p = MODELS / "tao/lprnet_us_baseline18.onnx"
+    d = MODELS / "tao/lprnet_dict_us.txt"
+    if p.is_file() and d.is_file():
+        from src.inference.tao import LPRNetRecognizer
+        return LPRNetRecognizer(str(p), str(d))
+    from src.inference.ocr import PlateOCR
+    return PlateOCR(str(MODELS / "cct-xs-v2-global-model.onnx"), str(MODELS / "plate_config.yaml"))
 
 
 MODEL_FACTORIES: Dict[str, Callable[[], Any]] = {

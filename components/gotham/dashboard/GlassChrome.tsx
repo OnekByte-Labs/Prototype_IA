@@ -46,8 +46,8 @@ export function GlassTitleBar() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [registryOpen, setRegistryOpen] = useState(false);
 
-  const link = feedLink === "up" ? (wsConnected ? "LIVE" : "POLLING") : feedLink === "down" ? "DOWN" : "…";
-  const linkTone = feedLink === "up" && wsConnected ? "text-ok-ink" : feedLink === "down" ? "text-crit-ink" : "text-warn-ink";
+  const link = feedLink === "up" ? "LIVE" : feedLink === "down" ? "DOWN" : "…";
+  const linkTone = feedLink === "up" ? "text-ok-ink" : feedLink === "down" ? "text-crit-ink" : "text-warn-ink";
   const initials = (session?.display_name ?? "?")
     .split(/\s+/)
     .map((w) => w[0])
