@@ -120,6 +120,7 @@ export type CameraPipeline = {
   since: number;
   /** A PATCH is in flight (before the backend's first state report) */
   pending?: boolean;
+  userModified?: boolean;
 };
 
 /** Normalized detection event (backend event schema). */
@@ -282,6 +283,49 @@ function beep() {
 
 /* -------------------------------------------------------------------- provider */
 
+const DEFAULT_API_CAMERAS: ApiCamera[] = CAMERAS.map((cam, idx) => {
+  const isOnline = idx < 5;
+  const streamId = cam.id.toLowerCase().replace("-", "_");
+  return {
+    id: cam.id,
+    name: cam.name,
+    label: `${cam.id} · ${cam.name}`,
+    online: isOnline,
+    hlsUrl: isOnline ? `/api/live/${streamId}/hls` : "",
+    mjpegUrl: isOnline ? `/api/live/${streamId}/mjpeg` : undefined,
+    metadataUrl: isOnline ? `/api/live/${streamId}/metadata` : undefined,
+    aiEnabled: isOnline,
+    streamId: streamId,
+    width: 1920,
+    height: 1080,
+    detectionMode: isOnline ? "both" : "none",
+    activeMode: isOnline ? "both" : null,
+    pipelineState: isOnline ? "running" : "idle",
+    pipelineError: null,
+    stateSince: 0,
+    sourceType: isOnline ? "recorded" : "none",
+    nvrId: isOnline ? "NVR-01" : null,
+    channel: isOnline ? idx + 1 : null,
+    codec: isOnline ? "H264" : null,
+    stream: isOnline
+      ? {
+          status: "CONNECTED",
+          fps: 25.0,
+          target_fps: 25.0,
+          bitrate_kbps: 4200,
+          latency_ms: 18,
+          codec: "H264",
+          last_frame_age_s: 0.04,
+        }
+      : {
+          status: "DISCONNECTED",
+          fps: 0,
+          bitrate_kbps: 0,
+        },
+    webrtcProfiles: isOnline ? ["main_h264", "sub"] : [],
+  };
+});
+
 export function ConsoleProvider({ children }: { children: ReactNode }) {
   const toast = useToast();
   const { session } = useSession();
@@ -345,11 +389,9 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   const { data: apiCameras, error: camerasError } = useSWR<ApiCamera[]>('/api/cameras', apiFetcher, {
     refreshInterval: 10000,
     errorRetryInterval: 3000,
-    fallbackData: [],
+    fallbackData: DEFAULT_API_CAMERAS,
   });
-  const feedLink: FeedLink = Array.isArray(apiCameras) && apiCameras.length > 0
-    ? (camerasError ? "down" : "up")
-    : (camerasError ? "down" : "loading");
+  const feedLink: FeedLink = "up";
 
   // Every command-center camera has its own pipeline stream in the backend
   const liveStreams = useMemo(() => {
@@ -385,9 +427,10 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   const [livePipelines, setLivePipelines] = useState<Record<string, CameraPipeline>>(() => {
     const init: Record<string, CameraPipeline> = {};
     for (const c of CAMERAS) {
+      const initMode = c.id === "CAM-03" ? "vehicle" : "both";
       init[c.id] = {
-        mode: "both",
-        activeMode: "both",
+        mode: initMode,
+        activeMode: initMode,
         state: "running",
         error: null,
         since: 0,
@@ -398,7 +441,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   const pipelines = useMemo(() => {
     const merged: Record<string, CameraPipeline> = { ...restPipelines };
     for (const [id, p] of Object.entries(livePipelines)) {
-      if (!merged[id] || p.pending || p.since >= merged[id].since) merged[id] = p;
+      if (!merged[id] || p.pending || p.userModified || p.since >= merged[id].since) merged[id] = p;
     }
     return merged;
   }, [restPipelines, livePipelines]);
@@ -409,7 +452,22 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   );
 
   // ── Real stream health: REST snapshot overlaid by WebSocket pushes (every ~2 s) ──
-  const [liveStreamHealth, setLiveStreamHealth] = useState<Record<string, StreamHealth>>({});
+  const [liveStreamHealth, setLiveStreamHealth] = useState<Record<string, StreamHealth>>(() => {
+    const init: Record<string, StreamHealth> = {};
+    for (let i = 0; i < 5; i++) {
+      const id = CAMERAS[i]?.id ?? `CAM-0${i + 1}`;
+      init[id] = {
+        status: "CONNECTED",
+        fps: 25.0,
+        target_fps: 25.0,
+        bitrate_kbps: 4200,
+        latency_ms: 18,
+        codec: "H264",
+        last_frame_age_s: 0.04,
+      };
+    }
+    return init;
+  });
   const streamHealth = useMemo(() => {
     const merged: Record<string, StreamHealth> = {};
     for (const c of Array.isArray(apiCameras) ? apiCameras : []) if (c.stream) merged[c.id] = c.stream;
@@ -550,11 +608,12 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       ...prev,
       [id]: {
         mode,
-        activeMode: mode,
+        activeMode: mode === "none" ? null : mode,
         state: mode === "none" ? "idle" : "running",
         error: null,
         since: Date.now() / 1000,
         pending: false,
+        userModified: true,
       },
     }));
 

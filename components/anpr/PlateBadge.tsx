@@ -5,6 +5,7 @@ interface PlateBadgeProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   isCommercial?: boolean; // Yellow background for commercial/taxi/truck
+  fixedWidth?: boolean;   // Standardized justifiable plate dimensions
 }
 
 export function PlateBadge({
@@ -12,57 +13,102 @@ export function PlateBadge({
   size = "md",
   className,
   isCommercial = false,
+  fixedWidth = true,
 }: PlateBadgeProps) {
   const clean = (plate || "UNKNOWN").toUpperCase();
 
-  const sizeClasses = {
-    sm: "h-5 text-[11px] px-1.5 gap-1",
-    md: "h-6 text-[12px] px-2 gap-1.5",
-    lg: "h-8 text-[14px] px-3 gap-2 tracking-wider",
+  // Standardized, justifiable dimensions matching physical license plates (ratio ~4.2:1)
+  const sizeConfig = {
+    sm: {
+      container: fixedWidth ? "h-[25px] w-[128px]" : "h-[25px] px-2",
+      indStrip: "w-[28px] text-[7.5px] gap-0.5",
+      flag: "text-[7px]",
+      indText: "text-[8px] font-bold",
+      plateText: "text-[11.5px] tracking-wider",
+    },
+    md: {
+      container: fixedWidth ? "h-[32px] w-[164px]" : "h-[32px] px-2.5",
+      indStrip: "w-[34px] text-[9px] gap-0.5",
+      flag: "text-[8.5px]",
+      indText: "text-[9px] font-bold",
+      plateText: "text-[14px] tracking-widest",
+    },
+    lg: {
+      container: fixedWidth ? "h-[44px] w-[224px]" : "h-[44px] px-4",
+      indStrip: "w-[44px] text-[10px] gap-1",
+      flag: "text-[10px]",
+      indText: "text-[11px] font-black",
+      plateText: "text-[17px] tracking-widest",
+    },
   }[size];
 
   const bgStyle = isCommercial
-    ? { backgroundColor: "#fbbf24", borderColor: "#d97706", color: "#000000" }
-    : { backgroundColor: "#ffffff", borderColor: "#94a3b8", color: "#000000" };
+    ? {
+        backgroundColor: "#f59e0b", // Reflective taxi amber/yellow
+        borderColor: "#b45309",
+        color: "#000000",
+      }
+    : {
+        backgroundColor: "#ffffff", // Pure reflective white
+        borderColor: "#94a3b8",
+        color: "#000000",
+      };
 
   return (
-    <span
+    <div
       className={cx(
-        "inline-flex items-center rounded border font-mono font-bold select-none shrink-0 shadow-sm transition-transform",
-        sizeClasses,
+        "relative inline-flex items-center rounded border font-mono font-bold select-none shrink-0 shadow-sm transition-transform",
+        sizeConfig.container,
         className
       )}
       style={{
         ...bgStyle,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.25)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6)",
       }}
       title={`License plate: ${clean}`}
     >
-      {/* IND hologram strip */}
-      <span
-        className="flex items-center gap-0.5 text-[8px] font-bold select-none pr-1 shrink-0"
+      {/* Subtle mounting rivet dots for physical plate authenticity */}
+      {size === "lg" && (
+        <>
+          <div className="absolute top-1.5 left-14 w-1.5 h-1.5 rounded-full bg-slate-400 border border-slate-600 shadow-inner" />
+          <div className="absolute top-1.5 right-2 w-1.5 h-1.5 rounded-full bg-slate-400 border border-slate-600 shadow-inner" />
+        </>
+      )}
+
+      {/* IND Hologram Strip with Indian flag */}
+      <div
+        className={cx(
+          "h-full flex items-center justify-center select-none shrink-0",
+          sizeConfig.indStrip
+        )}
         style={{
-          borderRight: "1px solid rgba(0,0,0,0.3)",
-          color: "#1d4ed8",
+          borderRight: "1px solid rgba(0,0,0,0.25)",
+          background: isCommercial
+            ? "linear-gradient(180deg, #d97706 0%, #b45309 100%)"
+            : "linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%)",
+          color: "#ffffff",
         }}
       >
-        <span className="text-[7px] leading-none">🇮🇳</span>
-        <span className="tracking-tighter font-mono font-black" style={{ color: "#1e40af" }}>
+        <span className={cx("leading-none", sizeConfig.flag)}>🇮🇳</span>
+        <span className={cx("tracking-tighter font-mono", sizeConfig.indText)}>
           IND
         </span>
-      </span>
-      {/* Plate characters */}
-      <span
-        className="font-mono tracking-wider uppercase text-center px-0.5"
+      </div>
+
+      {/* Plate Characters: Monospace, bold, centered & justifiable */}
+      <div
+        className={cx(
+          "flex-1 text-center font-mono uppercase overflow-hidden text-ellipsis whitespace-nowrap px-1",
+          sizeConfig.plateText
+        )}
         style={{
           color: "#000000",
+          letterSpacing: size === "lg" ? "0.12em" : "0.08em",
           fontWeight: 900,
-          letterSpacing: "0.08em",
         }}
       >
         {clean}
-      </span>
-    </span>
+      </div>
+    </div>
   );
 }
-

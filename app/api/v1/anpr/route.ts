@@ -21,6 +21,17 @@ export interface AnprLogRecord {
   status: "VERIFIED" | "FLAGGED" | "WATCHLIST" | "MULTI_SIGHTING";
   sightingsCount: number;
   bbox?: number[];
+  frameIdx?: number;
+  carCropUrl?: string;
+  verificationNote?: string;
+  sightingsHistory?: Array<{
+    cameraId: string;
+    cameraName: string;
+    sector: string;
+    timestamp: string;
+    frameIdx?: number;
+    cropUrl?: string;
+  }>;
 }
 
 export async function GET(request: NextRequest) {
@@ -32,7 +43,12 @@ export async function GET(request: NextRequest) {
   const status = url.searchParams.get("status") ?? "all";
   const plateTarget = (url.searchParams.get("plate") ?? "").trim().toUpperCase();
 
-  const allLogs = anprLogsData as AnprLogRecord[];
+  // Discard any plate where alphanumeric length is less than 7 and exclude CAM-03
+  const allLogs = (anprLogsData as AnprLogRecord[]).filter((l) => {
+    if (l.cameraId === "CAM-03") return false;
+    const clean = (l.plate || "").replace(/[^A-Za-z0-9]/g, "");
+    return clean.length >= 7;
+  });
 
   let filtered = allLogs;
 

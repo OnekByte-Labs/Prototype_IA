@@ -52,13 +52,8 @@ export function DatasetVideoPlayer({
 
   // Load telemetry data once per camera ID
   useEffect(() => {
-    if (frameCache.has(cleanId)) {
-      setFrames(frameCache.get(cleanId)!);
-      return;
-    }
-
     let active = true;
-    fetch(`/api/precomputed/${cleanId}`)
+    fetch(`/api/precomputed/${cleanId}?t=${Date.now()}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : []))
       .then((data: FrameData[]) => {
         if (!active) return;
@@ -159,11 +154,15 @@ export function DatasetVideoPlayer({
 
         const modelName = d.model ? d.model.trim() : "";
         let labelText = "";
+        const rawPlate = (d as any).plate || (d as any).anpr?.plate_text || "";
+        const cleanPlate = rawPlate.replace(/[^A-Za-z0-9]/g, "");
+        // Discard plate if size is less than 7
+        const plateText = cleanPlate.length >= 7 ? rawPlate : "";
 
         if (mode === "anpr") {
           // Rule: If ANPR, fetch number plate
-          if (!d.plate) continue;
-          labelText = `Plate : ${d.plate}`;
+          if (!plateText) continue;
+          labelText = `Plate : ${plateText}`;
           boxColor = "#eab308";
         } else if (mode === "vehicle" || mode === "vehicle_counting") {
           // Rule: If vehicle, fetch vehicle type and model (NO #numbers)
@@ -171,8 +170,8 @@ export function DatasetVideoPlayer({
         } else {
           // Rule: If both ANPR and Vehicle are selected, show original annotations (NO #numbers)
           let base = modelName ? `${vType} : ${modelName}` : vType;
-          if (d.plate) {
-            base += ` | ${d.plate}`;
+          if (plateText) {
+            base += ` | ${plateText}`;
             boxColor = "#eab308"; // Highlight plate
           }
           labelText = base;

@@ -97,7 +97,7 @@ export const TacticalVideoFeed = memo(function TacticalVideoFeed({
   const streamDead = isLive && health?.status === "ERROR";
   const aiUp = health?.status === "CONNECTED" || health?.status === "DEGRADED";
   const showWebrtc = isLive && profiles.length > 0 && !rtcFailed && !streamDead;
-  const showLive = !showWebrtc && (isLive ? !streamDead : camera.online) && !!liveMjpegUrl && !liveFailed;
+  const showLive = !isDatasetActive && !showWebrtc && (isLive ? !streamDead : camera.online) && !!liveMjpegUrl && !liveFailed;
   const transport = showWebrtc ? (rtcProfile ? "WEBRTC" : null) : showLive ? "MJPEG" : null;
   const onRtcFail = useCallback(() => {
     setRtcFailed(true);

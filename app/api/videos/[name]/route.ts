@@ -47,6 +47,50 @@ const VIDEO_MAP: Record<string, { raw: string; annotated: string }> = {
   },
 };
 
+// Safe adapter from fs.ReadStream to WHATWG ReadableStream that gracefully handles client disconnects
+function createSafeWebStream(filePath: string, options?: { start?: number; end?: number }): ReadableStream {
+  const stream = fs.createReadStream(filePath, options);
+  let closed = false;
+
+  return new ReadableStream({
+    start(controller) {
+      stream.on("data", (chunk: Buffer | Uint8Array) => {
+        if (closed) return;
+        try {
+          controller.enqueue(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+        } catch {
+          closed = true;
+          stream.destroy();
+        }
+      });
+
+      stream.on("end", () => {
+        if (closed) return;
+        closed = true;
+        try {
+          controller.close();
+        } catch {
+          // Controller already closed by client disconnect
+        }
+      });
+
+      stream.on("error", (err) => {
+        if (closed) return;
+        closed = true;
+        try {
+          controller.error(err);
+        } catch {
+          // ignore
+        }
+      });
+    },
+    cancel() {
+      closed = true;
+      stream.destroy();
+    },
+  });
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
@@ -86,7 +130,6 @@ export async function GET(
     }
   }
 
-
   if (!filePath || !fs.existsSync(filePath)) {
     return new NextResponse(JSON.stringify({ error: `Video not found: ${name} (${type})` }), {
       status: 404,
@@ -113,8 +156,7 @@ export async function GET(
     }
 
     const chunksize = end - start + 1;
-    const fileStream = fs.createReadStream(filePath, { start, end });
-    const webStream = Readable.toWeb(fileStream) as unknown as ReadableStream;
+    const webStream = createSafeWebStream(filePath, { start, end });
 
     return new NextResponse(webStream, {
       status: 206,
@@ -128,9 +170,8 @@ export async function GET(
     });
   }
 
-  // No range requested - stream full file
-  const fileStream = fs.createReadStream(filePath);
-  const webStream = Readable.toWeb(fileStream) as unknown as ReadableStream;
+  // No range requested - stream full file safely
+  const webStream = createSafeWebStream(filePath);
 
   return new NextResponse(webStream, {
     status: 200,

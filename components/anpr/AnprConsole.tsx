@@ -367,7 +367,7 @@ export function AnprConsole({
                 Time
               </Th>
               <Th
-                width={150}
+                width={185}
                 sortKey="plate"
                 activeSortKey={sortKey}
                 sortDir={sortDir === 1 ? "asc" : "desc"}
@@ -478,11 +478,21 @@ export function AnprConsole({
                         {timeString}
                       </Td>
                       <Td>
-                        <PlateBadge
-                          plate={log.plate}
-                          size="sm"
-                          isCommercial={log.vehicleType === "Truck" || log.vehicleType === "Taxi" || log.vehicleType === "Auto"}
-                        />
+                        <div className="flex items-center gap-2">
+                          {log.carCropUrl && (
+                            <img
+                              src={log.carCropUrl}
+                              alt={log.plate}
+                              className="w-9 h-6 object-cover rounded border border-line bg-black shrink-0 shadow-sm"
+                              title="Verified vehicle crop"
+                            />
+                          )}
+                          <PlateBadge
+                            plate={log.plate}
+                            size="sm"
+                            isCommercial={log.vehicleType === "Truck" || log.vehicleType === "Taxi" || log.vehicleType === "Auto"}
+                          />
+                        </div>
                       </Td>
                       <Td>
                         <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${classColor}`}>

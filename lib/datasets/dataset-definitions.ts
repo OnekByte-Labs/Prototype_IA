@@ -230,7 +230,7 @@ export const TACTICAL_CAMERAS: TacticalCamera[] = [
     tempC: 43.1,
     dataset: "MOT20",
     aiEnabled: true,
-    aiWorkload: "tracking",
+    aiWorkload: "anpr",
     isFixed: true,
     rtspUri: "rtsp://10.142.12.103:554/live/ch0",
     videoSrc: "/feeds/feed-mot20-crowd.mp4",

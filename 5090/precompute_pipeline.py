@@ -146,8 +146,9 @@ def clean_indian_plate(raw_text: str) -> str:
     if text.startswith("IND") and len(text) >= 11:
         text = text[3:]
 
+    # Rule: If plate size is less than 7, discard it
     if len(text) < 7:
-        return text
+        return ""
 
     # Disambiguation maps for visually similar OCR characters
     num_to_alpha = {"0": "O", "1": "I", "2": "Z", "5": "S", "8": "B", "4": "A", "6": "G"}
@@ -726,8 +727,8 @@ class OfflinePrecomputePipeline:
                             track_history[t_id]["car_model_conf"] = c_conf
                             track_history[t_id]["stable"] = True
 
-                # Stage 3: ANPR (Triggered ONLY in ANPR_MODE)
-                if mode == "ANPR_MODE":
+                # Stage 3: ANPR (Triggered in ANPR_MODE and for indain_road_footage3 / CAM-03)
+                if mode == "ANPR_MODE" or "indain_road_footage3" in video_path.name:
                     for det in temp_dets:
                         # Skip cycles and animals
                         if det["vehicle_type"] in ["Bicycle", "Animal"]:
