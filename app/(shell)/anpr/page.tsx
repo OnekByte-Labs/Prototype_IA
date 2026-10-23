@@ -8,7 +8,11 @@ export const metadata: Metadata = {
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
-export default async function AnprPage({ searchParams }: PageProps<"/anpr">) {
+export default async function AnprPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ plate?: string | string[]; camera?: string | string[] }>;
+}) {
   const { plate, camera } = await searchParams;
   return (
     <AnprConsole

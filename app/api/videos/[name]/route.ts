@@ -54,10 +54,11 @@ function createSafeWebStream(filePath: string, options?: { start?: number; end?:
 
   return new ReadableStream({
     start(controller) {
-      stream.on("data", (chunk: Buffer | Uint8Array) => {
+      stream.on("data", (chunk: Buffer | string) => {
         if (closed) return;
         try {
-          controller.enqueue(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+          const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+          controller.enqueue(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength));
         } catch {
           closed = true;
           stream.destroy();
