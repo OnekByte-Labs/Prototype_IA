@@ -1,4 +1,7 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../app";
+@source "../components";
+@source "../lib";
 @import "./tokens.css";
 @import "./glass.css";
 @import "../components/map/gis/gis-map.css";

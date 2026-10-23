@@ -14,7 +14,7 @@ import { ModeAnalyticsPanel } from "./ModeAnalyticsPanel";
 import { RestrictedZoneEditor } from "./RestrictedZoneEditor";
 import { TacticalVideoFeed } from "./TacticalVideoFeed";
 
-type LiveDetection = { id: number; class: string; confidence: number; plate?: string };
+type LiveDetection = { id: number; class: string; confidence: number; plate?: string; model?: string };
 type LiveSnapshot = {
   detections: LiveDetection[];
   fps: number;
@@ -112,7 +112,7 @@ export function CameraWall({
   onChangeDensity,
   alertFirst = false,
   onChangeAlertFirst,
-  showAiBoxes = false,
+  showAiBoxes = true,
   alertingCameraIds = [],
   onAcknowledgeCamera,
   selectedCameraId = null,
@@ -170,10 +170,25 @@ export function CameraWall({
   const focusedCam = TACTICAL_CAMERAS.find((c) => c.id === focusId);
   const focusedStream = focusedCam ? liveStreams[focusedCam.id] : undefined;
   const live = useLiveMetadata(focusedStream?.metadataUrl);
-  const liveDetections = useMemo(
-    () => [...(live?.detections ?? [])].sort((a, b) => b.confidence - a.confidence),
-    [live],
-  );
+  const [focusDetections, setFocusDetections] = useState<
+    Array<{ id: number; class: string; confidence: number; plate?: string; model?: string }>
+  >([]);
+
+  const activeMode = focusedCam ? pipelines[focusedCam.id]?.mode ?? "both" : "both";
+  const rawDetections = live?.detections && live.detections.length > 0 ? live.detections : focusDetections;
+
+  const liveDetections = useMemo(() => {
+    if (activeMode === "none") return [];
+    return rawDetections
+      .filter((d) => (activeMode === "anpr" ? !!d.plate : true))
+      .filter((d) => (d.confidence ?? 1) >= 0.35)
+      .map((d) => ({
+        ...d,
+        class: d.class.toLowerCase().includes("truck") ? "truck" : d.class,
+      }))
+      .sort((a, b) => b.confidence - a.confidence);
+  }, [rawDetections, activeMode]);
+
   const classCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const d of liveDetections) counts[d.class] = (counts[d.class] ?? 0) + 1;
@@ -283,6 +298,7 @@ export function CameraWall({
                 glass
                 showAiBoxes={showAiBoxes}
                 isBreached={alertingCameraIds.includes(focusedCam.id)}
+                onDetections={setFocusDetections}
               />
             </CameraTile>
 
@@ -381,12 +397,10 @@ export function CameraWall({
                   </div>
                 )}
                 <div className="flex-1 min-h-0 overflow-y-auto">
-                  {!focusedStream ? (
-                    <div className="text-caption text-crit-ink py-2">AI pipeline offline — no live detections.</div>
-                  ) : !live ? (
-                    <div className="text-caption text-ink-2 py-2">Connecting to live inference…</div>
-                  ) : liveDetections.length === 0 ? (
-                    <div className="text-caption text-ink-2 py-2">No objects in view.</div>
+                  {liveDetections.length === 0 ? (
+                    <div className="text-caption text-ink-2 py-2">
+                      {activeMode === "none" ? "No detections active (mode: None)" : "No objects in view."}
+                    </div>
                   ) : (
                     liveDetections.map((d) => (
                       <div
@@ -394,8 +408,22 @@ export function CameraWall({
                         className="flex items-center justify-between py-1 border-b border-line last:border-0 text-ui"
                       >
                         <span className="text-ink truncate capitalize">
-                          {d.class} <span className="text-ink-3 font-data text-data">#{d.id}</span>
-                          {d.plate && <span className="text-accent-ink font-data text-data"> · {d.plate}</span>}
+                          {activeMode === "anpr" ? (
+                            <span className="text-accent-ink font-data text-data font-semibold">
+                              Plate : {d.plate}
+                            </span>
+                          ) : activeMode === "vehicle" ? (
+                            <>
+                              {d.class}
+                              {d.model && <span className="text-ink-2 font-data text-data"> : {d.model}</span>}
+                            </>
+                          ) : (
+                            <>
+                              {d.class}
+                              {d.model && <span className="text-ink-2 font-data text-data"> : {d.model}</span>}
+                              {d.plate && <span className="text-accent-ink font-data text-data"> | {d.plate}</span>}
+                            </>
+                          )}
                         </span>
                         <span className="text-ink font-data text-data tnum">{(d.confidence * 100).toFixed(1)}%</span>
                       </div>
@@ -461,12 +489,10 @@ export function CameraWall({
               gridTemplateRows: `repeat(${grid.rows}, minmax(0, 1fr))`,
             }}
           >
-            {displayedCameras.map((cam, idx) => {
-              const isUnique = idx < 5;
-              const stream = isUnique ? liveStreams[cam.id] : undefined;
-              const health = isUnique ? streamHealth[cam.id] : undefined;
-              const alerting = isUnique && alertingCameraIds.includes(cam.id);
-              const down = isUnique && (!stream || health?.status === "ERROR" || health?.status === "DISCONNECTED");
+            {displayedCameras.map((cam) => {
+              const stream = liveStreams[cam.id];
+              const health = streamHealth[cam.id];
+              const alerting = alertingCameraIds.includes(cam.id);
               return (
                 <div
                   key={cam.id}
@@ -476,59 +502,22 @@ export function CameraWall({
                     "glass-viewport rounded-xl relative overflow-hidden transition min-h-0 min-w-0",
                     alerting
                       ? "!border-warn/50 ring-1 ring-warn/20 bg-warn/5"
-                      : !isUnique
-                        ? "!border-white/[0.08] bg-black/40 hover:!border-white/20"
-                        : down
-                          ? "!border-crit/30 bg-crit/5"
-                          : "hover:!border-accent/40",
+                      : "hover:!border-accent/40"
                   )}
                 >
-                  {isUnique ? (
-                    <TacticalVideoFeed
-                      camera={cam}
-                      liveMjpegUrl={stream?.mjpegUrl}
-                      pipeline={pipelines[cam.id]}
-                      stream={stream}
-                      health={health}
-                      feedLink={feedLink}
-                      focused={false}
-                      glass
-                      showAiBoxes={showAiBoxes}
-                      isBreached={alerting}
-                      onClick={() => setInternalFocusId(cam.id)}
-                    />
-                  ) : (
-                    <div
-                      className="relative w-full h-full select-none overflow-hidden flex flex-col justify-between p-2 cursor-pointer hover:bg-white/[0.02] transition"
-                      onClick={() => setInternalFocusId(cam.id)}
-                    >
-                      {/* Camera label */}
-                      <div className="z-10 pointer-events-none">
-                        <span className="inline-flex max-w-full items-center gap-1.5 px-1.5 py-0.5 rounded bg-black/65 border border-white/10 text-[10px] font-data">
-                          <span className="font-semibold text-accent-ink shrink-0">{cam.id.replace("-", " ")}</span>
-                          <span className="text-white/25 shrink-0">·</span>
-                          <span className="font-medium text-white/90 truncate uppercase">{cam.name}</span>
-                        </span>
-                      </div>
-
-                      {/* Loading state indicator */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-warn/80 pointer-events-none">
-                        <div className="w-7 h-7 rounded-full bg-warn/10 border border-warn/20 flex items-center justify-center">
-                          <Icon name="sync" size={15} className="animate-spin text-warn" />
-                        </div>
-                        <span className="text-[10px] font-data tracking-wider uppercase text-white/70">Connecting…</span>
-                      </div>
-
-                      {/* Bottom status badge */}
-                      <div className="z-10 flex items-center justify-between pointer-events-none">
-                        <span className="text-[9px] font-data text-white/30 truncate">{cam.zone}</span>
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/50 text-[9px] font-data text-warn">
-                          <span className="w-1.5 h-1.5 rounded-full bg-warn animate-pulse" />
-                          LOADING
-                        </span>
-                      </div>
-                    </div>
-                  )}
+                  <TacticalVideoFeed
+                    camera={cam}
+                    liveMjpegUrl={stream?.mjpegUrl}
+                    pipeline={pipelines[cam.id]}
+                    stream={stream}
+                    health={health}
+                    feedLink={feedLink}
+                    focused={false}
+                    glass
+                    showAiBoxes={showAiBoxes}
+                    isBreached={alerting}
+                    onClick={() => setInternalFocusId(cam.id)}
+                  />
                 </div>
               );
             })}

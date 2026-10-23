@@ -42,7 +42,7 @@ export function Dashboard() {
   // Wall state
   const [density, setDensity] = useState<GridDensity>(12);
   const [alertFirst, setAlertFirst] = useState(false);
-  const [showAiBoxes] = useState(false);
+  const [showAiBoxes, setShowAiBoxes] = useState(true);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 
   const alertingCameraIds = useMemo(

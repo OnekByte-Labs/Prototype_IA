@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
+import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { cameraCounts, destination, distanceBearing, fovWedge, indexConfig } from "@/lib/gis/geo";
 import type {
